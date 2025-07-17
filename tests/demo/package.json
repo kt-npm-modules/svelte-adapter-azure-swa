@@ -9,7 +9,7 @@
 		"build": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite build",
 		"build:swa": "PUBLIC_SWA=true npm run build",
 		"preview": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite preview",
-		"prepare": "svelte-kit sync || echo ''",
+		"prepare": "PUBLIC_SWA=${PUBLIC_SWA:-false} svelte-kit sync || echo ''",
 		"check": "PUBLIC_SWA=${PUBLIC_SWA:-false} svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
