@@ -61,6 +61,11 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
+          check-script: |
+            npm run build
+            npm run check
+        env:
+          PUBLIC_SWA: true
 
   test:
     needs: config
