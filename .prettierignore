@@ -5,6 +5,8 @@ yarn.lock
 bun.lock
 bun.lockb
 
+CHANGELOG.md
+
 # Demo subfolder - quick fix
 tests/demo-old
 tests/demo
