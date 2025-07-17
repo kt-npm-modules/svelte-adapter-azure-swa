@@ -61,7 +61,7 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
-          check-script: |
+          run-script: |
             npm run build
             npm run check
         env:
