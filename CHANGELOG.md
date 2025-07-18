@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.6
+
+### Patch Changes
+
+- 041150f: dependabot: directory '/', update @sentry/sveltekit
+
 ## 0.23.5
 
 ### Patch Changes
@@ -97,7 +103,6 @@
 ### Minor Changes
 
 - d3e8a8e: Rework bundling as ES module & `options.external`.
-
   - `options.external`
     - default: `['fsevents', '@azure/functions']`
     - other externals, if `apiDir` is not provided, will be automatically added to the generated Azure Functions `package.json`
@@ -130,7 +135,6 @@
 ### Patch Changes
 
 - 9232b6d: Minor fixes:
-
   - Externalize @babel/preset-typescript & @babel/preset-typescript/package.json
   - Fix issue with output of `staticwebapp.config.json`, if `staticDir` is customized
   - Clean up flags for `apiDir` & `staticDir`, default is `true`
