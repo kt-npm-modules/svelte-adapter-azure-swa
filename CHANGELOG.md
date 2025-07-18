@@ -1,5 +1,71 @@
 # Changelog
 
+## 0.23.5
+
+### Patch Changes
+
+- caaefb3: dependabot: directory '/', update @eslint/js
+- caaefb3: dependabot: directory '/', update @types/node
+- caaefb3: dependabot: directory '/', update eslint-plugin-svelte
+- caaefb3: dependabot: directory '/', update eslint
+- caaefb3: dependabot: directory '/', update svelte
+- 6b1df14: dependabot: directory '/', update @azure/functions
+- 6b1df14: dependabot: directory '/', update @playwright/test
+- 6b1df14: dependabot: directory '/', update @sentry/sveltekit
+- 6b1df14: dependabot: directory '/', update @sveltejs/kit
+- 6b1df14: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- 6b1df14: dependabot: directory '/', update @types/node
+- 6b1df14: dependabot: directory '/', update @vitest/coverage-istanbul
+- 6b1df14: dependabot: directory '/', update eslint-plugin-svelte
+- 6b1df14: dependabot: directory '/', update rollup
+- 6b1df14: dependabot: directory '/', update svelte
+- 6b1df14: dependabot: directory '/', update typescript-eslint
+- 6b1df14: dependabot: directory '/', update vitest
+- 6b17612: dependabot: directory '/', update @eslint/compat
+- 6b17612: dependabot: directory '/', update @eslint/js
+- 6b17612: dependabot: directory '/', update @rollup/plugin-commonjs
+- 6b17612: dependabot: directory '/', update @sentry/sveltekit
+- 6b17612: dependabot: directory '/', update @sveltejs/kit
+- 6b17612: dependabot: directory '/', update @types/node
+- 6b17612: dependabot: directory '/', update eslint
+- 6b17612: dependabot: directory '/', update svelte
+- 371fc7c: dependabot: directory '/', update @changesets/cli
+- 371fc7c: dependabot: directory '/', update @playwright/test
+- 371fc7c: dependabot: directory '/', update @rollup/plugin-commonjs
+- 371fc7c: dependabot: directory '/', update @sentry/sveltekit
+- 371fc7c: dependabot: directory '/', update @sveltejs/kit
+- 371fc7c: dependabot: directory '/', update @types/node
+- 371fc7c: dependabot: directory '/', update @vitest/coverage-istanbul
+- 371fc7c: dependabot: directory '/', update eslint-plugin-svelte
+- 371fc7c: dependabot: directory '/', update rollup
+- 371fc7c: dependabot: directory '/', update svelte-check
+- 371fc7c: dependabot: directory '/', update svelte
+- 371fc7c: dependabot: directory '/', update typescript-eslint
+- 371fc7c: dependabot: directory '/', update vitest
+
+## 0.23.4
+
+### Patch Changes
+
+- 181d605: dependabot: directory '/', update @eslint/js
+- 181d605: dependabot: directory '/', update @sveltejs/kit
+- 181d605: dependabot: directory '/', update @types/node
+- 181d605: dependabot: directory '/', update eslint-plugin-svelte
+- 181d605: dependabot: directory '/', update eslint
+- 181d605: dependabot: directory '/', update rollup
+- 181d605: dependabot: directory '/', update svelte
+- 82f7c2e: dependabot: directory '/', update @azure/functions
+- 82f7c2e: dependabot: directory '/', update @sentry/sveltekit
+- 82f7c2e: dependabot: directory '/', update @types/node
+- 82f7c2e: dependabot: directory '/', update eslint-plugin-svelte
+- 82f7c2e: dependabot: directory '/', update globals
+- 82f7c2e: dependabot: directory '/', update rollup
+- 82f7c2e: dependabot: directory '/', update svelte
+- 93a3069: dependabot: directory '/', update @sentry/sveltekit
+- 93a3069: dependabot: directory '/', update @types/node
+- 93a3069: dependabot: directory '/', update svelte
+- 93a3069: dependabot: directory '/', update typescript-eslint
+
 ## 0.23.3
 
 ### Patch Changes
