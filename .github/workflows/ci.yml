@@ -98,7 +98,6 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          # fail-on-empty-token: false # PRs outside of the org will not have a sonar token (secrets.SONAR_TOKEN is not available)
           cache-reset: ${{ needs.config.outputs.cache-reset }}
 
   swa:
