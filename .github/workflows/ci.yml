@@ -92,7 +92,7 @@ jobs:
   sonar:
     needs: config
     runs-on: ubuntu-latest
-    if: needs.config.outputs.do-sonar == 'true'
+    # if: needs.config.outputs.do-sonar == 'true'
     steps:
       - uses: kt-workflows/actions/npm-ci-sonar@main
         with:
