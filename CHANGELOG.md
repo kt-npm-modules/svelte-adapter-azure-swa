@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.23.6
+
+### Patch Changes
+
+- 041150f: dependabot: directory '/', update @sentry/sveltekit
+- 3f6f331: dependabot: directory '/', update @sveltejs/kit
+- 3f6f331: dependabot: directory '/', update @types/node
+- 3f6f331: dependabot: directory '/', update eslint-config-prettier
+- 3f6f331: dependabot: directory '/', update svelte-check
+- 3f6f331: dependabot: directory '/', update svelte
+- 3605e12: dependabot: directory '/', update @azure/cosmos
+- 3605e12: dependabot: directory '/', update @eslint/js
+- 3605e12: dependabot: directory '/', update @sentry/sveltekit
+- 3605e12: dependabot: directory '/', update @sveltejs/kit
+- 3605e12: dependabot: directory '/', update @types/node
+- 3605e12: dependabot: directory '/', update eslint
+- 3605e12: dependabot: directory '/', update rollup
+- 3605e12: dependabot: directory '/', update svelte
+- 3605e12: dependabot: directory '/', update typescript-eslint
+- 3605e12: dependabot: directory '/', update vite
+
 ## 0.23.5
 
 ### Patch Changes
@@ -97,7 +118,6 @@
 ### Minor Changes
 
 - d3e8a8e: Rework bundling as ES module & `options.external`.
-
   - `options.external`
     - default: `['fsevents', '@azure/functions']`
     - other externals, if `apiDir` is not provided, will be automatically added to the generated Azure Functions `package.json`
@@ -130,7 +150,6 @@
 ### Patch Changes
 
 - 9232b6d: Minor fixes:
-
   - Externalize @babel/preset-typescript & @babel/preset-typescript/package.json
   - Fix issue with output of `staticwebapp.config.json`, if `staticDir` is customized
   - Clean up flags for `apiDir` & `staticDir`, default is `true`
