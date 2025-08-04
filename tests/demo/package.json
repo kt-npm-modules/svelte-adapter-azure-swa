@@ -54,7 +54,7 @@
 	"dependencies": {
 		"@azure/cosmos": "^4.4.1",
 		"@inlang/paraglide-js": "^2.0.0",
-		"@sentry/sveltekit": "^9.39.0"
+		"@sentry/sveltekit": "^10.0.0"
 	},
 	"engines": {
 		"node": ">=20 <21"
