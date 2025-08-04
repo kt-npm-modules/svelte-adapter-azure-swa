@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.23.7
+
+### Patch Changes
+
+- 050ae08: dependabot: directory '/', update @playwright/test
+- 050ae08: dependabot: directory '/', update @sentry/sveltekit
+- 050ae08: dependabot: directory '/', update @sveltejs/kit
+- 050ae08: dependabot: directory '/', update playwright
+- 050ae08: dependabot: directory '/', update rollup
+- 050ae08: dependabot: directory '/', update svelte-check
+- 050ae08: dependabot: directory '/', update svelte
+- 050ae08: dependabot: directory '/', update typescript
+
 ## 0.23.6
 
 ### Patch Changes
