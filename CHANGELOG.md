@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.23.7
+
+### Patch Changes
+
+- 050ae08: dependabot: directory '/', update @playwright/test
+- 050ae08: dependabot: directory '/', update @sentry/sveltekit
+- 050ae08: dependabot: directory '/', update @sveltejs/kit
+- 050ae08: dependabot: directory '/', update playwright
+- 050ae08: dependabot: directory '/', update rollup
+- 050ae08: dependabot: directory '/', update svelte-check
+- 050ae08: dependabot: directory '/', update svelte
+- 050ae08: dependabot: directory '/', update typescript
+- 3b52f30: dependabot: directory '/', update @eslint/compat
+- 3b52f30: dependabot: directory '/', update @eslint/js
+- 3b52f30: dependabot: directory '/', update @sentry/sveltekit
+- 3b52f30: dependabot: directory '/', update @sveltejs/adapter-auto
+- 3b52f30: dependabot: directory '/', update @sveltejs/adapter-node
+- 3b52f30: dependabot: directory '/', update @sveltejs/kit
+- 3b52f30: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- 3b52f30: dependabot: directory '/', update @types/node
+- 3b52f30: dependabot: directory '/', update eslint
+- 3b52f30: dependabot: directory '/', update svelte
+- 3b52f30: dependabot: directory '/', update typescript-eslint
+- 3b52f30: dependabot: directory '/', update typescript
+- 3b52f30: dependabot: directory '/', update vite
+- 3b52f30: dependabot: directory '/', update vitest-browser-svelte
+- aa78139: dependabot: directory '/', update @changesets/cli
+- aa78139: dependabot: directory '/', update @sentry/sveltekit
+- aa78139: dependabot: directory '/', update @sveltejs/adapter-auto
+- aa78139: dependabot: directory '/', update @sveltejs/adapter-node
+- aa78139: dependabot: directory '/', update @sveltejs/kit
+- aa78139: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- aa78139: dependabot: directory '/', update @tailwindcss/vite
+- aa78139: dependabot: directory '/', update @types/node
+- aa78139: dependabot: directory '/', update svelte
+- aa78139: dependabot: directory '/', update tailwindcss
+- aa78139: dependabot: directory '/', update typescript-eslint
+- aa78139: dependabot: directory '/', update vite
+- 9795654: dependabot: directory '/', update @eslint/js
+- 9795654: dependabot: directory '/', update @playwright/test
+- 9795654: dependabot: directory '/', update @sveltejs/kit
+- 9795654: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- 9795654: dependabot: directory '/', update eslint
+- 9795654: dependabot: directory '/', update playwright
+- 9795654: dependabot: directory '/', update rollup
+- 9795654: dependabot: directory '/', update svelte
+- 9795654: dependabot: directory '/', update typescript-eslint
+- 9795654: dependabot: directory '/', update vite
+- b6b9289: dependabot: directory '/', update @sentry/sveltekit
+- b6b9289: dependabot: directory '/', update @sveltejs/kit
+- b6b9289: dependabot: directory '/', update rollup
+- b6b9289: dependabot: directory '/', update svelte
+- b6b9289: dependabot: directory '/', update typescript-eslint
+
 ## 0.23.6
 
 ### Patch Changes
