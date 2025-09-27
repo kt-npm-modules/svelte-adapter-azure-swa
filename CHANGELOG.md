@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.23.8
+
+### Patch Changes
+
+- f172a1b: dependabot: directory '/', update @azure/cosmos
+- f172a1b: dependabot: directory '/', update @eslint/js
+- f172a1b: dependabot: directory '/', update @sentry/sveltekit
+- f172a1b: dependabot: directory '/', update @sveltejs/kit
+- f172a1b: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- f172a1b: dependabot: directory '/', update @tailwindcss/vite
+- f172a1b: dependabot: directory '/', update @types/node
+- f172a1b: dependabot: directory '/', update eslint-plugin-svelte
+- f172a1b: dependabot: directory '/', update eslint
+- f172a1b: dependabot: directory '/', update rollup-plugin-sourcemaps2
+- f172a1b: dependabot: directory '/', update rollup
+- f172a1b: dependabot: directory '/', update svelte
+- f172a1b: dependabot: directory '/', update tailwindcss
+- f172a1b: dependabot: directory '/', update typescript-eslint
+- f172a1b: dependabot: directory '/', update vite
+- ad3ede8: dependabot: directory '/', update @azure/functions
+- ad3ede8: dependabot: directory '/', update @changesets/cli
+- ad3ede8: dependabot: directory '/', update @inlang/paraglide-js
+- ad3ede8: dependabot: directory '/', update @sentry/sveltekit
+- ad3ede8: dependabot: directory '/', update @sveltejs/adapter-node
+- ad3ede8: dependabot: directory '/', update @sveltejs/kit
+- ad3ede8: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- ad3ede8: dependabot: directory '/', update @types/node
+- ad3ede8: dependabot: directory '/', update eslint-plugin-svelte
+- ad3ede8: dependabot: directory '/', update globals
+- ad3ede8: dependabot: directory '/', update svelte
+- ad3ede8: dependabot: directory '/', update typescript-eslint
+- ad3ede8: dependabot: directory '/', update vite
+- c94e939: dependabot: directory '/', update @azure/static-web-apps-cli
+- c94e939: dependabot: directory '/', update @eslint/compat
+- c94e939: dependabot: directory '/', update @eslint/js
+- c94e939: dependabot: directory '/', update @fontsource/fira-mono
+- c94e939: dependabot: directory '/', update @inlang/paraglide-js
+- c94e939: dependabot: directory '/', update @playwright/test
+- c94e939: dependabot: directory '/', update @sentry/sveltekit
+- c94e939: dependabot: directory '/', update @sveltejs/kit
+- c94e939: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- c94e939: dependabot: directory '/', update @types/node
+- c94e939: dependabot: directory '/', update eslint-plugin-svelte
+- c94e939: dependabot: directory '/', update eslint
+- c94e939: dependabot: directory '/', update playwright
+- c94e939: dependabot: directory '/', update rollup
+- c94e939: dependabot: directory '/', update svelte-check
+- c94e939: dependabot: directory '/', update svelte
+- c94e939: dependabot: directory '/', update typescript-eslint
+- c94e939: dependabot: directory '/', update vite
+- a405010: dependabot: directory '/', update @types/node
+
 ## 0.23.7
 
 ### Patch Changes
