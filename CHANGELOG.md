@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.23.9
+
+### Patch Changes
+
+- 16df9a7: dependabot: directory '/', update @eslint/js
+- 16df9a7: dependabot: directory '/', update @rollup/plugin-node-resolve
+- 16df9a7: dependabot: directory '/', update @sentry/sveltekit
+- 16df9a7: dependabot: directory '/', update @sveltejs/adapter-node
+- 16df9a7: dependabot: directory '/', update @sveltejs/kit
+- 16df9a7: dependabot: directory '/', update @tailwindcss/vite
+- 16df9a7: dependabot: directory '/', update @types/node
+- 16df9a7: dependabot: directory '/', update eslint
+- 16df9a7: dependabot: directory '/', update rollup
+- 16df9a7: dependabot: directory '/', update svelte
+- 16df9a7: dependabot: directory '/', update tailwindcss
+- 16df9a7: dependabot: directory '/', update typescript-eslint
+- 16df9a7: dependabot: directory '/', update typescript
+- 16df9a7: dependabot: directory '/', update vite
+
 ## 0.23.8
 
 ### Patch Changes
