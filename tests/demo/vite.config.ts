@@ -3,7 +3,7 @@ import { sentrySvelteKit } from '@sentry/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { sentryRewriteSourcesFactory } from 'svelte-adapter-azure-swa';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	build: {
@@ -44,6 +44,7 @@ export default defineConfig({
 		// })
 	],
 	test: {
+		expect: { requireAssertions: true },
 		projects: [
 			{
 				extends: './vite.config.ts',

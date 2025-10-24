@@ -108,6 +108,7 @@ export interface AzureStaticWebAppsConfigurationFile {
 			| 'dotnet-isolated:6.0'
 			| 'dotnet-isolated:7.0'
 			| 'dotnet-isolated:8.0'
+			| 'dotnet-isolated:9.0'
 			| 'node:12'
 			| 'node:14'
 			| 'node:16'

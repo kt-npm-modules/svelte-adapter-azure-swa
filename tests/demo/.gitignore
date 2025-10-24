@@ -1,6 +1,5 @@
 test-results
 node_modules
-coverage
 
 # Output
 .output
@@ -35,3 +34,6 @@ project.inlang/cache
 sk_render/
 customStatic/
 func/package-lock.json
+
+# Coverage
+coverage
