@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.23.9
+
+### Patch Changes
+
+- 16df9a7: dependabot: directory '/', update @eslint/js
+- 16df9a7: dependabot: directory '/', update @rollup/plugin-node-resolve
+- 16df9a7: dependabot: directory '/', update @sentry/sveltekit
+- 16df9a7: dependabot: directory '/', update @sveltejs/adapter-node
+- 16df9a7: dependabot: directory '/', update @sveltejs/kit
+- 16df9a7: dependabot: directory '/', update @tailwindcss/vite
+- 16df9a7: dependabot: directory '/', update @types/node
+- 16df9a7: dependabot: directory '/', update eslint
+- 16df9a7: dependabot: directory '/', update rollup
+- 16df9a7: dependabot: directory '/', update svelte
+- 16df9a7: dependabot: directory '/', update tailwindcss
+- 16df9a7: dependabot: directory '/', update typescript-eslint
+- 16df9a7: dependabot: directory '/', update typescript
+- 16df9a7: dependabot: directory '/', update vite
+- 9105330: dependabot: directory '/', update @azure/cosmos
+- 9105330: dependabot: directory '/', update @playwright/test
+- 9105330: dependabot: directory '/', update @rollup/plugin-node-resolve
+- 9105330: dependabot: directory '/', update @sentry/sveltekit
+- 9105330: dependabot: directory '/', update @sveltejs/kit
+- 9105330: dependabot: directory '/', update @types/node
+- 9105330: dependabot: directory '/', update playwright
+- 9105330: dependabot: directory '/', update svelte-check
+- 9105330: dependabot: directory '/', update svelte
+- 9105330: dependabot: directory '/', update typescript-eslint
+- c0f42c2: dependabot: directory '/', update @eslint/js
+- c0f42c2: dependabot: directory '/', update @playwright/test
+- c0f42c2: dependabot: directory '/', update @rollup/plugin-commonjs
+- c0f42c2: dependabot: directory '/', update @sentry/sveltekit
+- c0f42c2: dependabot: directory '/', update @sveltejs/adapter-node
+- c0f42c2: dependabot: directory '/', update @sveltejs/kit
+- c0f42c2: dependabot: directory '/', update @types/node
+- c0f42c2: dependabot: directory '/', update eslint-plugin-svelte
+- c0f42c2: dependabot: directory '/', update eslint
+- c0f42c2: dependabot: directory '/', update playwright
+- c0f42c2: dependabot: directory '/', update prettier-plugin-tailwindcss
+- c0f42c2: dependabot: directory '/', update rollup
+- c0f42c2: dependabot: directory '/', update svelte
+- c0f42c2: dependabot: directory '/', update typescript-eslint
+- c0f42c2: dependabot: directory '/', update vite
+
 ## 0.23.8
 
 ### Patch Changes
