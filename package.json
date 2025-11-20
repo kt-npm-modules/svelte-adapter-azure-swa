@@ -54,12 +54,12 @@
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.28.1",
-		"@eslint/compat": "^1.2.8",
+		"@eslint/compat": "^2.0.0",
 		"@eslint/js": "^9.25.1",
 		"@sveltejs/kit": "^2.20.5",
 		"@types/node": "^24.0.0",
 		"@types/set-cookie-parser": "^2.4.7",
-		"@vitest/coverage-istanbul": "^3.1.1",
+		"@vitest/coverage-istanbul": "^4.0.12",
 		"eslint": "^9.25.1",
 		"eslint-config-prettier": "^10.1.2",
 		"globals": "^16.0.0",
@@ -67,11 +67,11 @@
 		"prettier": "^3.5.3",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.31.0",
-		"vitest": "^3.0.0"
+		"vitest": "^4.0.12"
 	},
 	"dependencies": {
-		"@rollup/plugin-alias": "^5.1.1",
-		"@rollup/plugin-commonjs": "^28.0.3",
+		"@rollup/plugin-alias": "^6.0.0",
+		"@rollup/plugin-commonjs": "^29.0.0",
 		"@rollup/plugin-json": "^6.1.0",
 		"@rollup/plugin-node-resolve": "^16.0.1",
 		"lodash": "^4.17.21",
