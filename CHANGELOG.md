@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.23.10
+
+### Patch Changes
+
+- 59846ac: Update outdated packages, fix tests
+
 ## 0.23.9
 
 ### Patch Changes
