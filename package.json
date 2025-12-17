@@ -17,7 +17,7 @@
 		"lint": "prettier --check . && eslint . && npm run lint --prefix ./tests/demo",
 		"test": "vitest",
 		"coverage": "vitest --coverage",
-		"changeset:version": "changeset version && git add --all",
+		"changeset:version": "changeset version && npm install && git add --all",
 		"changeset:publish": "changeset publish",
 		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts"
 	},
