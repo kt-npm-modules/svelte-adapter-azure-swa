@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.23.11
+
+### Patch Changes
+
+- 9526305: dependabot: directory '/', update @sentry/sveltekit
+- 9526305: dependabot: directory '/', update rollup
+- 9526305: dependabot: directory '/', update svelte-check
+- cc2ae0f: dependabot: directory '/', update @inlang/paraglide-js
+- cc2ae0f: dependabot: directory '/', update svelte
+- cc2ae0f: dependabot: directory '/', update typescript-eslint
+
 ## 0.23.10
 
 ### Patch Changes
