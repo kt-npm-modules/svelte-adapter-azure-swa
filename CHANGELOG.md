@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.23.12
+
+### Patch Changes
+
+- 3206778: dependabot: directory '/', update globals
+- 3206778: dependabot: directory '/', update typescript-eslint
+- 1545f20: dependabot: directory '/', update @azure/functions
+- 1545f20: dependabot: directory '/', update @eslint/compat
+- 1545f20: dependabot: directory '/', update @inlang/paraglide-js
+- 1545f20: dependabot: directory '/', update @sveltejs/kit
+- 1545f20: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- 1545f20: dependabot: directory '/', update @types/node
+- 1545f20: dependabot: directory '/', update eslint-plugin-svelte
+- 1545f20: dependabot: directory '/', update rollup
+- 1545f20: dependabot: directory '/', update typescript-eslint
+- 1545f20: dependabot: directory '/', update vite
+
 ## 0.23.11
 
 ### Patch Changes
