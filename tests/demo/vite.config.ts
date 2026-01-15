@@ -2,6 +2,7 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { sentrySvelteKit } from '@sentry/sveltekit';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
+import { playwright } from '@vitest/browser-playwright';
 import { sentryRewriteSourcesFactory } from 'svelte-adapter-azure-swa';
 import { defineConfig } from 'vitest/config';
 
@@ -50,10 +51,10 @@ export default defineConfig({
 				extends: './vite.config.ts',
 				test: {
 					name: 'client',
-					environment: 'browser',
+					// environment: 'browser',
 					browser: {
 						enabled: true,
-						provider: 'playwright',
+						provider: playwright(),
 						instances: [{ browser: 'chromium' }]
 					},
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],

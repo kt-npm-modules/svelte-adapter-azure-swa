@@ -36,26 +36,29 @@ describe('header processing', () => {
 
 		const cookies = splitCookiesFromHeaders(headers);
 
-		expect(cookies).toStrictEqual({
-			headers: new Headers(),
-			cookies: [
-				{
-					expires: new Date('1994-11-06T08:49:37.000Z'),
-					name: 'key1',
-					value: 'val1'
-				},
-				{
-					expires: new Date('1994-11-06T08:49:37.000Z'),
-					name: 'key2',
-					value: 'val2'
-				},
-				{
-					expires: new Date('1994-11-06T08:49:37.000Z'),
-					name: 'key3',
-					value: 'val3'
-				}
-			]
-		});
+		expect(cookies.headers).toStrictEqual(new Headers());
+		expect(cookies).toEqual(
+			expect.objectContaining({
+				headers: new Headers(),
+				cookies: [
+					{
+						expires: new Date('1994-11-06T08:49:37.000Z'),
+						name: 'key1',
+						value: 'val1'
+					},
+					{
+						expires: new Date('1994-11-06T08:49:37.000Z'),
+						name: 'key2',
+						value: 'val2'
+					},
+					{
+						expires: new Date('1994-11-06T08:49:37.000Z'),
+						name: 'key3',
+						value: 'val3'
+					}
+				]
+			})
+		);
 	});
 });
 

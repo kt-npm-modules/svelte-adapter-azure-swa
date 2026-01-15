@@ -1,7 +1,7 @@
 {
 	"name": "@ktarmyshov/svelte-adapter-azure-swa",
 	"description": "SvelteKit adapter for Azure Static Web Apps.",
-	"version": "0.23.8",
+	"version": "0.23.11",
 	"workspaces": [
 		".",
 		"tests/demo"
@@ -17,7 +17,7 @@
 		"lint": "prettier --check . && eslint . && npm run lint --prefix ./tests/demo",
 		"test": "vitest",
 		"coverage": "vitest --coverage",
-		"changeset:version": "changeset version && git add --all",
+		"changeset:version": "changeset version && npm install && git add --all",
 		"changeset:publish": "changeset publish",
 		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts"
 	},
@@ -49,35 +49,37 @@
 		"url": "https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues"
 	},
 	"peerDependencies": {
-		"@sveltejs/kit": "^2.0.0",
-		"@azure/functions": "^4.0.0"
+		"@azure/functions": "^4.0.0",
+		"@sveltejs/kit": "^2.0.0"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.28.1",
-		"@eslint/compat": "^1.2.8",
+		"@eslint/compat": "^2.0.0",
 		"@eslint/js": "^9.25.1",
 		"@sveltejs/kit": "^2.20.5",
-		"@types/node": "^24.0.0",
+		"@types/node": "^25.0.2",
 		"@types/set-cookie-parser": "^2.4.7",
-		"@vitest/coverage-istanbul": "^3.1.1",
+		"@vitest/coverage-istanbul": "^4.0.15",
 		"eslint": "^9.25.1",
 		"eslint-config-prettier": "^10.1.2",
-		"globals": "^16.0.0",
+		"globals": "^17.0.0",
 		"json-schema-to-typescript": "^15.0.4",
 		"prettier": "^3.5.3",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.31.0",
-		"vitest": "^3.0.0"
+		"vitest": "^4.0.15"
 	},
 	"dependencies": {
-		"@rollup/plugin-alias": "^5.1.1",
-		"@rollup/plugin-commonjs": "^28.0.3",
+		"@rollup/plugin-alias": "^6.0.0",
+		"@rollup/plugin-commonjs": "^29.0.0",
 		"@rollup/plugin-json": "^6.1.0",
 		"@rollup/plugin-node-resolve": "^16.0.1",
+		"@vitest/browser": "^4.0.15",
 		"lodash": "^4.17.21",
 		"rollup": "^4.40.1",
 		"rollup-plugin-sourcemaps2": "^0.5.1",
-		"set-cookie-parser": "^2.6.0"
+		"set-cookie-parser": "^2.6.0",
+		"vitest-browser-svelte": "^2.0.1"
 	},
 	"files": [
 		"src"
