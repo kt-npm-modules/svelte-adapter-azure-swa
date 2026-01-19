@@ -78,7 +78,7 @@
 		"lodash": "^4.17.21",
 		"rollup": "^4.40.1",
 		"rollup-plugin-sourcemaps2": "^0.5.1",
-		"set-cookie-parser": "^2.6.0",
+		"set-cookie-parser": "^3.0.1",
 		"vitest-browser-svelte": "^2.0.1"
 	},
 	"files": [
