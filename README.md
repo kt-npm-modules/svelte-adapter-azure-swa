@@ -7,7 +7,7 @@
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
 [![Socket Badge](https://socket.dev/api/badge/npm/package/@ktarmyshov/svelte-adapter-azure-swa)](https://socket.dev/npm/package/@ktarmyshov/svelte-adapter-azure-swa/overview)
 
-# @ktarmyshov/svelte-adapter-azure-swa
+# @ktarmyshov/svelte-adapter-azure-swa - zzz
 
 The experimental fork of [the original adapter repo](https://github.com/geoffrich/svelte-adapter-azure-swa)
 
