@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.23.12
+
+### Patch Changes
+
+- 3206778: dependabot: directory '/', update globals
+- 3206778: dependabot: directory '/', update typescript-eslint
+- 1545f20: dependabot: directory '/', update @azure/functions
+- 1545f20: dependabot: directory '/', update @eslint/compat
+- 1545f20: dependabot: directory '/', update @inlang/paraglide-js
+- 1545f20: dependabot: directory '/', update @sveltejs/kit
+- 1545f20: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- 1545f20: dependabot: directory '/', update @types/node
+- 1545f20: dependabot: directory '/', update eslint-plugin-svelte
+- 1545f20: dependabot: directory '/', update rollup
+- 1545f20: dependabot: directory '/', update typescript-eslint
+- 1545f20: dependabot: directory '/', update vite
+- 3182c02: dependabot: directory '/', update @inlang/paraglide-js
+- 3182c02: dependabot: directory '/', update @sentry/sveltekit
+- 3182c02: dependabot: directory '/', update @sveltejs/adapter-node
+- 3182c02: dependabot: directory '/', update @sveltejs/kit
+- 3182c02: dependabot: directory '/', update @types/node
+- 3182c02: dependabot: directory '/', update @vitest/browser-playwright
+- 3182c02: dependabot: directory '/', update @vitest/browser
+- 3182c02: dependabot: directory '/', update @vitest/coverage-istanbul
+- 3182c02: dependabot: directory '/', update prettier
+- 3182c02: dependabot: directory '/', update set-cookie-parser
+- 3182c02: dependabot: directory '/', update svelte
+- 3182c02: dependabot: directory '/', update typescript-eslint
+- 3182c02: dependabot: directory '/', update vitest
+- 52f988e: dependabot: directory '/', update @inlang/paraglide-js
+- 52f988e: dependabot: directory '/', update @playwright/test
+- 52f988e: dependabot: directory '/', update @sentry/sveltekit
+- 52f988e: dependabot: directory '/', update @sveltejs/adapter-node
+- 52f988e: dependabot: directory '/', update @sveltejs/kit
+- 52f988e: dependabot: directory '/', update @types/node
+- 52f988e: dependabot: directory '/', update @vitest/browser-playwright
+- 52f988e: dependabot: directory '/', update @vitest/browser
+- 52f988e: dependabot: directory '/', update @vitest/coverage-istanbul
+- 52f988e: dependabot: directory '/', update globals
+- 52f988e: dependabot: directory '/', update lodash
+- 52f988e: dependabot: directory '/', update playwright
+- 52f988e: dependabot: directory '/', update prettier
+- 52f988e: dependabot: directory '/', update rollup
+- 52f988e: dependabot: directory '/', update svelte
+- 52f988e: dependabot: directory '/', update typescript-eslint
+- 52f988e: dependabot: directory '/', update vitest-browser-svelte
+- 52f988e: dependabot: directory '/', update vitest
+- 188fb23: dependabot: directory '/', update svelte
+
 ## 0.23.11
 
 ### Patch Changes

@@ -1,7 +1,7 @@
 {
 	"name": "@ktarmyshov/svelte-adapter-azure-swa",
 	"description": "SvelteKit adapter for Azure Static Web Apps.",
-	"version": "0.23.11",
+	"version": "0.23.12",
 	"workspaces": [
 		".",
 		"tests/demo"
