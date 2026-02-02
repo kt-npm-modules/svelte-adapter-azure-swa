@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.23.13
+
+### Patch Changes
+
+- b0ac982: dependabot: directory '/', update @azure/cosmos
+- b0ac982: dependabot: directory '/', update @eslint/compat
+- b0ac982: dependabot: directory '/', update @inlang/paraglide-js
+- b0ac982: dependabot: directory '/', update @playwright/test
+- b0ac982: dependabot: directory '/', update @sentry/sveltekit
+- b0ac982: dependabot: directory '/', update @types/node
+- b0ac982: dependabot: directory '/', update globals
+- b0ac982: dependabot: directory '/', update playwright
+- b0ac982: dependabot: directory '/', update rollup
+- b0ac982: dependabot: directory '/', update svelte-check
+- b0ac982: dependabot: directory '/', update svelte
+- b0ac982: dependabot: directory '/', update typescript-eslint
+
 ## 0.23.12
 
 ### Patch Changes
