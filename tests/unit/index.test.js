@@ -1,5 +1,5 @@
 import { existsSync, writeFileSync } from 'fs';
-import { rollup } from 'rollup';
+import { rolldown } from 'rolldown';
 import { describe, expect, test, vi } from 'vitest';
 import azureAdapter from '../../src/index';
 import { generateConfig } from '../../src/swa-config';
@@ -12,8 +12,8 @@ vi.mock('fs', () => ({
 	existsSync: vi.fn(() => true)
 }));
 
-vi.mock('rollup', () => ({
-	rollup: vi.fn(() =>
+vi.mock('rolldown', () => ({
+	rolldown: vi.fn(() =>
 		Promise.resolve({
 			write: vi.fn(() => Promise.resolve())
 		})
@@ -103,7 +103,7 @@ describe('adapt', () => {
 		const adapter = azureAdapter({ apiDir: 'custom/api', cleanApiDir: true });
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(rollup).toBeCalledWith(
+		expect(rolldown).toBeCalledWith(
 			expect.objectContaining({
 				output: {
 					dir: 'custom/api/sk_render',
@@ -214,13 +214,13 @@ describe('adapt', () => {
 		expect(platform.user).toBeNull();
 	});
 
-	test('serverRollup - should not overwrite options.output', async () => {
+	test('serverRolldown - should not overwrite options.output', async () => {
 		const adapter = azureAdapter({
-			serverRollup: (options) => ({ ...options, output: { ...options.output, sourcemap: false } })
+			serverRolldown: (options) => ({ ...options, output: { ...options.output, sourcemap: false } })
 		});
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(rollup).toBeCalledWith(
+		expect(rolldown).toBeCalledWith(
 			expect.objectContaining({
 				output: {
 					format: 'es',

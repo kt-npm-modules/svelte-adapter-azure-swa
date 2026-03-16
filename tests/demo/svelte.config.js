@@ -49,7 +49,7 @@ const _adapterSWA = adapterSWA({
 	emulate: {
 		role: 'authenticated'
 	},
-	serverRollup(options) {
+	serverRolldown(options) {
 		options.onwarn = serverOnwarn;
 		return options;
 	}
