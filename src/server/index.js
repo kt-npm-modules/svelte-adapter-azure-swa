@@ -1,7 +1,3 @@
-import alias from '@rollup/plugin-alias';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
 import _ from 'lodash';
 import assert from 'node:assert';
 import { writeFileSync } from 'node:fs';
@@ -34,17 +30,7 @@ function defaultRolldownOptions() {
 			format: 'es',
 			sourcemap: true
 		},
-		plugins: [
-			sourcemaps(),
-			nodeResolve({
-				preferBuiltins: true,
-				browser: false
-			}),
-			commonjs({
-				strictRequires: true
-			}),
-			json()
-		]
+		plugins: [sourcemaps()]
 	};
 }
 /**
@@ -93,15 +79,13 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options) {
 			dir: join(outDir, SERVER_FUNC_DIR_NAME),
 			entryFileNames: FUNC_ENTRY_FILENAME
 		},
-		plugins: [
-			alias({
-				entries: {
-					MANIFEST: manifestFilePath,
-					SERVER: serverFilePath,
-					ENV: envFilePath
-				}
-			})
-		]
+		resolve: {
+			alias: {
+				MANIFEST: manifestFilePath,
+				SERVER: serverFilePath,
+				ENV: envFilePath
+			}
+		}
 	};
 	_options = _.mergeWith(defaultRolldownOptions(), _options, (objValue, srcValue) => {
 		if (Array.isArray(objValue) && Array.isArray(srcValue)) {
