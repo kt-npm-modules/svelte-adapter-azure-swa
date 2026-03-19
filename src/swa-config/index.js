@@ -3,7 +3,7 @@ import { SERVER_FUNC_DIR_NAME } from '../constants.js';
 
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
- * @typedef {import('rollup').RollupOptions} RollupOptions
+ * @typedef {import('rolldown').RolldownOptions} RolldownOptions
  * @typedef {import('../index.js').Options} Options
  * @typedef {import('../index.js').StaticWebAppConfig} StaticWebAppConfig
  */
@@ -60,7 +60,7 @@ export function generateConfig(customStaticWebAppConfig, appDir) {
 			rewrite: SSR_FUNC_ROUTE
 		},
 		platform: {
-			apiRuntime: 'node:20',
+			apiRuntime: 'node:22',
 			...customStaticWebAppConfig.platform
 		}
 	};

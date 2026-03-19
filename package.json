@@ -50,13 +50,13 @@
 	},
 	"peerDependencies": {
 		"@azure/functions": "^4.0.0",
-		"@sveltejs/kit": "^2.0.0"
+		"@sveltejs/kit": "^2.54.0"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.28.1",
 		"@eslint/compat": "^2.0.0",
 		"@eslint/js": "^9.25.1",
-		"@sveltejs/kit": "^2.20.5",
+		"@sveltejs/kit": "^2.55.0",
 		"@types/node": "^25.0.2",
 		"@types/set-cookie-parser": "^2.4.7",
 		"@vitest/coverage-istanbul": "^4.0.15",
@@ -70,14 +70,10 @@
 		"vitest": "^4.0.15"
 	},
 	"dependencies": {
-		"@rollup/plugin-alias": "^6.0.0",
-		"@rollup/plugin-commonjs": "^29.0.0",
-		"@rollup/plugin-json": "^6.1.0",
-		"@rollup/plugin-node-resolve": "^16.0.1",
 		"@vitest/browser": "^4.0.15",
 		"lodash": "^4.17.23",
-		"rollup": "^4.40.1",
-		"rollup-plugin-sourcemaps2": "^0.5.1",
+		"rolldown": "^1.0.0-rc.9",
+		"rolldown-plugin-sourcemaps": "^0.1.2",
 		"set-cookie-parser": "^3.0.1",
 		"vitest-browser-svelte": "^2.0.1"
 	},

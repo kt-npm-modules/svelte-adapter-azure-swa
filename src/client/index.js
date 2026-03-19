@@ -3,17 +3,17 @@ import _ from 'lodash';
 import assert from 'node:assert';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { rollup } from 'rollup';
-import sourcemaps from 'rollup-plugin-sourcemaps2';
+import { rolldown } from 'rolldown';
+import sourcemaps from 'rolldown-plugin-sourcemaps';
 
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
- * @typedef {import('rollup').RollupOptions} RollupOptions
+ * @typedef {import('rolldown').RolldownOptions} RolldownOptions
  * @typedef {import('..').Options} Options
  */
 
-/** @returns {RollupOptions} */
-function defaultRollupOptions() {
+/** @returns {RolldownOptions} */
+function defaultRolldownOptions() {
 	return {
 		external: ['@azure/functions'],
 		output: {
@@ -27,9 +27,9 @@ function defaultRollupOptions() {
 /**
  * @param {Builder} builder
  * @param {string} outDir
- * @returns {RollupOptions}
+ * @returns {RolldownOptions}
  */
-function prepareRollupOptions(builder, outDir) {
+function prepareRolldownOptions(builder, outDir) {
 	const clientDir = builder.getClientDirectory();
 	const input = Object.fromEntries(
 		globSync(`${clientDir}/**/*.js`).map((file) => [
@@ -41,14 +41,14 @@ function prepareRollupOptions(builder, outDir) {
 			fileURLToPath(new URL(file, import.meta.url))
 		])
 	);
-	/** @type RollupOptions */
+	/** @type RolldownOptions */
 	let _options = {
 		input,
 		output: {
 			dir: outDir
 		}
 	};
-	_options = _.merge(defaultRollupOptions(), _options);
+	_options = _.merge(defaultRolldownOptions(), _options);
 	return _options;
 }
 
@@ -83,9 +83,9 @@ export async function bundleClient(builder, outDir, options) {
 	builder.log(`Writing client files to ${outDir}`);
 	builder.writeClient(outDir);
 
-	builder.log(`[ROLLUP]: Re-Bundling client to correct sourcemaps to ${outDir}`);
-	const rollupOptions = prepareRollupOptions(builder, outDir);
-	const bundle = await rollup(rollupOptions);
-	assert(!Array.isArray(rollupOptions.output), 'output should not be an array');
-	await bundle.write(rollupOptions.output);
+	builder.log(`[ROLLDOWN]: Re-Bundling client to correct sourcemaps to ${outDir}`);
+	const rolldownOptions = prepareRolldownOptions(builder, outDir);
+	const bundle = await rolldown(rolldownOptions);
+	assert(!Array.isArray(rolldownOptions.output), 'output should not be an array');
+	await bundle.write(rolldownOptions.output);
 }

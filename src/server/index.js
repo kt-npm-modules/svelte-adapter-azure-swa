@@ -1,20 +1,16 @@
-import alias from '@rollup/plugin-alias';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
 import _ from 'lodash';
 import assert from 'node:assert';
 import { writeFileSync } from 'node:fs';
 import { posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { join } from 'path';
-import { rollup } from 'rollup';
-import sourcemaps from 'rollup-plugin-sourcemaps2';
+import { rolldown } from 'rolldown';
+import sourcemaps from 'rolldown-plugin-sourcemaps';
 import { SERVER_FUNC_DIR_NAME } from '../constants.js';
 
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
- * @typedef {import('rollup').RollupOptions} RollupOptions
+ * @typedef {import('rolldown').RolldownOptions} RolldownOptions
  * @typedef {import('../index.js').Options} Options
  * @typedef {import('../index.js').StaticWebAppConfig} StaticWebAppConfig
  */
@@ -25,8 +21,8 @@ const TEMPLATE_SERVER_DIR_PATH = fileURLToPath(new URL('./template', import.meta
 
 const REQUIRED_EXTERNAL = ['fsevents', '@azure/functions'];
 
-/** @returns {RollupOptions} */
-function defaultRollupOptions() {
+/** @returns {RolldownOptions} */
+function defaultRolldownOptions() {
 	return {
 		external: REQUIRED_EXTERNAL,
 		output: {
@@ -34,17 +30,7 @@ function defaultRollupOptions() {
 			format: 'es',
 			sourcemap: true
 		},
-		plugins: [
-			sourcemaps(),
-			nodeResolve({
-				preferBuiltins: true,
-				browser: false
-			}),
-			commonjs({
-				strictRequires: true
-			}),
-			json()
-		]
+		plugins: [sourcemaps()]
 	};
 }
 /**
@@ -81,29 +67,27 @@ function getPaths(builder, tmpDir) {
  * @param {string} outDir
  * @param {string} tmpDir
  * @param {Options} options
- * @returns {RollupOptions}
+ * @returns {RolldownOptions}
  */
-function prepareRollupOptions(builder, outDir, tmpDir, options) {
+function prepareRolldownOptions(builder, outDir, tmpDir, options) {
 	const { serverFilePath, manifestFilePath, envFilePath } = getPaths(builder, tmpDir);
 
-	/** @type RollupOptions */
+	/** @type RolldownOptions */
 	let _options = {
 		input: ENTRY_FILE_PATH,
 		output: {
 			dir: join(outDir, SERVER_FUNC_DIR_NAME),
 			entryFileNames: FUNC_ENTRY_FILENAME
 		},
-		plugins: [
-			alias({
-				entries: {
-					MANIFEST: manifestFilePath,
-					SERVER: serverFilePath,
-					ENV: envFilePath
-				}
-			})
-		]
+		resolve: {
+			alias: {
+				MANIFEST: manifestFilePath,
+				SERVER: serverFilePath,
+				ENV: envFilePath
+			}
+		}
 	};
-	_options = _.mergeWith(defaultRollupOptions(), _options, (objValue, srcValue) => {
+	_options = _.mergeWith(defaultRolldownOptions(), _options, (objValue, srcValue) => {
 		if (Array.isArray(objValue) && Array.isArray(srcValue)) {
 			return objValue.concat(srcValue);
 		}
@@ -113,7 +97,7 @@ function prepareRollupOptions(builder, outDir, tmpDir, options) {
 	let external = _options.external;
 	external = [...(external || []), ...(options.external || [])];
 	_options.external = external;
-	_options = options.serverRollup?.(_options) || _options;
+	_options = options.serverRolldown?.(_options) || _options;
 	return _options;
 }
 
@@ -216,11 +200,11 @@ export async function bundleServer(builder, outDir, tmpDir, options) {
 		}
 	}
 
-	// Rollup the server function
+	// Rolldown the server function
 	const functionDirPath = join(outDir, SERVER_FUNC_DIR_NAME);
-	builder.log(`[ROLLUP]: Building server function to ${functionDirPath}`);
-	const rollupOptions = prepareRollupOptions(builder, outDir, tmpDir, options);
-	const bundle = await rollup(rollupOptions);
-	assert(!Array.isArray(rollupOptions.output), 'output should not be an array');
-	await bundle.write(rollupOptions.output);
+	builder.log(`[ROLLDOWN]: Building server function to ${functionDirPath}`);
+	const rolldownOptions = prepareRolldownOptions(builder, outDir, tmpDir, options);
+	const bundle = await rolldown(rolldownOptions);
+	assert(!Array.isArray(rolldownOptions.output), 'output should not be an array');
+	await bundle.write(rolldownOptions.output);
 }

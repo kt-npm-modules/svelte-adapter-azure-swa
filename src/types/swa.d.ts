@@ -2,7 +2,7 @@ import { AzureStaticWebAppsConfigurationFile } from './swa-config-gen';
 // types and documentation adapted from https://docs.microsoft.com/en-us/azure/static-web-apps/configuration
 export interface StaticWebAppConfig extends AzureStaticWebAppsConfigurationFile {
 	platform?: {
-		apiRuntime?: 'node:20';
+		apiRuntime?: 'node:22';
 	};
 }
 
