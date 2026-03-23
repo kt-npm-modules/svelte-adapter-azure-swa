@@ -26,7 +26,7 @@ jobs:
     environment: development
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Check if AZURE_STATIC_WEB_APPS_API_TOKEN is set
       - id: do-swa-azure

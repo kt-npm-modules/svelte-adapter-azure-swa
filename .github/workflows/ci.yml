@@ -17,49 +17,46 @@ permissions:
   pull-requests: write # to create comments (actions/github-script)
 
 env:
-  DEFAULT_MATRIX_NODE_VERSION: '[20]'
+  DEFAULT_MATRIX_NODE_VERSION: '[22, 24]'
   DEFAULT_CACHE_RESET: false
   PUBLIC_SWA: false
   CI: true
 
 jobs:
-  # echo:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: ${{ tojson(github) }}
-  #       shell: cat {0}
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ${{ tojson(github) }}
+        shell: cat {0}
 
   config:
-    # prepare the configuration for the workflow from different sources of variables
     runs-on: ubuntu-latest
     outputs:
-      matrix-node-version: ${{ steps.config.outputs.MATRIX_NODE_VERSION }}
-      cache-reset: ${{ steps.config.outputs.CACHE_RESET }}
-      do-sonar: ${{ steps.config.outputs.DO_SONAR }}
+      matrix-node-version: ${{ steps.matrix-node-version.outputs.matrix-node-version }}
+      sonar: ${{ steps.sonar.outputs.sonar }}
+      cache-reset: ${{ steps.cache-reset.outputs.cache-reset }}
+      cache-additional-path: ${{ steps.cache-additional-path.outputs.cache-additional-path }}
     steps:
-      - id: config
+      - id: matrix-node-version
         run: |
-          if [[ -z "${{ vars.MATRIX_NODE_VERSION }}" ]]; then
-            echo "MATRIX_NODE_VERSION is not set. Using default value to $DEFAULT_MATRIX_NODE_VERSION."
-            echo "MATRIX_NODE_VERSION=$DEFAULT_MATRIX_NODE_VERSION" >> "$GITHUB_OUTPUT"
+          # Set the node version to use in the matrix
+          echo "matrix-node-version=${{ vars.MATRIX_NODE_VERSION || env.DEFAULT_MATRIX_NODE_VERSION || '' }}" >> "$GITHUB_OUTPUT"
+
+      - id: sonar
+        run: |
+          # Check if the SONAR_TOKEN secret is set, if not skip the sonar job
+          if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
+            echo "SONAR_TOKEN is not set, skipping sonar job"
+            echo "sonar=false" >> "$GITHUB_OUTPUT"
           else
-            echo "MATRIX_NODE_VERSION is set to '${{ vars.MATRIX_NODE_VERSION }}'."
-            echo "MATRIX_NODE_VERSION=${{ vars.MATRIX_NODE_VERSION }}" >> "$GITHUB_OUTPUT"
+            echo "SONAR_TOKEN is set, running sonar job"
+            echo "sonar=true" >> "$GITHUB_OUTPUT"
           fi
-          if [[ -z "${{ vars.CACHE_RESET }}" ]]; then
-            echo "CACHE_RESET is not set. Using default value to $DEFAULT_CACHE_RESET."
-            echo "CACHE_RESET=$DEFAULT_CACHE_RESET" >> "$GITHUB_OUTPUT"
-          else
-            echo "CACHE_RESET is set to '${{ vars.CACHE_RESET }}'."
-            echo "CACHE_RESET=${{ vars.CACHE_RESET }}" >> "$GITHUB_OUTPUT"
-          fi
-          if [[ -z "${{ secrets.SONAR_TOKEN }}" ]]; then
-            echo "SONAR_TOKEN is not set. Skipping SonarQube analysis."
-            echo "DO_SONAR=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "SONAR_TOKEN is set. Will run SonarQube analysis."
-            echo "DO_SONAR=true" >> "$GITHUB_OUTPUT"
-          fi
+
+      - id: cache-reset
+        run: |
+          # Set the cache reset to use
+          echo "cache-reset=${{ vars.CACHE_RESET || env.DEFAULT_CACHE_RESET }}" >> "$GITHUB_OUTPUT"
 
   check:
     needs: config
@@ -69,6 +66,7 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
+          cache-additional-path: ${{ needs.config.outputs.cache-additional-path }}
           run-script: |
             npm run build --prefix ./tests/demo
             npm run check
@@ -85,20 +83,21 @@ jobs:
     steps:
       - uses: kt-workflows/actions/npm-ci-test@main
         with:
-          # pass the matrix node version to the called workflow
           node-version: ${{ matrix.node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
+          cache-additional-path: ${{ needs.config.outputs.cache-additional-path }}
 
   sonar:
     needs: config
+    if: needs.config.outputs.sonar == 'true'
     runs-on: ubuntu-latest
-    if: needs.config.outputs.do-sonar == 'true'
     steps:
       - uses: kt-workflows/actions/npm-ci-sonar@main
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
+          cache-additional-path: ${{ needs.config.outputs.cache-additional-path }}
 
   swa:
     strategy:
@@ -109,7 +108,35 @@ jobs:
     with:
       node-version: ${{ matrix.node-version }}
       cache-reset: ${{ needs.config.outputs.cache-reset == 'true' }}
+      cache-additional-path: ${{ needs.config.outputs.cache-additional-path }}
     secrets: inherit
+
+  required-main:
+    name: required-main
+    needs:
+      - check
+      - test
+      - swa
+      - sonar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs for main
+        shell: bash
+        run: |
+          echo "Required jobs for main are fullfilled"
+
+  required-contribution:
+    name: required-contribution
+    needs:
+      - check
+      - test
+      - swa
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs for contribution
+        shell: bash
+        run: |
+          echo "Required jobs for contribution are fullfilled"
 
   retry-failed:
     runs-on: ubuntu-latest

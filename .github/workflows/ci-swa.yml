@@ -3,19 +3,25 @@ name: CI-SWA
 on:
   workflow_call:
     inputs:
-      node-version:
+      node-matrix-version:
         required: true
         type: string
       cache-reset:
         required: false
         type: boolean
+      cache-additional-path:
+        required: false
+        type: string
     secrets:
       WORKFLOW_APP_ID:
+        required: true
       WORKFLOW_APP_PRIVATE_KEY:
+        required: true
+      AZURE_STATIC_WEB_APPS_API_TOKEN:
+        required: true
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
-  DEFAULT_CACHE_ADDITIONAL_PATH: /home/runner/.cache/ms-playwright
   DEFAULT_INSTALL_SCRIPT: >-
     npm ci &&
     npm exec playwright install
@@ -38,8 +44,15 @@ jobs:
       install-script: ${{ steps.config.outputs.INSTALL_SCRIPT }}
       do-azure: ${{ steps.do-swa-azure.outputs.result }}
     steps:
+      - id: cache-additional-path
+        run: |
+          # Set the cache additional path to use - concatenate inputs.cache-additional-path and DEFAULT_CACHE_ADDITIONAL_PATH
+          echo "cache-additional-path=${{ inputs.cache-additional-path }}:${{ env.DEFAULT_CACHE_ADDITIONAL_PATH || '' }}" >> "$GITHUB_OUTPUT"
+          echo "cache-additional-path=${{ vars.CACHE_ADDITIONAL_PATH || env.DEFAULT_CACHE_ADDITIONAL_PATH || '' }}" >> "$GITHUB_OUTPUT"
+
       - id: config
         run: |
+          # Set additonal cache path
           if [[ -z "${{ vars.CACHE_ADDITIONAL_PATH }}" ]]; then
             echo "CACHE_ADDITIONAL_PATH is not set. Using default value to $DEFAULT_CACHE_ADDITIONAL_PATH."
             echo "CACHE_ADDITIONAL_PATH=$DEFAULT_CACHE_ADDITIONAL_PATH" >> "$GITHUB_OUTPUT"
@@ -97,7 +110,7 @@ jobs:
       NODE_ENV: development # Avoid uploadig source maps to sentry
       PUBLIC_SWA: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: kt-workflows/actions/npm-run-script@main
         with:
@@ -127,7 +140,7 @@ jobs:
           # Default to github token if secrets are not provided
           default-to-github-token: true
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ steps.app-token.outputs.token }}
 
@@ -183,7 +196,7 @@ jobs:
     needs: [config, azure-deploy]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: kt-workflows/actions/npm-run-script@main
         with:
