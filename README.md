@@ -32,6 +32,11 @@ export type EmulateOptions = {
 - Utilities
   - `sentryRewriteSourcesFactory`: creates rewriteSource function for `sentrySvelteKit` plugin's option `sourceMapsUploadOptions.unstable_sentryVitePluginOptions.sourcemaps.rewriteSources`, because `@sentry/sveltekit` does not resolve it properly
 
+## Acknowledgements
+
+Special thanks to [@sukeshpabolu](https://github.com/sukeshpabolu)
+for contributing the Node 22 / Rolldown migration and being the first external contributor to the project.
+
 # svelte-adapter-azure-swa
 
 Adapter for Svelte apps that creates an Azure Static Web App, using an Azure function for dynamic server rendering. If your app is purely static, you may be able to use [adapter-static](https://www.npmjs.com/package/@sveltejs/adapter-static) instead.
