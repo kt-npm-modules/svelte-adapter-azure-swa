@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   update-pull:
+    # prevents this action from running on forks
+    if: github.repository == 'kt-npm-modules/svelte-adapter-azure-swa'
     runs-on: ubuntu-latest
     steps:
       - id: app-token
