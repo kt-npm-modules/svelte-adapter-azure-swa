@@ -3,28 +3,23 @@ name: CI-SWA
 on:
   workflow_call:
     inputs:
-      node-matrix-version:
+      matrix-node-version:
         required: true
         type: string
       cache-reset:
         required: false
         type: boolean
-      cache-additional-path:
-        required: false
-        type: string
-    secrets:
-      WORKFLOW_APP_ID:
-        required: true
-      WORKFLOW_APP_PRIVATE_KEY:
-        required: true
-      AZURE_STATIC_WEB_APPS_API_TOKEN:
-        required: true
+    # secrets:
+    #   WORKFLOW_APP_ID:
+    #     required: true
+    #   WORKFLOW_APP_PRIVATE_KEY:
+    #     required: true
+    #   AZURE_STATIC_WEB_APPS_API_TOKEN:
+    #     required: true
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
-  DEFAULT_INSTALL_SCRIPT: >-
-    npm ci &&
-    npm exec playwright install
+  DEFAULT_INSTALL_SCRIPT: npm ci && npm exec playwright install
   PUBLIC_SWA: false
   CI: true
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -37,31 +32,14 @@ permissions:
 jobs:
   config:
     environment: development
-    # prepare the configuration for the workflow from different sources of variables
     runs-on: ubuntu-latest
     outputs:
-      cache-additional-path: ${{ steps.config.outputs.CACHE_ADDITIONAL_PATH }}
-      install-script: ${{ steps.config.outputs.INSTALL_SCRIPT }}
-      do-azure: ${{ steps.do-swa-azure.outputs.result }}
+      install-script: ${{ steps.install-script.outputs.result }}
+      azure: ${{ steps.azure.outputs.result }}
     steps:
-      - id: cache-additional-path
+      - id: install-script
         run: |
-          # Set the cache additional path to use - concatenate inputs.cache-additional-path and DEFAULT_CACHE_ADDITIONAL_PATH
-          echo "cache-additional-path=${{ inputs.cache-additional-path }}:${{ env.DEFAULT_CACHE_ADDITIONAL_PATH || '' }}" >> "$GITHUB_OUTPUT"
-          echo "cache-additional-path=${{ vars.CACHE_ADDITIONAL_PATH || env.DEFAULT_CACHE_ADDITIONAL_PATH || '' }}" >> "$GITHUB_OUTPUT"
-
-      - id: config
-        run: |
-          # Set additonal cache path
-          if [[ -z "${{ vars.CACHE_ADDITIONAL_PATH }}" ]]; then
-            echo "CACHE_ADDITIONAL_PATH is not set. Using default value to $DEFAULT_CACHE_ADDITIONAL_PATH."
-            echo "CACHE_ADDITIONAL_PATH=$DEFAULT_CACHE_ADDITIONAL_PATH" >> "$GITHUB_OUTPUT"
-          else
-            echo "CACHE_ADDITIONAL_PATH is set to '${{ vars.CACHE_ADDITIONAL_PATH }}'."
-            echo "CACHE_ADDITIONAL_PATH=${{ vars.CACHE_ADDITIONAL_PATH }}" >> "$GITHUB_OUTPUT"
-          fi
-
-          echo "INSTALL_SCRIPT=$DEFAULT_INSTALL_SCRIPT" >> "$GITHUB_OUTPUT"
+          echo "result=$DEFAULT_INSTALL_SCRIPT" >> "$GITHUB_OUTPUT"
 
       # We only run azure SWA deployment if we push to the default branch or create a PR into the default branch from our own org!
       # Check that it's a push into the default branch
@@ -77,7 +55,6 @@ jobs:
       # Check that it's a pull request into the default branch from within the same organization
       - id: pr-to-main
         if: |
-          steps.main-push.outputs.result != 'true' &&
           github.event_name == 'pull_request' &&
           github.event.pull_request.base.ref == github.event.repository.default_branch &&
           github.event.pull_request.head.repo.owner.login == github.event.repository.owner.login
@@ -91,7 +68,7 @@ jobs:
         working-directory: '.'
 
       # Check if AZURE_STATIC_WEB_APPS_API_TOKEN is set
-      - id: do-swa-azure
+      - id: azure
         if: ${{ steps.main-push.outputs.result == 'true' || steps.pr-to-main.outputs.result == 'true' }}
         run: |
           if [[ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]]; then
@@ -106,6 +83,9 @@ jobs:
   cli:
     needs: config
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ${{ fromJson(inputs.matrix-node-version) }}
     env:
       NODE_ENV: development # Avoid uploadig source maps to sentry
       PUBLIC_SWA: true
@@ -114,22 +94,25 @@ jobs:
 
       - uses: kt-workflows/actions/npm-run-script@main
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ matrix.node-version }}
           cache-reset: ${{ inputs.cache-reset }}
           install-script: ${{ needs.config.outputs.install-script }}
-          cache-additional-path: ${{ needs.config.outputs.cache-additional-path }}
           run-script: npm run test:swa --prefix ./tests/demo
 
-  azure-deploy:
+  azure:
     needs: config
-    if: ${{ needs.config.outputs.do-azure == 'true' }}
+    if: ${{ needs.config.outputs.azure == 'true' }}
     environment: development
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ${{ fromJson(inputs.matrix-node-version) }}
+      max-parallel: 1
     # Deploy to the same environment and wait for the previous job to finish, if we have more than one node version to test
     concurrency:
       group: swa-azure-${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
-    outputs:
-      base-url: ${{ steps.build-deploy.outputs.static_web_app_url }}
+    # outputs:
+    #   base-url: ${{ steps.build-deploy.outputs.static_web_app_url }}
     steps:
       - id: app-token
         uses: kt-workflows/actions/create-github-app-token@main
@@ -153,10 +136,9 @@ jobs:
 
       - uses: kt-workflows/actions/npm-run-script@main
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ matrix.node-version }}
           cache-reset: ${{ inputs.cache-reset }}
           install-script: ${{ needs.config.outputs.install-script }}
-          cache-additional-path: ${{ needs.config.outputs.cache-additional-path }}
           # Run the build script and install the dependencies for the built api of the demo app
           # We build the app ourselves, otherwise the azure swa action will build it for us and it will take a very long time
           # For example: with build ourselves it takes about 1:30-2:00 minutes to build and deploy
@@ -192,18 +174,11 @@ jobs:
           skip_api_build: true
           ###### End of Repository/Build Configurations ######
 
-  azure:
-    needs: [config, azure-deploy]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
       - uses: kt-workflows/actions/npm-run-script@main
         with:
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ matrix.node-version }}
           cache-reset: ${{ inputs.cache-reset }}
           install-script: ${{ needs.config.outputs.install-script }}
-          cache-additional-path: ${{ needs.config.outputs.cache-additional-path }}
           # Run the build script and install the dependencies for the built api of the demo app
           # We build the app ourselves, otherwise the azure swa action will build it for us and it will take a very long time
           # For example: with build ourselves it takes about 1:30-2:00 minutes to build and deploy
@@ -212,4 +187,29 @@ jobs:
           # Overall CI workflow reduced from about 5:00 minutes to about 2:30 minutes
           run-script: npm test --prefix ./tests/demo
         env:
-          PLAYWRIGHT_TEST_BASE_URL: ${{ needs.azure-deploy.outputs.base-url }}
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.build-deploy.outputs.static_web_app_url }}
+
+  # Stable aggregate required-* checks for branch protection rules.
+  # This avoids depending directly on individual matrix job statuses.
+  required-main:
+    name: required-main
+    needs:
+      - cli
+      - azure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs for main
+        shell: bash
+        run: |
+          echo "Required jobs for main are fulfilled"
+
+  required-contribution:
+    name: required-contribution
+    needs:
+      - cli
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs for contribution
+        shell: bash
+        run: |
+          echo "Required jobs for contribution are fulfilled"
