@@ -18,7 +18,7 @@ permissions:
   pull-requests: write # to create comments (actions/github-script)
 
 env:
-  DEFAULT_MATRIX_NODE_VERSION: '[20, 22, 24]'
+  DEFAULT_MATRIX_NODE_VERSION: '[20, 22]'
   DEFAULT_CACHE_RESET: false
   PUBLIC_SWA: false
   CI: true
