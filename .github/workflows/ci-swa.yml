@@ -36,12 +36,12 @@ jobs:
     outputs:
       install-script: ${{ steps.install-script.outputs.result }}
       azure: ${{ steps.azure.outputs.result }}
+      concurrency-group: ${{ steps.concurrency-group.outputs.result }}
     steps:
       - id: install-script
         run: |
           echo "result=$DEFAULT_INSTALL_SCRIPT" >> "$GITHUB_OUTPUT"
 
-      # We only run azure SWA deployment if we push to the default branch or create a PR into the default branch from our own org!
       # Check that it's a push into the default branch
       - id: main-push
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -52,10 +52,20 @@ jobs:
           echo "result=true" >> "$GITHUB_OUTPUT"
         working-directory: '.'
 
+      # Check that it's a push into the contribution branch
+      - id: contribution-push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/contribution'
+        run: |
+          echo "Push to contribution branch detected."
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "result=true" >> "$GITHUB_OUTPUT"
+        working-directory: '.'
+
       # Check that it's a pull request into the default branch from within the same organization
       - id: pr-to-main
         if: |
-          ${{ steps.main-push.outputs.result != 'true' }} &&
+          ${{ steps.main-push.outputs.result != 'true' && steps.contribution-push.outputs.result != 'true' }} &&
           github.event_name == 'pull_request' &&
           github.event.pull_request.base.ref == github.event.repository.default_branch &&
           github.event.pull_request.head.repo.owner.login == github.event.repository.owner.login
@@ -68,9 +78,28 @@ jobs:
           echo "result=true" >> "$GITHUB_OUTPUT"
         working-directory: '.'
 
+      # Compute Azure SWA concurrency group:
+      # - trusted pushes to main/contribution share one production lane
+      # - internal PRs to main use separate preview lanes
+      - id: concurrency-group
+        if: |
+          ${{ steps.main-push.outputs.result == 'true' || steps.contribution-push.outputs.result == 'true' || steps.pr-to-main.outputs.result == 'true' }}
+        run: |
+          if [[ "${{ steps.main-push.outputs.result }}" == 'true' || "${{ steps.contribution-push.outputs.result }}" == 'true' ]]; then
+            GROUP="swa-azure-${{ github.repository }}-${{ github.workflow }}-production"
+            echo "Trusted push detected. Using shared production deploy lane."
+          else
+            GROUP="swa-azure-${{ github.repository }}-${{ github.workflow }}-preview-${{ github.ref }}"
+            echo "Internal PR detected. Using preview deploy lane."
+          fi
+
+          echo "group=$GROUP"
+          echo "result=$GROUP" >> "$GITHUB_OUTPUT"
+        working-directory: '.'
+
       # Check if AZURE_STATIC_WEB_APPS_API_TOKEN is set
       - id: azure
-        if: ${{ steps.main-push.outputs.result == 'true' || steps.pr-to-main.outputs.result == 'true' }}
+        if: ${{ steps.main-push.outputs.result == 'true' || steps.contribution-push.outputs.result == 'true' || steps.pr-to-main.outputs.result == 'true' }}
         run: |
           if [[ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]]; then
             echo "Deploy token not set. Skipping deployment."
@@ -111,7 +140,8 @@ jobs:
       max-parallel: 1
     # Deploy to the same environment and wait for the previous job to finish, if we have more than one node version to test
     concurrency:
-      group: swa-azure-${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+      group: ${{ needs.config.outputs.concurrency-group }}
+      cancel-in-progress: false
     # outputs:
     #   base-url: ${{ steps.build-deploy.outputs.static_web_app_url }}
     steps:
