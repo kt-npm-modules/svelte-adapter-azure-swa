@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-      - feat/workflows
+      - contribution
+      - feat/workflows # TODO: Delete after tests!
   pull_request:
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
@@ -24,11 +25,11 @@ env:
   CI: true
 
 jobs:
-  echo:
-    runs-on: ubuntu-latest
-    steps:
-      - run: ${{ tojson(github) }}
-        shell: cat {0}
+  # echo:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: ${{ tojson(github) }}
+  #       shell: cat {0}
 
   config:
     runs-on: ubuntu-latest
@@ -67,9 +68,8 @@ jobs:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
           run-script: |
-            npm run build --prefix ./tests/demo
             npm run check
-            npm run
+            npm run lint
         env:
           PUBLIC_SWA: true
 
