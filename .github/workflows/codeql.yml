@@ -5,12 +5,12 @@ on:
     branches:
       - main
       - contribution
+      - feat/workflows # TODO: Delete after tests!
 
   pull_request:
     branches:
       - main
       - contribution
-      - feat/workflows # TODO: Delete after tests!
   schedule:
     - cron: '27 20 * * 4'
 
