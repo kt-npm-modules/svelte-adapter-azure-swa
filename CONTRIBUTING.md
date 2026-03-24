@@ -12,6 +12,9 @@ In the PR description:
 
 Small and focused PRs are appreciated.
 
+External contributions should target the `contribution` branch.
+Changes are promoted to `main` after the trusted validation flow passes.
+
 Issues are optional and mostly useful for larger discussions.
 
 Thank you!
