@@ -69,6 +69,7 @@ jobs:
           cache-reset: ${{ needs.config.outputs.cache-reset }}
           install-script: npm ci --workspaces
           run-script: |
+            npm run build --prefix ./tests/demo
             npm run check
             npm run lint
         env:

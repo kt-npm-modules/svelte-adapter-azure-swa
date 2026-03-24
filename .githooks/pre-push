@@ -2,6 +2,6 @@
 
 set -e
 
-npm ci
+npm ci --workspaces
 npm run check
 npm run lint
