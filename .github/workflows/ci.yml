@@ -67,6 +67,7 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
+          install-script: npm ci --workspaces
           run-script: |
             npm run check
             npm run lint
