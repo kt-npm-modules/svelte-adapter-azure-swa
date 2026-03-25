@@ -5,6 +5,8 @@ on:
     workflows: ['CI']
     types:
       - completed
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -22,11 +24,11 @@ jobs:
   #   steps:
   #     - run: ${{ tojson(github) }}
   #       shell: cat {0}
+
   release:
     # prevents this action from running on forks
     if: >-
       github.repository == 'kt-npm-modules/svelte-adapter-azure-swa' && 
-      github.ref == 'refs/heads/main' && 
       github.event.workflow_run.event == 'push' && 
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -42,6 +44,7 @@ jobs:
           # cache-reset: true
           # npm-token: ${{ secrets.NPM_TOKEN }} # uncomment if not trusted publishing
 
+  # This is likely not needed because we updated script npm run changeset:version - which updates the package-lock.json
   # update-pkg-lock:
   #   needs: release
   #   if: needs.release.outputs.release-branch != ''
