@@ -144,6 +144,9 @@ jobs:
       cancel-in-progress: false
     # outputs:
     #   base-url: ${{ steps.build-deploy.outputs.static_web_app_url }}
+    env:
+      NODE_API_RUNTIME_MAJOR: ${{ matrix.node-version }}
+      NODE_API_RUNTIME: node:${{ matrix.node-version }}
     steps:
       - id: app-token
         uses: kt-workflows/actions/create-github-app-token@main
@@ -158,13 +161,6 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
 
-      - id: node-api-runtime
-        run: |
-          NODE_API_RUNTIME_MAJOR=$(node -v | cut -d. -f1 | cut -dv -f2)
-          echo "NODE_API_RUNTIME_MAJOR=$NODE_API_RUNTIME_MAJOR" >> "$GITHUB_ENV"
-          NODE_API_RUNTIME=node:$NODE_API_RUNTIME_MAJOR
-          echo "NODE_API_RUNTIME=$NODE_API_RUNTIME" >> "$GITHUB_ENV"
-
       - uses: kt-workflows/actions/npm-run-script@main
         with:
           node-version: ${{ matrix.node-version }}
@@ -178,9 +174,12 @@ jobs:
           # Overall CI workflow reduced from about 5:00 minutes to about 2:30 minutes
           run-script: |
             npm run build --prefix ./tests/demo
-
+            echo "############################################################################"
+            cat ./tests/demo/build/static/staticwebapp.config.json
+            echo "############################################################################"
             # Custom API directory
             cat ./tests/demo/func/package.json
+            echo "############################################################################"
             npm install --omit=dev --prefix ./tests/demo/func
             du -sh ./tests/demo/func/sk_render
             du -sh ./tests/demo/func
