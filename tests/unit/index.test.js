@@ -32,7 +32,7 @@ describe('generateConfig', () => {
 			},
 			routes: expect.arrayContaining([
 				{
-					methods: ['POST', 'PUT', 'DELETE'],
+					methods: ['POST', 'PUT', 'DELETE', 'PATCH'],
 					rewrite: '/api/sk_render',
 					route: '*'
 				},
