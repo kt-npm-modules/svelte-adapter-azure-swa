@@ -4,12 +4,8 @@ on:
   push:
     branches:
       - main
-      - contribution
 
   pull_request:
-    branches:
-      - main
-      - contribution
   schedule:
     - cron: '27 20 * * 4'
 
