@@ -60,7 +60,7 @@
 		"@types/node": "^25.0.2",
 		"@types/set-cookie-parser": "^2.4.7",
 		"@vitest/coverage-istanbul": "^4.0.15",
-		"eslint": "^9.25.1",
+		"eslint": "^10.1.0",
 		"eslint-config-prettier": "^10.1.2",
 		"globals": "^17.0.0",
 		"json-schema-to-typescript": "^15.0.4",
