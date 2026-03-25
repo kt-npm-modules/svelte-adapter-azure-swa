@@ -6,7 +6,7 @@ on:
       - main
       - contribution
       - feat/workflows # TODO: Delete after tests!
-      
+
   pull_request:
     branches:
       - main

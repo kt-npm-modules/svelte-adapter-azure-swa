@@ -1,11 +1,8 @@
 [![NPM Version](https://img.shields.io/npm/v/%40ktarmyshov%2Fsvelte-adapter-azure-swa)](https://www.npmjs.com/package/@ktarmyshov/svelte-adapter-azure-swa)
 [![CI](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=bugs)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
-[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
-[![Socket Badge](https://socket.dev/api/badge/npm/package/@ktarmyshov/svelte-adapter-azure-swa)](https://socket.dev/npm/package/@ktarmyshov/svelte-adapter-azure-swa/overview)
+[![License](https://img.shields.io/npm/l/@ktarmyshov/npm-typescript-template)](./LICENSE)
 
 # @ktarmyshov/svelte-adapter-azure-swa
 
@@ -34,6 +31,11 @@ export type EmulateOptions = {
 
 - Utilities
   - `sentryRewriteSourcesFactory`: creates rewriteSource function for `sentrySvelteKit` plugin's option `sourceMapsUploadOptions.unstable_sentryVitePluginOptions.sourcemaps.rewriteSources`, because `@sentry/sveltekit` does not resolve it properly
+
+## Acknowledgements
+
+Special thanks to [@sukeshpabolu](https://github.com/sukeshpabolu)
+for contributing the Node 22 / Rolldown migration and being the first external contributor to the project.
 
 # svelte-adapter-azure-swa
 
@@ -238,7 +240,7 @@ export default {
 					}
 				},
 				platform: {
-					apiRuntime: 'node:22'
+					apiRuntime: 'node:22' // or 'node:20
 				}
 			}
 		})

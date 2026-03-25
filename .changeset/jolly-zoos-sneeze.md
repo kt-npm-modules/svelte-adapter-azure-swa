@@ -2,4 +2,6 @@
 '@ktarmyshov/svelte-adapter-azure-swa': minor
 ---
 
-Update all usages of node to node:22/node22
+Add support for `node:22` and make it the default.
+
+Contributed by [@sukeshpabolu](https://github.com/sukeshpabolu).

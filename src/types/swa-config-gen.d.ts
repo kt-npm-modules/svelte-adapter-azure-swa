@@ -114,7 +114,6 @@ export interface AzureStaticWebAppsConfigurationFile {
 			| 'node:16'
 			| 'node:18'
 			| 'node:20'
-			| 'node:22'
 			| 'python:3.8'
 			| 'python:3.9'
 			| 'python:3.10';
@@ -190,6 +189,14 @@ export interface Auth {
 				 * The name of the application setting containing the client secret for the Azure AD app registration
 				 */
 				clientSecretSettingName: string;
+				/**
+				 * A Key Vault reference for the certificate used for certificate-based authentication
+				 */
+				clientSecretCertificateKeyVaultReference?: string;
+				/**
+				 * The thumbprint of the certificate used for certificate-based authentication
+				 */
+				clientSecretCertificateThumbprint?: string;
 			};
 			login?: {
 				loginParameters?: string[];
