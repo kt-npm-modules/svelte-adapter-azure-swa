@@ -12,7 +12,7 @@ updates:
       - '/tests/demo'
     schedule:
       interval: 'weekly'
-      time: '03:19' # UTC
+      time: '03:19' # UTC ?
       timezone: 'Europe/Berlin'
 
     groups:
