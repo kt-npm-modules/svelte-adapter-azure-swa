@@ -4,4 +4,4 @@
 
 Add instrumentation support and Sentry integration tests.
 
-Breaking: Removed `options.cleanApiDir` and `options.cleanStaticDir`. Server and client bundling produce multiple JavaScript chunks with non-deterministic names, so leaving old files in place would create orphaned chunks.
+Breaking: Removed `options.cleanApiDir` and `options.cleanStaticDir`. Because server and client bundling produce multiple JavaScript chunks with non-deterministic names, preserving old output files would leave orphaned chunks behind.
