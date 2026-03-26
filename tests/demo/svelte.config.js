@@ -38,7 +38,6 @@ const serverOnwarn = (warning, handler) => {
 const _adapterSWA = adapterSWA({
 	external: ['@sentry/sveltekit'],
 	apiDir: './func',
-	// cleanApiDir: true,
 	staticDir: './build/static',
 	// cleanStaticDir: true,
 	customStaticWebAppConfig: {

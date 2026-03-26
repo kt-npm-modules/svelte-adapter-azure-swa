@@ -5,3 +5,4 @@ coverage/
 .vscode/
 demo-test-results/
 .devcontainer/
+artifacts/

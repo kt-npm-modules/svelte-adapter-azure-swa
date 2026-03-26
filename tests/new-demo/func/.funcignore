@@ -1,0 +1,29 @@
+# Exclude local settings and sensitive files
+local.settings.json
+
+# Exclude test files
+**/*.test.js
+**/*.spec.js
+
+# Exclude node_modules
+node_modules/
+
+# Exclude build artifacts
+*.log
+*.tsbuildinfo
+
+# Exclude IDE and editor settings
+.vscode/
+.idea/
+*.swp
+
+# Exclude temporary files
+*.tmp
+*.temp
+
+# Exclude coverage reports
+coverage/
+
+# Exclude environment files
+.env
+.env.*

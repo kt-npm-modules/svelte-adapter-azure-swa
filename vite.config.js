@@ -1,15 +1,19 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 
-const testsAppDir = './tests/demo';
-
 export default defineConfig({
 	test: {
-		exclude: [...configDefaults.exclude, `${testsAppDir}/**`, './tests/unit/json.js'],
+		exclude: [
+			...configDefaults.exclude,
+			'./tests/demo/**',
+			'./tests/new-demo/**',
+			'./tests/unit/json.js'
+		],
 		coverage: {
 			provider: 'istanbul',
 			exclude: [
 				...configDefaults.exclude,
-				`${testsAppDir}/**`,
+				'./tests/demo/**',
+				'./tests/new-demo/**',
 				'./tests/**',
 				'./src/server/entry/index.js',
 				'./tests/unit/json.js'
