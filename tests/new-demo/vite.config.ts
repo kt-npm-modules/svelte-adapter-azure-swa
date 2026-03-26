@@ -1,3 +1,4 @@
+import { sentrySvelteKit } from "@sentry/sveltekit";
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 // import devtoolsJson from 'vite-plugin-devtools-json';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -9,12 +10,11 @@ export default defineConfig({
 	build: {
 		sourcemap: true
 	},
-	plugins: [
-		tailwindcss(),
-		sveltekit(),
-		// devtoolsJson(),
-		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' })
-	],
+	plugins: [sentrySvelteKit({
+        org: "konstantin-tarmyshov",
+        project: "svelte-adapter-azure-swa"
+    }), tailwindcss(), sveltekit(), // devtoolsJson(),
+    paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' })],
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

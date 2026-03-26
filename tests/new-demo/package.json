@@ -23,7 +23,6 @@
 		"@inlang/paraglide-js": "^2.10.0",
 		"@neoconfetti/svelte": "^2.2.2",
 		"@playwright/test": "^1.58.2",
-		"svelte-adapter-azure-swa": "file:../..",
 		"@sveltejs/kit": "^2.50.2",
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@tailwindcss/forms": "^0.5.11",
@@ -40,6 +39,7 @@
 		"prettier-plugin-svelte": "^3.4.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"svelte": "^5.54.0",
+		"svelte-adapter-azure-swa": "file:../..",
 		"svelte-check": "^4.4.2",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.9.3",
@@ -50,5 +50,8 @@
 	},
 	"engines": {
 		"node": ">=20 <21 || >=22 <23"
+	},
+	"dependencies": {
+		"@sentry/sveltekit": "^10.46.0"
 	}
 }
