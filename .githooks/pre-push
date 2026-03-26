@@ -2,7 +2,6 @@
 
 set -e
 
-npm run clean
 npm ci
 npm run check
 npm run lint
