@@ -10,6 +10,7 @@ export default defineConfig({
 		],
 		coverage: {
 			provider: 'istanbul',
+			reportsDirectory: './coverage-test',
 			exclude: [
 				...configDefaults.exclude,
 				'./tests/demo/**',

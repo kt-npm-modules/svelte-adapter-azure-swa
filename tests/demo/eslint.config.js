@@ -51,7 +51,7 @@ export default defineConfig(
 
 	// Non-project files: lint, but without project service
 	{
-		files: ['e2e/**/*.ts', 'func/**/*.js', '*.config.js', '*.config.ts'],
+		files: ['e2e/**/*.ts', 'e2e/**/*.mjs', 'func/**/*.js', '*.config.js', '*.config.ts'],
 		languageOptions: {
 			parserOptions: {
 				tsconfigRootDir: __dirname

@@ -1,4 +1,5 @@
 import { defineConfig, PlaywrightTestConfig } from '@playwright/test';
+import { fileURLToPath } from 'url';
 
 console.warn('#'.repeat(100));
 console.warn('NODE_ENV: ', process.env.NODE_ENV);
@@ -27,5 +28,6 @@ console.warn('#'.repeat(100));
 
 export default defineConfig({
 	webServer,
-	testDir: 'e2e'
+	testDir: 'e2e',
+  globalTeardown: fileURLToPath(new URL('./e2e/global-teardown.mjs', import.meta.url))
 });

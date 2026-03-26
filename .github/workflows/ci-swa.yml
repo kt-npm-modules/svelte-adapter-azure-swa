@@ -9,13 +9,6 @@ on:
       cache-reset:
         required: false
         type: boolean
-    # secrets:
-    #   WORKFLOW_APP_ID:
-    #     required: true
-    #   WORKFLOW_APP_PRIVATE_KEY:
-    #     required: true
-    #   AZURE_STATIC_WEB_APPS_API_TOKEN:
-    #     required: true
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
@@ -119,6 +112,7 @@ jobs:
     env:
       NODE_ENV: development # Avoid uploadig source maps to sentry
       PUBLIC_SWA: true
+      COVERAGE_DIR: coverage-swa-node${{ matrix.node-version }}
     steps:
       - uses: actions/checkout@v6
 
@@ -127,7 +121,18 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache-reset: ${{ inputs.cache-reset }}
           install-script: ${{ needs.config.outputs.install-script }}
-          run-script: npm run test:swa --prefix ./tests/demo
+          run-script: |
+            npm run test:swa --prefix ./tests/demo
+            node ./tests/coverage/mcr-report-swa.mjs
+            mv coverage-swa "${COVERAGE_DIR}"
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.COVERAGE_DIR }}
+          path: ${{ env.COVERAGE_DIR }}
+          if-no-files-found: error
 
   azure:
     needs: config

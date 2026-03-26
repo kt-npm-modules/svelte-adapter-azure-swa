@@ -68,6 +68,7 @@
 		"eslint-config-prettier": "^10.1.2",
 		"globals": "^17.0.0",
 		"json-schema-to-typescript": "^15.0.4",
+		"monocart-coverage-reports": "^2.12.9",
 		"prettier": "^3.5.3",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.31.0",
