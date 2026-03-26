@@ -8,7 +8,7 @@
 		"tests/new-demo"
 	],
 	"scripts": {
-		"prepare": "npm run prepare --workspace tests/demo && npm run prepare --workspace tests/new-demo",
+		"prepare": "npm run prepare --workspace tests/demo",
 		"build": "npm run gen:swa-conig-ts",
 		"build:release": "npm run build",
 		"format": "prettier --write .",
