@@ -5,10 +5,12 @@ import svelte from 'eslint-plugin-svelte';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
 
 const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
@@ -32,7 +34,27 @@ export default defineConfig(
 				projectService: true,
 				extraFileExtensions: ['.svelte'],
 				parser: ts.parser,
-				svelteConfig
+				svelteConfig,
+				tsconfigRootDir: __dirname
+			}
+		}
+	},
+	{
+		files: ['src/**/*.ts', 'src/**/*.js'],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: __dirname
+			}
+		}
+	},
+
+	// Non-project files: lint, but without project service
+	{
+		files: ['e2e/**/*.ts', 'func/**/*.js', '*.config.js', '*.config.ts'],
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: __dirname
 			}
 		}
 	}
