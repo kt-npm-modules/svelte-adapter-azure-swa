@@ -108,7 +108,7 @@ jobs:
     if: needs.config.outputs.sonar == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      # - uses: actions/checkout@v6
 
       - name: Download all coverage artifacts to repo root
         uses: actions/download-artifact@v5
@@ -118,7 +118,7 @@ jobs:
 
       - uses: kt-workflows/actions/npm-ci-sonar@main
         with:
-          checkout: false # already checked out in previous step
+          # checkout: false # already checked out in previous step
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
