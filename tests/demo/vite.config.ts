@@ -1,5 +1,6 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { sentrySvelteKit } from '@sentry/sveltekit';
+// import devtoolsJson from 'vite-plugin-devtools-json';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { playwright } from '@vitest/browser-playwright';
@@ -13,6 +14,8 @@ export default defineConfig({
 	plugins: [
 		sentrySvelteKit({
 			adapter: 'other',
+			org: 'konstantin-tarmyshov',
+			project: 'svelte-adapter-azure-swa',
 			sourceMapsUploadOptions: {
 				org: 'konstantin-tarmyshov',
 				project: 'svelte-adapter-azure-swa',
@@ -32,17 +35,8 @@ export default defineConfig({
 		}),
 		tailwindcss(),
 		sveltekit(),
-		paraglideVitePlugin({
-			project: './project.inlang',
-			outdir: './src/lib/paraglide'
-		})
-		// istanbul({
-		// 	include: ['src/*', '../../src/entry/*', './func/sk_render/*'],
-		// 	exclude: ['node_modules', 'test/'],
-		// 	extension: ['.js', '.ts', '.svelte'],
-		// 	requireEnv: false,
-		// 	forceBuildInstrument: true
-		// })
+		// devtoolsJson(),
+		paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' })
 	],
 	test: {
 		expect: { requireAssertions: true },
@@ -51,17 +45,16 @@ export default defineConfig({
 				extends: './vite.config.ts',
 				test: {
 					name: 'client',
-					// environment: 'browser',
 					browser: {
 						enabled: true,
 						provider: playwright(),
-						instances: [{ browser: 'chromium' }]
+						instances: [{ browser: 'chromium', headless: true }]
 					},
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**'],
-					setupFiles: ['./vitest-setup-client.ts']
+					exclude: ['src/lib/server/**']
 				}
 			},
+
 			{
 				extends: './vite.config.ts',
 				test: {
