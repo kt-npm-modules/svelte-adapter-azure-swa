@@ -101,7 +101,10 @@ jobs:
           if-no-files-found: error
 
   sonar:
-    needs: config
+    needs:
+      - config
+      - test
+      - swa
     if: needs.config.outputs.sonar == 'true'
     runs-on: ubuntu-latest
     steps:
