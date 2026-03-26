@@ -29,5 +29,5 @@ console.warn('#'.repeat(100));
 export default defineConfig({
 	webServer,
 	testDir: 'e2e',
-  globalTeardown: fileURLToPath(new URL('./e2e/global-teardown.mjs', import.meta.url))
+	globalTeardown: fileURLToPath(new URL('./e2e/global-teardown.mjs', import.meta.url))
 });
