@@ -6,5 +6,8 @@
 	"editor.detectIndentation": false,
 	"editor.tabSize": 2,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"eslint.workingDirectories": [".", ".demo"]
+	"eslint.workingDirectories": [".", ".demo"],
+	"files.associations": {
+		"*.css": "tailwindcss"
+	}
 }

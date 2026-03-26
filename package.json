@@ -4,23 +4,24 @@
 	"version": "0.23.13",
 	"workspaces": [
 		".",
-		"tests/demo"
+		"tests/demo",
+		"tests/new-demo"
 	],
 	"scripts": {
-		"clean": "rm -rf node_modules ./tests/demo/node_modules",
-		"clean:lock": "rm -rf node_modules package-lock.json ./tests/demo/node_modules ./tests/demo/package-lock.json",
-		"prepare": "npm run prepare --workspace tests/demo",
+		"prepare": "npm run prepare --workspace tests/demo && npm run prepare --workspace tests/new-demo",
 		"build": "npm run gen:swa-conig-ts",
 		"build:release": "npm run build",
-		"format": "prettier --write . && npm run format --prefix ./tests/demo",
-		"check": "tsc --skipLibCheck && npm run check --prefix ./tests/demo",
+		"format": "prettier --write .",
+		"check": "tsc --skipLibCheck --noEmit",
 		"lint": "prettier --check . && eslint . && npm run lint --prefix ./tests/demo",
 		"test": "vitest --run",
 		"coverage": "vitest --coverage --run",
 		"test:local:all": "npm run check && npm run lint && npm run build && npm run build:swa --prefix ./tests/demo && npm run test && npm run test:swa --prefix ./tests/demo",
 		"changeset:version": "changeset version && npm install && git add --all",
 		"changeset:publish": "changeset publish",
-		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts"
+		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts",
+		"clean:nm": "find . -type d -name node_modules -not -path '*/node_modules/*/node_modules' -prune -exec rm -rf '{}' +",
+		"clean:nm:lock": "npm run clean:nm && find . -name 'package-lock.json' -type f -exec rm -rf '{}' +"
 	},
 	"main": "./src/index.js",
 	"types": "./src/index.d.ts",
