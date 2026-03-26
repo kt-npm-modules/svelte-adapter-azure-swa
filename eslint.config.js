@@ -6,8 +6,6 @@ import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
-const demoGitignorePath = fileURLToPath(new URL('./tests/demo/.gitignore', import.meta.url));
-const newDemoGitignorePath = fileURLToPath(new URL('./tests/new-demo/.gitignore', import.meta.url));
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default ts.config(
@@ -23,28 +21,16 @@ export default ts.config(
 			}
 		}
 	},
-	includeIgnoreFile(demoGitignorePath),
-	includeIgnoreFile(newDemoGitignorePath),
+
 	globalIgnores(['tests/demo', 'tests/old-demo', 'tests/new-demo']),
 
 	// Type-aware linting only where it belongs
 	{
-		files: ['src/**/*.ts', 'src/**/*.js', 'tests/**/*.ts'],
+		files: ['src/**/*.ts', 'src/**/*.js', 'tests/unit/**/*.ts', 'tests/unit/**/*.js'],
 		ignores: ['*.config.js', '*.config.ts', 'e2e/*.ts'],
 		languageOptions: {
 			parserOptions: {
 				projectService: true,
-				tsconfigRootDir: __dirname
-			}
-		}
-	},
-
-	// JS unit tests: lint, but without type-aware project service
-	{
-		files: ['tests/**/*.js'],
-		ignores: ['*.config.js', '*.config.ts', 'e2e/*.ts'],
-		languageOptions: {
-			parserOptions: {
 				tsconfigRootDir: __dirname
 			}
 		}
