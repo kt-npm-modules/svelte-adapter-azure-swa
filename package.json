@@ -15,8 +15,9 @@
 		"format": "prettier --write . && npm run format --prefix ./tests/demo",
 		"check": "tsc --skipLibCheck && npm run check --prefix ./tests/demo",
 		"lint": "prettier --check . && eslint . && npm run lint --prefix ./tests/demo",
-		"test": "vitest",
-		"coverage": "vitest --coverage",
+		"test": "vitest --run",
+		"coverage": "vitest --coverage --run",
+		"test:local:all": "npm run check && npm run lint && npm run build && npm run build:swa --prefix ./tests/demo && npm run test && npm run test:swa --prefix ./tests/demo",
 		"changeset:version": "changeset version && npm install && git add --all",
 		"changeset:publish": "changeset publish",
 		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts"
