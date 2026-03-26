@@ -109,6 +109,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # fetch all history for accurate SonarCloud analysis
 
       - name: Download all coverage artifacts to repo root
         uses: actions/download-artifact@v5
