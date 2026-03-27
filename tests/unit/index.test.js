@@ -96,7 +96,7 @@ describe('adapt', () => {
 			'build/server',
 			expect.anything()
 		);
-		expect(builder.copy).toBeCalledTimes(2);
+		expect(builder.copy).toBeCalledTimes(1);
 	});
 
 	test('writes to custom api directory', async () => {

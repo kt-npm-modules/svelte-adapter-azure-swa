@@ -234,8 +234,6 @@ export async function bundleServer(builder, outDir, tmpDir, options) {
 	const bundle = await rollup(rollupOptions);
 	assert(!Array.isArray(rollupOptions.output), 'output should not be an array');
 	await bundle.write(rollupOptions.output);
-	const targetIndexPath = join(functionDirPath, 'index.js');
-	builder.copy(WRAPPER_INDEX_FILE_PATH, targetIndexPath);
 	if (builder.hasServerInstrumentationFile?.()) {
 		builder.instrument?.({
 			entrypoint: join(functionDirPath, 'index.js'),
