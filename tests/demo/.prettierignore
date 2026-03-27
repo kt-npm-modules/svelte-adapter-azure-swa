@@ -7,4 +7,5 @@ bun.lockb
 
 # Miscellaneous
 /static/
-project.inlang
+
+project.inlang/

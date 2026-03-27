@@ -18,9 +18,7 @@ type AdjustRollupInputOptionsFunction = (options: RollupOptions) => RollupOption
 export type Options = {
 	debug?: boolean;
 	apiDir?: string;
-	cleanApiDir?: boolean;
 	staticDir?: string;
-	cleanStaticDir?: boolean;
 	external?: ExternalOption;
 	customStaticWebAppConfig?: CustomStaticWebAppConfig;
 	allowReservedSwaRoutes?: boolean;

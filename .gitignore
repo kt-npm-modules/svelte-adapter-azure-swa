@@ -1,7 +1,10 @@
 node_modules/
 coverage/
+coverage*/
+!tests/coverage/
 .nyc_output
 *.tgz
 .vscode/
 demo-test-results/
 .devcontainer/
+artifacts/
