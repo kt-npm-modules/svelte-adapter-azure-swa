@@ -36,7 +36,13 @@ export default defineConfig([
 		}
 	},
 	{
-		files: ['tests/unit/**/*.ts', 'tests/unit/**/*.js'],
+		files: [
+			'tests/unit/**/*.ts',
+			'tests/unit/**/*.js',
+			'tests/coverage/**/*.ts',
+			'tests/coverage/**/*.js',
+			'tests/coverage/**/*.mjs'
+		],
 		ignores: ['*.config.js', '*.config.ts', 'e2e/*.ts'],
 		languageOptions: {
 			parserOptions: {

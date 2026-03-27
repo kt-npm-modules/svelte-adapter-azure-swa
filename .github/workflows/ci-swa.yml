@@ -122,7 +122,7 @@ jobs:
           cache-reset: ${{ inputs.cache-reset }}
           install-script: ${{ needs.config.outputs.install-script }}
           run-script: |
-            npm run test:swa --prefix ./tests/demo
+            NODE_V8_COVERAGE=coverage-v8 npm run test:swa --prefix ./tests/demo
             node ./tests/coverage/mcr-report-swa.mjs
             mv coverage-swa "${COVERAGE_DIR}"
 
