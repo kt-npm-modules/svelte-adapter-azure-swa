@@ -65,11 +65,10 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
-          install-script: npm ci --workspaces
           run-script: |
             npm run build --prefix ./tests/demo
-            npm run check --workspaces
-            npm run lint --workspaces
+            npm run check:all
+            npm run lint:all
         env:
           PUBLIC_SWA: true
 
