@@ -8,7 +8,7 @@ export default async function globalTeardown() {
 			const coverageDir = await client.writeCoverage();
 			console.log('[coverage] dumped via CDP to:', coverageDir);
 		} finally {
-			await client.close();
+			await client?.close();
 		}
 	} catch (error) {
 		console.warn('[coverage] CDP coverage dump skipped');
