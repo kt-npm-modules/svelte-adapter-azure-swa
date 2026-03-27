@@ -26,7 +26,7 @@ jobs:
     environment: development
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Check if AZURE_STATIC_WEB_APPS_API_TOKEN is set
       - id: do-swa-azure
@@ -41,7 +41,7 @@ jobs:
         working-directory: .
 
       - id: app-token
-        uses: kt-public/github-actions/create-github-app-token@v1
+        uses: kt-workflows/actions/create-github-app-token@main
         if: ${{ steps.do-swa-azure.outputs.result == 'true' }}
         with:
           app-id: ${{ secrets.WORKFLOW_APP_ID }}
@@ -66,4 +66,4 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
           GH_DEBUG: api
-        run: gh workflow run ci-retry.yml -F run_id=${{ github.run_id }} -F concurrency=${{ github.workflow }}-${{ github.event.number || github.ref_name }}
+        run: gh workflow run ci-retry.yml -F run_id=${{ github.run_id }} -F concurrency="${{ github.workflow }}-${{ github.event.number || github.ref_name }}"

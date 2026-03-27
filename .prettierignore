@@ -8,5 +8,6 @@ bun.lockb
 CHANGELOG.md
 
 # Demo subfolder - quick fix
-tests/demo-old
+tests/old-demo
 tests/demo
+tests/new-demo

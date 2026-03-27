@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.24.0
+
+### Minor Changes
+
+- 457b95f: FEATURE: Added support for `node:22` and make it the default.
+  - Contributed by [@sukeshpabolu](https://github.com/sukeshpabolu).
+
+### Patch Changes
+
+- 457b95f: FEATURE: Added support for the HTTP `PATCH` method.
+  - Adapted from the [upstream](https://github.com/geoffrich/svelte-adapter-azure-swa) project.
+
 ## 0.23.13
 
 ### Patch Changes

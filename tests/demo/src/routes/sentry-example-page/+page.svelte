@@ -7,9 +7,7 @@ Feel free to delete this file and the entire sentry route.
 	import * as Sentry from '@sentry/sveltekit';
 	import { onMount } from 'svelte';
 
-	// Svelte Runes (requires Svelte 5)
-	// let hasSentError = $state(false);
-	let hasSentError = false;
+	let hasSentError = $state(false);
 	let isConnected = true;
 
 	onMount(async () => {
@@ -79,6 +77,15 @@ Feel free to delete this file and the entire sentry route.
 </div>
 
 <style>
+	:global(body) {
+		margin: 0;
+
+		@media (prefers-color-scheme: dark) {
+			color: #ededed;
+			background-color: #0a0a0a;
+		}
+	}
+
 	main {
 		display: flex;
 		min-height: 100vh;

@@ -1,25 +1,29 @@
 {
 	"name": "@ktarmyshov/svelte-adapter-azure-swa",
 	"description": "SvelteKit adapter for Azure Static Web Apps.",
-	"version": "0.23.13",
+	"version": "0.24.0",
 	"workspaces": [
 		".",
-		"tests/demo"
+		"tests/demo",
+		"tests/new-demo"
 	],
 	"scripts": {
-		"clean": "rm -rf node_modules ./tests/demo/node_modules",
-		"clean:lock": "rm -rf node_modules package-lock.json ./tests/demo/node_modules ./tests/demo/package-lock.json",
 		"prepare": "npm run prepare --workspace tests/demo",
 		"build": "npm run gen:swa-conig-ts",
 		"build:release": "npm run build",
-		"format": "prettier --write . && npm run format --prefix ./tests/demo",
-		"check": "tsc --skipLibCheck && npm run check --prefix ./tests/demo",
-		"lint": "prettier --check . && eslint . && npm run lint --prefix ./tests/demo",
-		"test": "vitest",
-		"coverage": "vitest --coverage",
+		"format": "prettier --write .",
+		"format:all": "npm run format --workspaces",
+		"check": "tsc --skipLibCheck --noEmit",
+		"check:all": "npm run check --workspaces",
+		"lint": "prettier --check . && eslint .",
+		"lint:all": "npm run lint --workspaces",
+		"test": "vitest --run",
+		"coverage": "vitest --coverage --run",
 		"changeset:version": "changeset version && npm install && git add --all",
 		"changeset:publish": "changeset publish",
-		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts"
+		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts",
+		"clean:nm": "find . -type d -name node_modules -not -path '*/node_modules/*/node_modules' -prune -exec rm -rf '{}' +",
+		"clean:nm:lock": "npm run clean:nm && find . -name 'package-lock.json' -type f -exec rm -rf '{}' +"
 	},
 	"main": "./src/index.js",
 	"types": "./src/index.d.ts",
@@ -50,20 +54,21 @@
 	},
 	"peerDependencies": {
 		"@azure/functions": "^4.0.0",
-		"@sveltejs/kit": "^2.0.0"
+		"@sveltejs/kit": "^2.54.0"
 	},
 	"devDependencies": {
 		"@changesets/cli": "^2.28.1",
 		"@eslint/compat": "^2.0.0",
-		"@eslint/js": "^9.25.1",
-		"@sveltejs/kit": "^2.20.5",
+		"@eslint/js": "^10.0.0",
+		"@sveltejs/kit": "^2.55.0",
 		"@types/node": "^25.0.2",
 		"@types/set-cookie-parser": "^2.4.7",
 		"@vitest/coverage-istanbul": "^4.0.15",
-		"eslint": "^9.25.1",
+		"eslint": "^10.0.0",
 		"eslint-config-prettier": "^10.1.2",
 		"globals": "^17.0.0",
 		"json-schema-to-typescript": "^15.0.4",
+		"monocart-coverage-reports": "^2.12.9",
 		"prettier": "^3.5.3",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.31.0",
@@ -76,12 +81,15 @@
 		"@rollup/plugin-node-resolve": "^16.0.1",
 		"@vitest/browser": "^4.0.15",
 		"lodash": "^4.17.23",
-		"rollup": "^4.40.1",
-		"rollup-plugin-sourcemaps2": "^0.5.1",
+		"rollup": "^4.59.0",
+		"rollup-plugin-sourcemaps2": "0.5.4",
 		"set-cookie-parser": "^3.0.1",
 		"vitest-browser-svelte": "^2.0.1"
 	},
 	"files": [
 		"src"
-	]
+	],
+	"engines": {
+		"node": ">=20 <21 || >=22 <23"
+	}
 }
