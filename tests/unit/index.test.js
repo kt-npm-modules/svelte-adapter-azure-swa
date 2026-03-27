@@ -32,7 +32,7 @@ describe('generateConfig', () => {
 			},
 			routes: expect.arrayContaining([
 				{
-					methods: ['POST', 'PUT', 'DELETE'],
+					methods: ['POST', 'PUT', 'DELETE', 'PATCH'],
 					rewrite: '/api/sk_render',
 					route: '*'
 				},
@@ -100,14 +100,14 @@ describe('adapt', () => {
 	});
 
 	test('writes to custom api directory', async () => {
-		const adapter = azureAdapter({ apiDir: 'custom/api', cleanApiDir: true });
+		const adapter = azureAdapter({ apiDir: 'custom/api' });
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
 		expect(rolldown).toBeCalledWith(
 			expect.objectContaining({
 				output: {
 					dir: 'custom/api/sk_render',
-					entryFileNames: 'index.js',
+					entryFileNames: '[name].js',
 					format: 'es',
 					// inlineDynamicImports: true,
 					sourcemap: true
@@ -193,7 +193,6 @@ describe('adapt', () => {
 	test('emulate authenticated', async () => {
 		const adapter = azureAdapter({
 			apiDir: 'custom/api',
-			cleanApiDir: true,
 			emulate: { role: 'authenticated' }
 		});
 		const emulator = await adapter.emulate();
@@ -205,7 +204,6 @@ describe('adapt', () => {
 	test('emulate unauthenticated', async () => {
 		const adapter = azureAdapter({
 			apiDir: 'custom/api',
-			cleanApiDir: true,
 			emulate: { role: 'anonymous' }
 		});
 		const emulator = await adapter.emulate();
@@ -226,7 +224,7 @@ describe('adapt', () => {
 					format: 'es',
 					sourcemap: true,
 					dir: 'build/server/sk_render',
-					entryFileNames: 'index.js'
+					entryFileNames: '[name].js'
 				}
 			})
 		);

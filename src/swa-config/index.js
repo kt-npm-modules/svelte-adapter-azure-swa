@@ -46,7 +46,7 @@ export function generateConfig(customStaticWebAppConfig, appDir) {
 			},
 			{
 				route: '*',
-				methods: ['POST', 'PUT', 'DELETE'],
+				methods: ['POST', 'PUT', 'DELETE', 'PATCH'],
 				rewrite: SSR_FUNC_ROUTE
 			},
 			{

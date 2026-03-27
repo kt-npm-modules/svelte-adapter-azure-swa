@@ -15,8 +15,8 @@ import { SERVER_FUNC_DIR_NAME } from '../constants.js';
  * @typedef {import('../index.js').StaticWebAppConfig} StaticWebAppConfig
  */
 
-const FUNC_ENTRY_FILENAME = 'index.js';
-const ENTRY_FILE_PATH = fileURLToPath(new URL('./entry/index.js', import.meta.url));
+const ENTRY_FILE_PATH = fileURLToPath(new URL('./entry/entry.js', import.meta.url));
+const WRAPPER_INDEX_FILE_PATH = fileURLToPath(new URL('./entry/index.js', import.meta.url));
 const TEMPLATE_SERVER_DIR_PATH = fileURLToPath(new URL('./template', import.meta.url));
 
 const REQUIRED_EXTERNAL = ['fsevents', '@azure/functions'];
@@ -72,12 +72,23 @@ function getPaths(builder, tmpDir) {
 function prepareRolldownOptions(builder, outDir, tmpDir, options) {
 	const { serverFilePath, manifestFilePath, envFilePath } = getPaths(builder, tmpDir);
 
+	/** @type {Record<string, string>} */
+	const input = {
+		entry: ENTRY_FILE_PATH,
+		index: WRAPPER_INDEX_FILE_PATH
+	};
+	if (builder.hasServerInstrumentationFile?.()) {
+		input['instrumentation.server'] = join(
+			builder.getServerDirectory(),
+			'instrumentation.server.js'
+		);
+	}
 	/** @type RolldownOptions */
 	let _options = {
-		input: ENTRY_FILE_PATH,
+		input,
 		output: {
 			dir: join(outDir, SERVER_FUNC_DIR_NAME),
-			entryFileNames: FUNC_ENTRY_FILENAME
+			entryFileNames: '[name].js'
 		},
 		resolve: {
 			alias: {
@@ -107,7 +118,7 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options) {
  * @param {Options} options
  */
 function cleanOutDir(builder, outDir, options) {
-	if (options.apiDir !== undefined && (options.cleanApiDir || true)) {
+	if (options.apiDir !== undefined) {
 		const apiFuncDirPath = join(outDir, SERVER_FUNC_DIR_NAME);
 		// Clean the custom output directory
 		builder.log(`Cleaning up custom Azure Functions output directory: ${apiFuncDirPath}`);
@@ -207,4 +218,10 @@ export async function bundleServer(builder, outDir, tmpDir, options) {
 	const bundle = await rolldown(rolldownOptions);
 	assert(!Array.isArray(rolldownOptions.output), 'output should not be an array');
 	await bundle.write(rolldownOptions.output);
+	if (builder.hasServerInstrumentationFile?.()) {
+		builder.instrument?.({
+			entrypoint: join(functionDirPath, 'index.js'),
+			instrumentation: join(functionDirPath, 'instrumentation.server.js')
+		});
+	}
 }
