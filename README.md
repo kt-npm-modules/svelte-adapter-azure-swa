@@ -4,7 +4,7 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
 [![License](https://img.shields.io/npm/l/@ktarmyshov/npm-typescript-template)](./LICENSE)
 
-# @ktarmyshov/svelte-adapter-azure-swa
+# @ktarmyshov/svelte-adapter-azure-swa - zzz
 
 The experimental fork of [the original adapter repo](https://github.com/geoffrich/svelte-adapter-azure-swa)
 
