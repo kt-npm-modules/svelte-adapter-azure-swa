@@ -52,7 +52,8 @@ jobs:
           echo "Push to contribution branch detected."
           echo "github.ref: ${{ github.ref }}"
           echo "github.event_name: ${{ github.event_name }}"
-          echo "result=true" >> "$GITHUB_OUTPUT"
+          # For now we disable azure deployment for contribution branch
+          echo "result=false" >> "$GITHUB_OUTPUT"
         working-directory: '.'
 
       # Check that it's a pull request into the default branch from within the same organization
