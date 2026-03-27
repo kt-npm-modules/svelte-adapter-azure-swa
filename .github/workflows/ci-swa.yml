@@ -12,9 +12,7 @@ on:
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
-  DEFAULT_INSTALL_SCRIPT: |
-    npm ci
-    npm exec playwright install
+  DEFAULT_INSTALL_SCRIPT: npm ci && npm exec playwright install
   PUBLIC_SWA: false
   CI: true
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
