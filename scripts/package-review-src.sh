@@ -19,7 +19,7 @@ ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 STAGING_DIR="$ARTIFACTS_DIR/.review-src-staging"
 
 TIMESTAMP="$(date +"%Y%m%d-%H%M%S")"
-NAME_PREFIX="chessboard-src-review"
+NAME_PREFIX="adapter-src-review"
 FULL_MODE="false"
 
 for arg in "$@"; do
