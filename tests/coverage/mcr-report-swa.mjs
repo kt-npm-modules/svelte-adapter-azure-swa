@@ -2,7 +2,8 @@ import MCR from 'monocart-coverage-reports';
 
 const mcr = MCR({
 	outputDir: './coverage-swa',
-	reports: ['lcovonly', 'console-summary', 'console-details']
+	// reports: ['lcovonly', 'console-summary', 'console-details'] - extremely verbose
+	reports: ['lcovonly', 'console-summary']
 });
 
 await mcr.addFromDir('./coverage-v8'); // Build phase
