@@ -28,11 +28,11 @@ describe('generateConfig', () => {
 				rewrite: '/api/sk_render'
 			},
 			platform: {
-				apiRuntime: 'node:20'
+				apiRuntime: 'node:22'
 			},
 			routes: expect.arrayContaining([
 				{
-					methods: ['POST', 'PUT', 'DELETE'],
+					methods: ['POST', 'PUT', 'DELETE', 'PATCH'],
 					rewrite: '/api/sk_render',
 					route: '*'
 				},
