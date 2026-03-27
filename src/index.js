@@ -78,6 +78,9 @@ If you want to suppress this error, set allowReservedSwaRoutes to true in your a
 					return emulatePlatform(config, prerender, options.emulate);
 				}
 			};
+		},
+		supports: {
+			instrumentation: () => true
 		}
 	};
 }

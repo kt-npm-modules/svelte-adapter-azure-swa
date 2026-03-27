@@ -58,7 +58,7 @@ function prepareRollupOptions(builder, outDir) {
  * @param {Options} options
  */
 function cleanOutDir(builder, outDir, options) {
-	if (options.staticDir !== undefined && (options.cleanStaticDir || true)) {
+	if (options.staticDir !== undefined) {
 		// Clean the custom output directory
 		builder.log(`Cleaning up custom static output directory: ${outDir}`);
 		builder.rimraf(outDir);

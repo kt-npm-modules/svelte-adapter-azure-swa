@@ -12,8 +12,8 @@ Differences with original adapter:
 
 - `rollup` instead of `esbuild` under the hood
   - the output is bundled with chunks, not into one single file, this reduces the total size of the bundle
-  - `customApi/sk_render`, where the server bundle is generated to if custom `apiDir` location is provided is cleaned up. This can be switched off by setting `cleanApiDir` to `false`.
-  - `customStatic`, where the client bundle is generated to if custom `staticDir` location is provided is cleaned up. This can be switched off by setting `cleanStaticDir` to `false`.
+  - `customApi/sk_render`, where the server bundle is generated to if custom `apiDir` location is provided is cleaned up.
+  - `customStatic`, where the client bundle is generated to if custom `staticDir` location is provided is cleaned up.
 - Fixed issue with sourcemaps, so Sentry should be able to work with the result
 - Emulator of the platform via `options.emulate`
 

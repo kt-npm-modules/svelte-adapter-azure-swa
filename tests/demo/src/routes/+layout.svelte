@@ -1,22 +1,30 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import Header from './Header.svelte';
-	import '../app.css';
+	import './layout.css';
 
 	let { children } = $props();
 </script>
 
 <div class="app">
 	<Header />
-
-	<main>
-		{@render children()}
-	</main>
+	<main>{@render children()}</main>
 
 	<footer>
 		<p>
-			visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to learn about SvelteKit
+			visit
+			<a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a>
+			to learn about SvelteKit
 		</p>
 	</footer>
+</div>
+
+<div style="display:none">
+	{#each locales as locale (locale)}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
+	{/each}
 </div>
 
 <style>

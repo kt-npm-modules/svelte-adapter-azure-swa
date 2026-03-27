@@ -65,11 +65,10 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
-          install-script: npm ci --workspaces
           run-script: |
             npm run build --prefix ./tests/demo
-            npm run check
-            npm run lint
+            npm run check:all
+            npm run lint:all
         env:
           PUBLIC_SWA: true
 
@@ -79,22 +78,58 @@ jobs:
     strategy:
       matrix:
         node-version: ${{ fromJson(needs.config.outputs.matrix-node-version) }}
+    env:
+      COVERAGE_DIR: coverage-test-node${{ matrix.node-version }}
     steps:
       - uses: kt-workflows/actions/npm-ci-test@main
         with:
+          # run tests with coverage for SonarCloud
+          run-script: |
+            npm run build
+            npm run coverage
+            mv coverage-test "${COVERAGE_DIR}"
           node-version: ${{ matrix.node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
 
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.COVERAGE_DIR }}
+          path: ${{ env.COVERAGE_DIR }}
+          if-no-files-found: error
+
   sonar:
-    needs: config
+    needs:
+      - config
+      - test
+      - swa
     if: needs.config.outputs.sonar == 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # fetch all history for accurate SonarCloud analysis
+
+      - name: Download all coverage artifacts to repo root
+        uses: actions/download-artifact@v5
+        with:
+          pattern: 'coverage-*'
+          path: .
+
       - uses: kt-workflows/actions/npm-ci-sonar@main
         with:
+          checkout: false # already checked out in previous step
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
+          install-script: exit 0
+          run-script: |
+            echo 'Workspace root:'
+            ls -la
+            echo
+            echo 'Coverage reports:'
+            find . -maxdepth 2 -name lcov.info | sort
 
   swa:
     needs: config
