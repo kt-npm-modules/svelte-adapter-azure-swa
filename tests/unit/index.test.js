@@ -55,6 +55,12 @@ describe('generateConfig', () => {
 		);
 	});
 
+	test('default config', () => {
+		const result = generateConfig({});
+		expect(result.platform.apiRuntime).toBe('node:22');
+		expect(result.platform.globalHeaders).toBeUndefined();
+	});
+
 	test('accepts custom config', () => {
 		const result = generateConfig({
 			platform: {

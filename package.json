@@ -9,7 +9,7 @@
 	],
 	"scripts": {
 		"prepare": "npm run prepare --workspace tests/demo",
-		"build": "npm run gen:swa-conig-ts",
+		"build": "npm run gen:swa-config-ts",
 		"build:release": "npm run build",
 		"format": "prettier --write .",
 		"format:all": "npm run format --workspaces",
@@ -21,7 +21,7 @@
 		"coverage": "vitest --coverage --run",
 		"changeset:version": "changeset version && npm install && git add --all",
 		"changeset:publish": "changeset publish",
-		"gen:swa-conig-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts",
+		"gen:swa-config-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts",
 		"clean:nm": "find . -type d -name node_modules -not -path '*/node_modules/*/node_modules' -prune -exec rm -rf '{}' +",
 		"clean:nm:lock": "npm run clean:nm && find . -name 'package-lock.json' -type f -exec rm -rf '{}' +"
 	},
