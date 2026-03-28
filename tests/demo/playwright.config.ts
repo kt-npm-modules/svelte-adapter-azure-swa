@@ -11,7 +11,7 @@ if (process.env.PUBLIC_SWA == 'true') {
 	console.warn('Running in SWA mode');
 	webServer = {
 		timeout: 120 * 1000,
-		command: 'npm run build:swa && npm run swa -- --verbose=silly',
+		command: 'npm run swa -- --verbose=silly',
 		port: 4280
 	};
 } else if (process.env.CI == 'true') {

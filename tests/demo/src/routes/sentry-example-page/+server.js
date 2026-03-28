@@ -2,6 +2,6 @@
 // Feel free to delete this file and the entire sentry route.
 
 export const GET = async () => {
-  // Comment to check sentry works normally in CI
+	// Comment to check sentry works normally in CI - 2
 	throw new Error('Sentry Example API Route Error');
 };

@@ -17,7 +17,7 @@
 		"test:unit": "vitest",
 		"test:e2e": "playwright test",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:swa": "PUBLIC_SWA=true npm run test"
+		"test:swa": "npm run build:swa && PUBLIC_SWA=true npm run test"
 	},
 	"devDependencies": {
 		"@azure/functions": "^4.12.0",
