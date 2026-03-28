@@ -10,7 +10,7 @@ The experimental fork of [the original adapter repo](https://github.com/geoffric
 
 Differences with original adapter:
 
-- `rollup` instead of `esbuild` under the hood
+- `rolldown` instead of `esbuild` under the hood
   - the output is bundled with chunks, not into one single file, this reduces the total size of the bundle
   - `customApi/sk_render`, where the server bundle is generated to if custom `apiDir` location is provided is cleaned up.
   - `customStatic`, where the client bundle is generated to if custom `staticDir` location is provided is cleaned up.
@@ -27,7 +27,7 @@ export type EmulateOptions = {
 - `options.external`
   - always included: `['fsevents', '@azure/functions']`
   - other externals, if `apiDir` is not provided, will be automatically added to the generated Azure Functions `package.json`
-- `options.serverRollup` function to adjust rollup options for the server bundling
+- `options.serverRolldown` function to adjust rolldown options for the server bundling
 
 - Utilities
   - `sentryRewriteSourcesFactory`: creates rewriteSource function for `sentrySvelteKit` plugin's option `sourceMapsUploadOptions.unstable_sentryVitePluginOptions.sourcemaps.rewriteSources`, because `@sentry/sveltekit` does not resolve it properly
