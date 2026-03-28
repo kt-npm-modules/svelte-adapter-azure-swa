@@ -216,7 +216,7 @@ jobs:
   # Stable aggregate required-* checks for branch protection rules.
   # This avoids depending directly on individual matrix job statuses.
   required-main:
-    name: required-main
+    name: required-main (${{ github.event_name }})
     needs:
       - cli
       - azure
@@ -228,7 +228,7 @@ jobs:
           echo "Required jobs for main are fulfilled"
 
   required-contribution:
-    name: required-contribution
+    name: required-contribution (${{ github.event_name }})
     needs:
       - cli
     runs-on: ubuntu-latest
