@@ -7,6 +7,11 @@ import { playwright } from '@vitest/browser-playwright';
 import { sentryRewriteSourcesFactory } from 'svelte-adapter-azure-swa';
 import { defineConfig } from 'vitest/config';
 
+const SENTRY_AUTH_TOKEN = process.env.SENTRY_AUTH_TOKEN;
+if (!SENTRY_AUTH_TOKEN) {
+	console.warn('SENTRY_AUTH_TOKEN is not set. Sentry source maps upload will be skipped.');
+}
+
 export default defineConfig({
 	build: {
 		sourcemap: true
