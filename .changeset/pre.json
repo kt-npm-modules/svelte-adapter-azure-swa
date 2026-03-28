@@ -1,0 +1,9 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "@ktarmyshov/svelte-adapter-azure-swa": "0.24.0",
+    "demo": "0.0.1"
+  },
+  "changesets": []
+}
