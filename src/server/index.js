@@ -30,10 +30,8 @@ function prefixBuiltinModules() {
 		name: 'prefix-built-in-modules',
 		resolveId(source) {
 			if (builtinModules.includes(source)) {
-				// console.log('Resolving built-in module:', source);
 				return { id: 'node:' + source, external: true };
 			} else if (source.startsWith('node:')) {
-				// console.log('Resolving built-in module with node: prefix:', source);
 				return { id: source, external: true };
 			}
 		}
