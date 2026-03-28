@@ -114,7 +114,6 @@ export interface AzureStaticWebAppsConfigurationFile {
 			| 'node:16'
 			| 'node:18'
 			| 'node:20'
-			| 'node:22'
 			| 'python:3.8'
 			| 'python:3.9'
 			| 'python:3.10';

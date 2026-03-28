@@ -1,14 +1,5 @@
 # Changelog
 
-## 1.0.0-rc.12
-
-### Major Changes
-
-- 207072c: FEATURE: Rolldown replaces Rollup in the adapter.
-
-  BREAKING: `options.serverRollup` is replaced with `options.serverRolldown`.
-  - Contributed by [@sukeshpabolu](https://github.com/sukeshpabolu).
-
 ## 0.24.0
 
 ### Minor Changes

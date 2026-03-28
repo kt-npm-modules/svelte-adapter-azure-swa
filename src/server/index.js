@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import assert from 'node:assert';
 import { writeFileSync } from 'node:fs';
+import { builtinModules } from 'node:module';
 import { posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { join } from 'path';
@@ -21,6 +22,24 @@ const TEMPLATE_SERVER_DIR_PATH = fileURLToPath(new URL('./template', import.meta
 
 const REQUIRED_EXTERNAL = ['fsevents', '@azure/functions'];
 
+/**
+ * @returns {import('rolldown').Plugin}
+ */
+function prefixBuiltinModules() {
+	return {
+		name: 'prefix-built-in-modules',
+		resolveId(source) {
+			if (builtinModules.includes(source)) {
+				// console.log('Resolving built-in module:', source);
+				return { id: 'node:' + source, external: true };
+			} else if (source.startsWith('node:')) {
+				// console.log('Resolving built-in module with node: prefix:', source);
+				return { id: source, external: true };
+			}
+		}
+	};
+}
+
 /** @returns {RolldownOptions} */
 function defaultRolldownOptions() {
 	return {
@@ -30,7 +49,12 @@ function defaultRolldownOptions() {
 			format: 'es',
 			sourcemap: true
 		},
-		plugins: [sourcemaps()]
+		plugins: [
+			sourcemaps(),
+			// Adapted from @sveltejs/adapter-node
+			//https://github.com/sveltejs/kit/blob/version-3/packages/adapter-node/rolldown.config.js
+			prefixBuiltinModules()
+		]
 	};
 }
 /**
