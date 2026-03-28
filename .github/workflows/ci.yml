@@ -59,6 +59,7 @@ jobs:
           fi
 
   config:
+    needs: check-execution
     if: needs.check-execution.outputs.should-run == 'true'
     runs-on: ubuntu-latest
     outputs:
