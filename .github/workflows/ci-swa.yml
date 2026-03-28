@@ -100,7 +100,6 @@ jobs:
       matrix:
         node-version: ${{ fromJson(inputs.matrix-node-version) }}
     env:
-      NODE_ENV: development # Avoid uploading source maps to sentry
       PUBLIC_SWA: true
       COVERAGE_DIR: coverage-swa-node${{ matrix.node-version }}
     steps:
