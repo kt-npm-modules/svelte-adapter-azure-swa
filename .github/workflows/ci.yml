@@ -30,6 +30,34 @@ jobs:
   #     - run: ${{ tojson(github) }}
   #       shell: cat {0}
 
+  check-execution:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check-event.outputs.should-run }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: check-event
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Checking if the workflow should execute for this event"
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/contribution" ]]; then
+            echo "This is a push event to contribution branch, checking for open PRs..."
+            pr_count=$(gh pr list --head contribution --base main --state open --limit 1 --json number --jq 'length')
+            if [[ "$pr_count" -gt 0 ]]; then
+              echo "There is an open PR for contribution -> main, skipping this workflow to avoid duplicate runs."
+              echo "should-run=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "No open PRs for contribution -> main, proceeding with this workflow."
+              echo "should-run=true" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "This is not a push event to contribution branch, proceeding with this workflow."
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   config:
     runs-on: ubuntu-latest
     outputs:
