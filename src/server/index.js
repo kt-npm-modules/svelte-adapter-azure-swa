@@ -50,7 +50,7 @@ function defaultRolldownOptions() {
 			sourcemap: true
 		},
 		plugins: [
-			sourcemaps(),
+			sourcemaps({ include: /./ }),
 			// Adapted from @sveltejs/adapter-node
 			//https://github.com/sveltejs/kit/blob/version-3/packages/adapter-node/rolldown.config.js
 			prefixBuiltinModules()

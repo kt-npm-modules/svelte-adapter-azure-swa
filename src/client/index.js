@@ -20,7 +20,7 @@ function defaultRolldownOptions() {
 			format: 'esm',
 			sourcemap: true
 		},
-		plugins: [sourcemaps()]
+		plugins: [sourcemaps({ include: /./ })]
 	};
 }
 
