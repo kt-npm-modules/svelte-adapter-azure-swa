@@ -92,5 +92,11 @@ test('empty form submit via page action', async ({ page }) => {
 	await page.click('#empty-post-submit');
 
 	await expect(page.locator('#empty-post-success')).toHaveText('success');
-	await expect(page.locator('#empty-post-workaround-marker')).toHaveText('false');
+
+	const isSwaCli = process.env.PUBLIC_SWA === 'true';
+	const isLiveAzure = process.env.CI === 'true' && !isSwaCli;
+
+	await expect(page.locator('#empty-post-workaround-marker')).toHaveText(
+		isLiveAzure ? 'true' : 'false'
+	);
 });

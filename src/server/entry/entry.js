@@ -97,13 +97,20 @@ function toRequest(httpRequest, testWorkaroundsInfo) {
 	// this header contains the URL the user requested
 	const originalUrl = httpRequest.headers.get('x-ms-original-url');
 
-	// SWA strips content-type headers from empty POST requests, but SK form actions require the header
+	// SWA can strip the content-type header from empty POST requests,
+	// but SvelteKit form actions require it.
 	// https://github.com/geoffrich/svelte-adapter-azure-swa/issues/178
-	if (
+	//
+	// This has been observed in live Azure runtime, but not in local SWA CLI.
+	// Azure can expose a truthy body object for an empty POST request while
+	// still dropping content-type, so the workaround must not rely on !httpRequest.body.
+	const isEmptyPostFormNavigation =
 		httpRequest.method === 'POST' &&
-		!httpRequest.body &&
-		!httpRequest.headers.get('content-type')
-	) {
+		!httpRequest.headers.get('content-type') &&
+		httpRequest.headers.get('content-length') === '0' &&
+		httpRequest.headers.get('sec-fetch-mode') === 'navigate' &&
+		httpRequest.headers.get('sec-fetch-dest') === 'document';
+	if (isEmptyPostFormNavigation) {
 		httpRequest.headers.set('content-type', 'application/x-www-form-urlencoded');
 		if (testWorkarounds) {
 			testWorkaroundsInfo.emptyPostWorkaround = true;
