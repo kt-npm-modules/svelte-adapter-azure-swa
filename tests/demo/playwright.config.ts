@@ -11,7 +11,8 @@ if (process.env.PUBLIC_SWA == 'true') {
 	console.warn('Running in SWA mode');
 	webServer = {
 		timeout: 120 * 1000,
-		command: 'npm run swa -- --verbose=silly',
+		command:
+			'mkdir -p .tmp && TIMESTAMP="$(date +"%Y%m%d-%H%M%S")" && npm run swa -- --verbose=silly 2>&1 | tee .tmp/swa-$TIMESTAMP.log',
 		port: 4280
 	};
 } else if (process.env.CI == 'true') {

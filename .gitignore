@@ -8,3 +8,4 @@ coverage*/
 demo-test-results/
 .devcontainer/
 artifacts/
+.tmp/

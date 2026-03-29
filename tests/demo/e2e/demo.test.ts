@@ -45,9 +45,31 @@ for (const verb of ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']) {
 		});
 		expect(response.ok()).toBeTruthy();
 		expect(await response.text()).toContain(verb.toLowerCase());
-		if (verb === 'POST') {
-			expect(response.headers()['x-adapter-test-empty-post-workaround']).toBeTruthy();
-			expect(response.headers()['x-adapter-test-empty-post-workaround']).toBe('true');
-		}
 	});
 }
+
+test(`POST method on server endpoint - EMPTY BODY edge case`, async ({ request }) => {
+	const verb = 'POST';
+	const response = await request.fetch(`/methods/`, {
+		method: verb,
+		headers: {
+			'content-length': '0'
+		}
+	});
+	expect(response.ok()).toBeTruthy();
+	expect(await response.text()).toContain(verb.toLowerCase());
+	expect(response.headers()['x-adapter-test-empty-post-workaround']).toBe('true');
+});
+
+test('POST method on server endpoint - empty body edge case via native fetch', async () => {
+	const response = await fetch('http://localhost:4280/methods/', {
+		method: 'POST',
+		headers: {
+			'content-length': '0'
+		}
+	});
+
+	expect(response.ok).toBeTruthy();
+	expect(await response.text()).toContain('post');
+	expect(response.headers.get('x-adapter-test-empty-post-workaround')).toBe('true');
+});

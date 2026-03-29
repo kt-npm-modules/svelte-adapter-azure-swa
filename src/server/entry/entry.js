@@ -41,7 +41,7 @@ app.http('sk_render', {
 			context.log(`Request: ${JSON.stringify(httpRequest)}`);
 		}
 
-		const request = toRequest(httpRequest);
+		const request = toRequest(httpRequest, context);
 
 		const ipAddress = getClientIPFromHeaders(request.headers);
 		const clientPrincipal = getClientPrincipalFromHeaders(request.headers, context);
@@ -83,15 +83,24 @@ app.http('sk_render', {
 
 /**
  * @param {HttpRequest} httpRequest
+ * @param {InvocationContext} context
  * @returns {Request}
  */
-function toRequest(httpRequest) {
+function toRequest(httpRequest, context) {
 	// because we proxy all requests to the render function, the original URL in the request is /api/sk_render
 	// this header contains the URL the user requested
 	const originalUrl = httpRequest.headers.get('x-ms-original-url');
 
 	// SWA strips content-type headers from empty POST requests, but SK form actions require the header
 	// https://github.com/geoffrich/svelte-adapter-azure-swa/issues/178
+	if (testWorkarounds) {
+		context.log('POST workaround probe', {
+			method: httpRequest.method,
+			hasBodyObject: httpRequest.body != null,
+			contentType: httpRequest.headers.get('content-type'),
+			contentLength: httpRequest.headers.get('content-length')
+		});
+	}
 	if (
 		httpRequest.method === 'POST' &&
 		!httpRequest.body &&

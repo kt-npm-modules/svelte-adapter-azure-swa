@@ -47,6 +47,7 @@ const _adapterSWA = adapterSWA({
 		return options;
 	},
 	testWorkarounds: true
+	// debug: true
 });
 
 /** @type {import('@sveltejs/kit').Config} */
