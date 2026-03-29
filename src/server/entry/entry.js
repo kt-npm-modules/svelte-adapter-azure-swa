@@ -53,6 +53,12 @@ app.http('sk_render', {
 
 		const request = toRequest(httpRequest, testWorkaroundsInfo);
 
+		// Mirror workaround diagnostics into the internal request so test actions
+		// can inspect the request shape observed by the adapter.
+		if (testWorkarounds && httpRequest.method === 'POST') {
+			request.headers.set('x-adapter-test-workarounds', JSON.stringify(testWorkaroundsInfo));
+		}
+
 		const ipAddress = getClientIPFromHeaders(request.headers);
 		const clientPrincipal = getClientPrincipalFromHeaders(request.headers, context);
 
