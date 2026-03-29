@@ -45,7 +45,8 @@ const _adapterSWA = adapterSWA({
 	serverRolldown(options) {
 		// options.onwarn = serverOnwarn;
 		return options;
-	}
+	},
+	testWorkarounds: true
 });
 
 /** @type {import('@sveltejs/kit').Config} */
