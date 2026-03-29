@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import { expect, test } from './baseFixtures';
 
 test('home page has expected h1', async ({ page }) => {
@@ -47,3 +48,58 @@ for (const verb of ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']) {
 		expect(await response.text()).toContain(verb.toLowerCase());
 	});
 }
+
+test(`POST empty-body edge case currently does not expose workaround marker`, async ({
+	request
+}) => {
+	const verb = 'POST';
+	const response = await request.fetch(`/methods/`, {
+		method: verb,
+		headers: {
+			'content-length': '0'
+		}
+	});
+	expect(response.ok()).toBeTruthy();
+	expect(await response.text()).toContain(verb.toLowerCase());
+	const workaroundHeaderStr = response.headers()['x-adapter-test-workarounds'];
+	assert(workaroundHeaderStr, 'workaround header must be present');
+	const workaroundHeader = JSON.parse(workaroundHeaderStr);
+	expect(workaroundHeader).toBeDefined();
+	expect(workaroundHeader.emptyPostWorkaround).toBe(false);
+});
+
+test('POST empty-body edge case currently does not expose workaround marker via native fetch', async () => {
+	const baseURL = test.info().project.use.baseURL;
+	assert(baseURL, 'baseURL must be defined in test configuration');
+	const response = await fetch(`${baseURL}/methods/`, {
+		method: 'POST',
+		headers: {
+			'content-length': '0'
+		}
+	});
+
+	expect(response.ok).toBeTruthy();
+	expect(await response.text()).toContain('post');
+	const workaroundHeaderStr = response.headers.get('x-adapter-test-workarounds');
+	assert(workaroundHeaderStr, 'workaround header must be present');
+	const workaroundHeader = JSON.parse(workaroundHeaderStr);
+	expect(workaroundHeader).toBeDefined();
+	expect(workaroundHeader.emptyPostWorkaround).toBe(false);
+});
+
+test('empty form submit via page action', async ({ page }) => {
+	await page.goto('/empty-post-form');
+	await page.click('#empty-post-submit');
+
+	await expect(page.locator('#empty-post-success')).toHaveText('success');
+
+	const isSwaCli = process.env.PUBLIC_SWA === 'true';
+	const isLiveAzure = process.env.CI === 'true' && !isSwaCli;
+
+	// #workarounds-info-marker must always be true
+	await expect(page.locator('#workarounds-info-marker')).toHaveText('true');
+
+	await expect(page.locator('#empty-post-workaround-marker')).toHaveText(
+		isLiveAzure ? 'true' : 'false'
+	);
+});
