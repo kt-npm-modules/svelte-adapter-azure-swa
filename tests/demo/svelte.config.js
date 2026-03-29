@@ -46,8 +46,8 @@ const _adapterSWA = adapterSWA({
 		// options.onwarn = serverOnwarn;
 		return options;
 	},
-	testWorkarounds: true
-	// debug: true
+	testWorkarounds: true,
+	debug: process.env.PUBLIC_SWA === 'true'
 });
 
 /** @type {import('@sveltejs/kit').Config} */
