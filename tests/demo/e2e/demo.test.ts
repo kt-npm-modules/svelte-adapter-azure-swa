@@ -48,7 +48,9 @@ for (const verb of ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']) {
 	});
 }
 
-test(`POST method on server endpoint - EMPTY BODY edge case`, async ({ request }) => {
+test(`POST empty-body edge case currently does not expose workaround marker`, async ({
+	request
+}) => {
 	const verb = 'POST';
 	const response = await request.fetch(`/methods/`, {
 		method: verb,
@@ -58,10 +60,10 @@ test(`POST method on server endpoint - EMPTY BODY edge case`, async ({ request }
 	});
 	expect(response.ok()).toBeTruthy();
 	expect(await response.text()).toContain(verb.toLowerCase());
-	expect(response.headers()['x-adapter-test-empty-post-workaround']).toBe('true');
+	expect(response.headers()['x-adapter-test-empty-post-workaround']).toBeUndefined();
 });
 
-test('POST method on server endpoint - empty body edge case via native fetch', async () => {
+test('POST empty-body edge case currently does not expose workaround marker via native fetch', async () => {
 	const response = await fetch('http://localhost:4280/methods/', {
 		method: 'POST',
 		headers: {
@@ -71,5 +73,5 @@ test('POST method on server endpoint - empty body edge case via native fetch', a
 
 	expect(response.ok).toBeTruthy();
 	expect(await response.text()).toContain('post');
-	expect(response.headers.get('x-adapter-test-empty-post-workaround')).toBe('true');
+	expect(response.headers.get('x-adapter-test-empty-post-workaround')).toBeNull();
 });

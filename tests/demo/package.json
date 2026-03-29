@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite dev",
 		"swa": "PUBLIC_SWA=true swa start",
-		"build": "ADAPTER_TEST_MARKERS=true PUBLIC_SWA=${PUBLIC_SWA:-false} vite build",
+		"build": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite build",
 		"build:swa": "PUBLIC_SWA=true npm run build",
 		"preview": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite preview",
 		"prepare": "PUBLIC_SWA=${PUBLIC_SWA:-false} svelte-kit sync || echo ''",

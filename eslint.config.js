@@ -29,9 +29,6 @@ export default defineConfig([
 		files: ['src/**/*.ts', 'src/**/*.js'],
 		ignores: ['*.config.js', '*.config.ts', 'e2e/*.ts'],
 		languageOptions: {
-			globals: {
-				__ADAPTER_TEST_MARKERS__: 'readonly'
-			},
 			parserOptions: {
 				projectService: true,
 				tsconfigRootDir: __dirname
