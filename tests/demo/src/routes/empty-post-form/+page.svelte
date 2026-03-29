@@ -14,6 +14,6 @@
 
 {#if form}
 	<p id="empty-post-workaround-marker">
-		{form.workaroundMarker ? 'true' : 'false'}
+		{form.workaroundsInfo?.emptyPostWorkaround ? 'true' : 'false'}
 	</p>
 {/if}

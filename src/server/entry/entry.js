@@ -41,7 +41,17 @@ app.http('sk_render', {
 			context.log(`Request: ${JSON.stringify(httpRequest)}`);
 		}
 
-		const request = toRequest(httpRequest, context);
+		/** @type {Record<string, any>} */
+		const testWorkaroundsInfo = {};
+		if (testWorkarounds && httpRequest.method === 'POST') {
+			testWorkaroundsInfo.method = httpRequest.method;
+			testWorkaroundsInfo.contentType = httpRequest.headers.get('content-type');
+			testWorkaroundsInfo.contentLength = httpRequest.headers.get('content-length');
+			testWorkaroundsInfo.hasBodyObject = httpRequest.body != null;
+			testWorkaroundsInfo.emptyPostWorkaround = false;
+		}
+
+		const request = toRequest(httpRequest, testWorkaroundsInfo);
 
 		const ipAddress = getClientIPFromHeaders(request.headers);
 		const clientPrincipal = getClientPrincipalFromHeaders(request.headers, context);
@@ -58,13 +68,9 @@ app.http('sk_render', {
 			}
 		});
 
-		if (testWorkarounds) {
-			if (request.headers.has('x-adapter-test-empty-post-workaround')) {
-				rendered.headers.set(
-					'x-adapter-test-empty-post-workaround',
-					request.headers.get('x-adapter-test-empty-post-workaround')
-				);
-			}
+		if (testWorkarounds && httpRequest.method === 'POST') {
+			context.log('POST workaround probe', testWorkaroundsInfo);
+			rendered.headers.set('x-adapter-test-workarounds', JSON.stringify(testWorkaroundsInfo));
 		}
 
 		if (debug) {
@@ -83,24 +89,16 @@ app.http('sk_render', {
 
 /**
  * @param {HttpRequest} httpRequest
- * @param {InvocationContext} context
+ * @param {Record<string, any>} testWorkaroundsInfo
  * @returns {Request}
  */
-function toRequest(httpRequest, context) {
+function toRequest(httpRequest, testWorkaroundsInfo) {
 	// because we proxy all requests to the render function, the original URL in the request is /api/sk_render
 	// this header contains the URL the user requested
 	const originalUrl = httpRequest.headers.get('x-ms-original-url');
 
 	// SWA strips content-type headers from empty POST requests, but SK form actions require the header
 	// https://github.com/geoffrich/svelte-adapter-azure-swa/issues/178
-	if (testWorkarounds) {
-		context.log('POST workaround probe', {
-			method: httpRequest.method,
-			hasBodyObject: httpRequest.body != null,
-			contentType: httpRequest.headers.get('content-type'),
-			contentLength: httpRequest.headers.get('content-length')
-		});
-	}
 	if (
 		httpRequest.method === 'POST' &&
 		!httpRequest.body &&
@@ -108,7 +106,7 @@ function toRequest(httpRequest, context) {
 	) {
 		httpRequest.headers.set('content-type', 'application/x-www-form-urlencoded');
 		if (testWorkarounds) {
-			httpRequest.headers.set('x-adapter-test-empty-post-workaround', 'true');
+			testWorkaroundsInfo.emptyPostWorkaround = true;
 		}
 	}
 
