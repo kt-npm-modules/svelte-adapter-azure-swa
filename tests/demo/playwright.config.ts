@@ -13,7 +13,7 @@ if (process.env.PUBLIC_SWA == 'true') {
 	webServer = {
 		timeout: 120 * 1000,
 		command:
-			'mkdir -p .tmp && TIMESTAMP="$(date +"%Y%m%d-%H%M%S")" && npm run swa -- --verbose=silly 2>&1 | tee .tmp/swa-$TIMESTAMP.log',
+			'mkdir -p .tmp && TIMESTAMP="$(date +"%Y%m%d-%H%M%S")" && npm run swa 2>&1 | tee .tmp/swa-$TIMESTAMP.log',
 		port: 4280
 	};
 	baseURL = 'http://localhost:4280';
