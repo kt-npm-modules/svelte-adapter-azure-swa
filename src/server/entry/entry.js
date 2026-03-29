@@ -1,6 +1,6 @@
 import { app } from '@azure/functions';
 import { installPolyfills } from '@sveltejs/kit/node/polyfills';
-import { debug } from 'ENV';
+import { debug, testWorkarounds } from 'ENV';
 import { manifest } from 'MANIFEST';
 import { Server } from 'SERVER';
 import {
@@ -58,6 +58,15 @@ app.http('sk_render', {
 			}
 		});
 
+		if (testWorkarounds) {
+			if (request.headers.has('x-adapter-test-empty-post-workaround')) {
+				rendered.headers.set(
+					'x-adapter-test-empty-post-workaround',
+					request.headers.get('x-adapter-test-empty-post-workaround')
+				);
+			}
+		}
+
 		if (debug) {
 			/** @type {Record<string, string>} */
 			const headers = {};
@@ -89,6 +98,9 @@ function toRequest(httpRequest) {
 		!httpRequest.headers.get('content-type')
 	) {
 		httpRequest.headers.set('content-type', 'application/x-www-form-urlencoded');
+		if (testWorkarounds) {
+			httpRequest.headers.set('x-adapter-test-empty-post-workaround', 'true');
+		}
 	}
 
 	/** @type {Record<string, string>} */

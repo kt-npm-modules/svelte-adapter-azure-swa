@@ -17,6 +17,7 @@ type AdjustRolldownInputOptionsFunction = (options: RolldownOptions) => Rolldown
 
 export type Options = {
 	debug?: boolean;
+	testWorkarounds?: boolean;
 	apiDir?: string;
 	staticDir?: string;
 	external?: ExternalOption;

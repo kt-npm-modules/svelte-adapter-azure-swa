@@ -45,5 +45,9 @@ for (const verb of ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']) {
 		});
 		expect(response.ok()).toBeTruthy();
 		expect(await response.text()).toContain(verb.toLowerCase());
+		if (verb === 'POST') {
+			expect(response.headers()['x-adapter-test-empty-post-workaround']).toBeTruthy();
+			expect(response.headers()['x-adapter-test-empty-post-workaround']).toBe('true');
+		}
 	});
 }
