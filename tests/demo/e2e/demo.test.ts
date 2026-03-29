@@ -1,3 +1,4 @@
+import assert from 'node:assert';
 import { expect, test } from './baseFixtures';
 
 test('home page has expected h1', async ({ page }) => {
@@ -65,6 +66,7 @@ test(`POST empty-body edge case currently does not expose workaround marker`, as
 
 test('POST empty-body edge case currently does not expose workaround marker via native fetch', async () => {
 	const baseURL = test.info().project.use.baseURL;
+	assert(baseURL, 'baseURL must be defined in test configuration');
 	const response = await fetch(`${baseURL}/methods/`, {
 		method: 'POST',
 		headers: {
