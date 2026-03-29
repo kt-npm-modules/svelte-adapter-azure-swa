@@ -153,6 +153,7 @@ jobs:
           checkout: false # already checked out in previous step
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
+          fail-on-empty-token: true
           cache-reset: ${{ needs.config.outputs.cache-reset }}
           install-script: exit 0
           run-script: |
