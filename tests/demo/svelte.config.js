@@ -30,6 +30,14 @@ console.warn('#'.repeat(100));
 	handler(warning);
 };*/
 
+console.warn(
+	'####################################################################################################################'
+);
+console.warn('PUBLIC_SWA:', process.env.PUBLIC_SWA);
+console.warn(
+	'####################################################################################################################'
+);
+
 const _adapterSWA = adapterSWA({
 	external: ['@sentry/sveltekit'],
 	apiDir: './func',

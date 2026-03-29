@@ -64,7 +64,8 @@ test(`POST empty-body edge case currently does not expose workaround marker`, as
 });
 
 test('POST empty-body edge case currently does not expose workaround marker via native fetch', async () => {
-	const response = await fetch('http://localhost:4280/methods/', {
+	const baseURL = test.info().project.use.baseURL;
+	const response = await fetch(`${baseURL}/methods/`, {
 		method: 'POST',
 		headers: {
 			'content-length': '0'
