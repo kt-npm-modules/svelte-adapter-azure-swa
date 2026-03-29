@@ -20,6 +20,7 @@ if (process.env.PUBLIC_SWA == 'true') {
 } else if (process.env.CI == 'true') {
 	console.warn('Running in CI mode');
 	webServer = undefined;
+	baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL;
 } else {
 	console.warn('Running in local mode');
 	webServer = {
