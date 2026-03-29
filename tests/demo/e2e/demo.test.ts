@@ -78,3 +78,11 @@ test('POST empty-body edge case currently does not expose workaround marker via 
 	expect(await response.text()).toContain('post');
 	expect(response.headers.get('x-adapter-test-empty-post-workaround')).toBeNull();
 });
+
+test('empty form submit via page action', async ({ page }) => {
+	await page.goto('/empty-post-form');
+	await page.click('#empty-post-submit');
+
+	await expect(page.locator('#empty-post-success')).toHaveText('success');
+	await expect(page.locator('#empty-post-workaround-marker')).toHaveText('false');
+});
