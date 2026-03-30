@@ -202,8 +202,8 @@ jobs:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           fail-on-empty-token: true
           cache-reset: ${{ needs.config.outputs.cache-reset }}
-          install-script: exit 0
           run-script: |
+            npm run prepare --prefix ./tests/demo
             echo 'Workspace root:'
             ls -la
             echo
