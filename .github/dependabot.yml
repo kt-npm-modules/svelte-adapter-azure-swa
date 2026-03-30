@@ -26,7 +26,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-        group-by: dependency-name
 
       major:
         patterns:
