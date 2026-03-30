@@ -540,6 +540,92 @@ Successful local SWA CLI validation does not guarantee identical behavior in the
 
 Treat the CLI as a valuable validation tool, not as a perfect simulation.
 
+### Prerendered routes and `trailingSlash` in SWA CLI
+
+When testing a SvelteKit app through the Azure Static Web Apps CLI, prerendered routes and full-refresh route handling may fail unless SWA-CLI-specific route option handling is applied.
+
+In the demo app, removing the root-level `trailingSlash` policy caused two different failures during local SWA CLI testing:
+
+- `/sverdle` on full refresh entered a redirect loop and failed with `ERR_TOO_MANY_REDIRECTS`
+- `/sverdle/how-to-play` and `/sverdle/how-to-play/` returned `404`, even though `tests/demo/src/routes/sverdle/how-to-play/+page.ts` explicitly sets `export const prerender = true`
+
+Two practical fixes are available.
+
+#### Option 1: preferred when `trailingSlash` is not overridden below the root layout
+
+If your app does not override `trailingSlash` in lower-level layouts or pages, the simplest fix is to define an SWA-CLI-aware root-level `trailingSlash` policy.
+
+Use a shared SWA CLI environment helper:
+
+```ts
+// tests/demo/src/lib/swa-env.ts
+import { PUBLIC_SWA_CLI } from '$env/static/public';
+
+export const isSwaCli = PUBLIC_SWA_CLI === 'true';
+```
+
+Then derive the root-level trailing slash policy from it:
+
+```ts
+// tests/demo/src/routes/+layout.ts
+import { isSwaCli } from '$lib/swa-env';
+
+export const trailingSlash = isSwaCli ? 'always' : 'never';
+```
+
+In the demo app, restoring this root-level `trailingSlash` policy fixed the failing SWA CLI route handling.
+
+Relevant demo files:
+
+- `tests/demo/src/lib/swa-env.ts`
+- `tests/demo/src/routes/+layout.ts`
+
+#### Option 2: explicit per-route prerender control
+
+If you prefer not to use the root-level `trailingSlash` fix, or if `trailingSlash` is already overridden in lower-level routes, disable prerender explicitly on prerendered routes for SWA CLI mode:
+
+```ts
+import { isSwaCli } from '$lib/swa-env';
+
+export const prerender = !isSwaCli;
+```
+
+This is the more explicit route-level fix. It requires updating each prerendered route that should not be prerendered under SWA CLI.
+
+For example, the demo app includes a prerendered leaf route here:
+
+- `tests/demo/src/routes/sverdle/how-to-play/+page.ts`
+
+A minimal SWA-CLI-aware version would look like this:
+
+```ts
+import { dev } from '$app/environment';
+import { isSwaCli } from '$lib/swa-env';
+
+// we don't need any JS on this page, though we'll load
+// it in dev so that we get hot module replacement
+export const csr = dev;
+
+// prerender in normal environments, but disable it for SWA CLI local testing
+export const prerender = !isSwaCli;
+```
+
+#### Which option to use
+
+Use the root-level `trailingSlash` fix when all of the following are true:
+
+- you are testing through SWA CLI
+- you want the least invasive fix
+- `trailingSlash` is not overridden in lower-level routes
+
+Use route-level `prerender = !isSwaCli` when:
+
+- you want explicit control over prerendered routes
+- or `trailingSlash` is already customized below the root layout
+- or you do not want SWA-CLI-specific trailing slash behavior to affect the whole app
+
+If `trailingSlash` is overridden in lower-level routes or layouts, review those overrides carefully for SWA CLI testing, as behavior may become inconsistent.
+
 ### Monorepo Sentry path rewriting
 
 If your app lives in a monorepo, Sentry source path rewriting relative to the repository root is required.
