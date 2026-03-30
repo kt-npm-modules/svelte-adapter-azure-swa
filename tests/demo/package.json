@@ -4,20 +4,20 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite dev",
-		"swa": "PUBLIC_SWA=true swa start",
-		"build": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite build",
-		"build:swa": "PUBLIC_SWA=true npm run build",
-		"preview": "PUBLIC_SWA=${PUBLIC_SWA:-false} vite preview",
-		"prepare": "PUBLIC_SWA=${PUBLIC_SWA:-false} svelte-kit sync || echo ''",
-		"check": "PUBLIC_SWA=${PUBLIC_SWA:-false} svelte-kit sync && PUBLIC_SWA=${PUBLIC_SWA:-false} svelte-check --tsconfig ./tsconfig.json",
+		"dev": "PUBLIC_SWA_CLI=${PUBLIC_SWA_CLI:-false} vite dev",
+		"swa": "PUBLIC_SWA_CLI=true swa start",
+		"build": "PUBLIC_SWA_CLI=${PUBLIC_SWA_CLI:-false} vite build",
+		"build:swa": "PUBLIC_SWA_CLI=true npm run build",
+		"preview": "PUBLIC_SWA_CLI=${PUBLIC_SWA_CLI:-false} vite preview",
+		"prepare": "PUBLIC_SWA_CLI=${PUBLIC_SWA_CLI:-false} svelte-kit sync || echo ''",
+		"check": "PUBLIC_SWA_CLI=${PUBLIC_SWA_CLI:-false} svelte-kit sync && PUBLIC_SWA_CLI=${PUBLIC_SWA_CLI:-false} svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
 		"test:e2e": "playwright test",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:swa": "npm run build:swa && PUBLIC_SWA=true npm run test"
+		"test:swa": "npm run build:swa && PUBLIC_SWA_CLI=true npm run test"
 	},
 	"devDependencies": {
 		"@azure/functions": "^4.12.0",

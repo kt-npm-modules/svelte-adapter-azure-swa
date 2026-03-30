@@ -3,12 +3,12 @@ import { fileURLToPath } from 'url';
 
 console.warn('#'.repeat(100));
 console.warn('NODE_ENV: ', process.env.NODE_ENV);
-console.warn('SWA: ', process.env.PUBLIC_SWA);
+console.warn('SWA: ', process.env.PUBLIC_SWA_CLI);
 console.warn('CI: ', process.env.CI);
 
 let webServer: PlaywrightTestConfig['webServer'];
 let baseURL: string | undefined;
-if (process.env.PUBLIC_SWA == 'true') {
+if (process.env.PUBLIC_SWA_CLI == 'true') {
 	console.warn('Running in SWA mode');
 	webServer = {
 		timeout: 120 * 1000,

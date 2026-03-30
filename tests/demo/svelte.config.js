@@ -33,7 +33,7 @@ console.warn('#'.repeat(100));
 console.warn(
 	'####################################################################################################################'
 );
-console.warn('PUBLIC_SWA:', process.env.PUBLIC_SWA);
+console.warn('PUBLIC_SWA_CLI:', process.env.PUBLIC_SWA_CLI);
 console.warn(
 	'####################################################################################################################'
 );
@@ -55,7 +55,7 @@ const _adapterSWA = adapterSWA({
 		return options;
 	},
 	testWorkarounds: true,
-	debug: process.env.PUBLIC_SWA === 'true'
+	debug: process.env.PUBLIC_SWA_CLI === 'true'
 });
 
 /** @type {import('@sveltejs/kit').Config} */
