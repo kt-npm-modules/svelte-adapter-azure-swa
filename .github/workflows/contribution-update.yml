@@ -76,7 +76,14 @@ jobs:
 
       - name: Merge 'main' into 'contribution' branch
         run: |
-          git fetch origin main contribution
-          git checkout contribution || git checkout -b contribution origin/contribution
-          git merge origin/main
+          git fetch origin contribution || true
+
+          if git show-ref --verify --quiet refs/remotes/origin/contribution; then
+            git checkout contribution
+            git reset --hard origin/contribution
+            git merge --no-edit origin/main
+          else
+            git checkout -b contribution origin/main
+          fi
+
           git push origin contribution

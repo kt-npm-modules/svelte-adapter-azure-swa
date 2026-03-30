@@ -25,6 +25,7 @@ Feel free to delete this file and the entire sentry route.
 				const res = await fetch('/sentry-example-page');
 				if (!res.ok) {
 					hasSentError = true;
+					// Comment to check sentry works normally in CI - 3
 					throw new Error('Sentry Example Frontend Error');
 				}
 			}

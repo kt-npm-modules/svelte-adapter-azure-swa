@@ -30,6 +30,14 @@ console.warn('#'.repeat(100));
 	handler(warning);
 };*/
 
+console.warn(
+	'####################################################################################################################'
+);
+console.warn('PUBLIC_SWA:', process.env.PUBLIC_SWA);
+console.warn(
+	'####################################################################################################################'
+);
+
 const _adapterSWA = adapterSWA({
 	external: ['@sentry/sveltekit'],
 	apiDir: './func',
@@ -42,10 +50,12 @@ const _adapterSWA = adapterSWA({
 	emulate: {
 		role: 'authenticated'
 	},
-	serverRollup(options) {
+	serverRolldown(options) {
 		// options.onwarn = serverOnwarn;
 		return options;
-	}
+	},
+	testWorkarounds: true,
+	debug: process.env.PUBLIC_SWA === 'true'
 });
 
 /** @type {import('@sveltejs/kit').Config} */

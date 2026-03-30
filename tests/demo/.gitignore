@@ -33,7 +33,7 @@ customStatic/
 func/package-lock.json
 
 # Coverage
-coverage
+coverage*/
 
 # Sentry Config File
 .env.sentry-build-plugin

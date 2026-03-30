@@ -1,5 +1,6 @@
 declare module 'ENV' {
 	export const debug: boolean;
+	export const testWorkarounds: boolean;
 }
 
 declare module 'SERVER' {
