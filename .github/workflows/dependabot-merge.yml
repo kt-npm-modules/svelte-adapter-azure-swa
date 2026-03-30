@@ -1,17 +1,10 @@
 name: Merge Dependabot PR
-# Auto-merge for Dependabot PRs with approval protection does not work
-# So we use this workflow to merge Dependabot PRs after CI checks have passed.
 
 on:
   workflow_run:
     workflows: ['CI']
     types:
       - completed
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
-  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -39,7 +32,7 @@ jobs:
           private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
           configure-git: false
 
-      - name: Merge matching Dependabot PR
+      - id: pr
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
@@ -47,22 +40,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Repository: $REPO"
-          echo "Head branch: $HEAD_BRANCH"
-
-          PR_NUMBER="$(gh pr list \
+          pr_url="$(gh pr list \
             --repo "$REPO" \
             --state open \
             --base main \
             --head "$HEAD_BRANCH" \
             --app dependabot \
-            --json number \
-            --jq '.[0].number')"
+            --json url \
+            --jq '.[0].url')"
 
-          if [ -z "${PR_NUMBER:-}" ] || [ "$PR_NUMBER" = "null" ]; then
-            echo "No matching open Dependabot PR found."
-            exit 0
-          fi
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
 
-          echo "Merging PR #$PR_NUMBER"
-          gh pr merge "$PR_NUMBER" --repo "$REPO" --squash --delete-branch
+      - name: Merge
+        if: steps.pr.outputs.url != '' && steps.pr.outputs.url != 'null'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh pr merge --squash --delete-branch "${{ steps.pr.outputs.url }}"
