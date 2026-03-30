@@ -7,3 +7,6 @@ import { isSwaCli } from '$lib/swa-env';
 // If this 'trailingSlash' is not used in the lower-level routes, then use it here.
 // If you DO use it in the lower-level routes, you will also need to adjust the logic basing on the 'isSwaCli' variable in those routes.
 export const trailingSlash = isSwaCli ? 'always' : 'never';
+
+// 2. Use prerender = !isSwaCli in places where you have prerender = true, instead.
+// The previous option is less invasive.
