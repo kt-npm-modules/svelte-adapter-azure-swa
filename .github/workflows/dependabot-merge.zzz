@@ -49,6 +49,7 @@ jobs:
             --json url \
             --jq '.[0].url')"
 
+
           echo "url=$pr_url" >> "$GITHUB_OUTPUT"
 
       - name: Merge
