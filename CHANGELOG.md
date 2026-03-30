@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.0.0-rc.0
+
+### Major Changes
+
+- a181abb: FEATURE: Rolldown replaces Rollup in the adapter.
+
+  BREAKING: `options.serverRollup` is replaced with `options.serverRolldown`.
+  - Contributed by [@sukeshpabolu](https://github.com/sukeshpabolu).
+
+### Patch Changes
+
+- a181abb: FIX: Restore empty form POST handling in Azure Static Web Apps cloud runtime
+  - Updated the historical empty POST workaround for the current Azure request shape.
+  - Fixed a case where Azure could drop `content-type` for empty form submissions, causing SvelteKit form actions to fail with `415 Unsupported Media Type`.
+  - Scoped the workaround to browser navigation form POST requests so generic POST handling remains unchanged.
+
+- 17f92ef: dependabot: directory '/', update svelte from 5.55.0 to 5.55.1
+
 ## 0.24.0
 
 ### Minor Changes
