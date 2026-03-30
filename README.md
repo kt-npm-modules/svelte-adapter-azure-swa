@@ -459,7 +459,7 @@ It is especially helpful for:
 
 ### Backend coverage example
 
-The repository CI workflow at `./.github/workflows/ci-swa.yml` demonstrates backend coverage collection for the SWA CLI / generated Azure Functions flow.
+The repository CI workflow at [`./.github/workflows/ci-swa.yml`](./.github/workflows/ci-swa.yml) demonstrates backend coverage collection for the SWA CLI / generated Azure Functions flow.
 
 In that setup:
 
