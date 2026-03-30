@@ -93,7 +93,7 @@ test('empty form submit via page action', async ({ page }) => {
 
 	await expect(page.locator('#empty-post-success')).toHaveText('success');
 
-	const isSwaCli = process.env.PUBLIC_SWA === 'true';
+	const isSwaCli = process.env.PUBLIC_SWA_CLI === 'true';
 	const isLiveAzure = process.env.CI === 'true' && !isSwaCli;
 
 	// #workarounds-info-marker must always be true
