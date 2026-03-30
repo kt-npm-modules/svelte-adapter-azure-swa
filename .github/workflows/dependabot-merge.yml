@@ -1,0 +1,67 @@
+name: Merge Dependabot PR
+# Auto-merge for Dependabot PRs with approval protection does not work
+# So we use this workflow to merge Dependabot PRs after CI checks have passed.
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ${{ tojson(github) }}
+        shell: cat {0}
+
+  merge-dependabot-pr:
+    if: >-
+      github.repository == 'kt-npm-modules/svelte-adapter-azure-swa' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - id: app-token
+        uses: kt-workflows/actions/create-github-app-token@main
+        with:
+          app-id: ${{ secrets.WORKFLOW_APP_ID }}
+          private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
+          configure-git: false
+
+      - name: Merge matching Dependabot PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+
+          echo "Repository: $REPO"
+          echo "Head branch: $HEAD_BRANCH"
+
+          PR_NUMBER="$(gh pr list \
+            --repo "$REPO" \
+            --state open \
+            --base main \
+            --head "$HEAD_BRANCH" \
+            --app dependabot \
+            --json number \
+            --jq '.[0].number')"
+
+          if [ -z "${PR_NUMBER:-}" ] || [ "$PR_NUMBER" = "null" ]; then
+            echo "No matching open Dependabot PR found."
+            exit 0
+          fi
+
+          echo "Merging PR #$PR_NUMBER"
+          gh pr merge "$PR_NUMBER" --repo "$REPO" --squash --delete-branch

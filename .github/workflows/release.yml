@@ -43,15 +43,3 @@ jobs:
           matrix-node-version: ${{ vars.MATRIX_NODE_VERSION }}
           # cache-reset: true
           # npm-token: ${{ secrets.NPM_TOKEN }} # uncomment if not trusted publishing
-
-  # This is likely not needed because we updated script npm run changeset:version - which updates the package-lock.json
-  # update-pkg-lock:
-  #   needs: release
-  #   if: needs.release.outputs.release-branch != ''
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: kt-workflows/actions/npm-release-upd-pkg-lock@main
-  #       with:
-  #         app-id: ${{ secrets.WORKFLOW_APP_ID }}
-  #         private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
-  #         release-branch: ${{ needs.release.outputs.release-branch }}
