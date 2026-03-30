@@ -19,7 +19,7 @@
 		"lint:all": "npm run lint --workspaces",
 		"test": "vitest --run",
 		"coverage": "vitest --coverage --run",
-		"changeset:version": "changeset version && npm install && git add --all",
+		"changeset:version": "changeset version && npm install && npm run format:all && git add --all",
 		"changeset:publish": "changeset publish",
 		"gen:swa-config-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts",
 		"clean:nm": "find . -type d -name node_modules -not -path '*/node_modules/*/node_modules' -prune -exec rm -rf '{}' +",
