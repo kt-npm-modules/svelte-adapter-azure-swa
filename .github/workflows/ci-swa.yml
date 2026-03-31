@@ -201,7 +201,7 @@ jobs:
       - uses: kt-workflows/actions/npm-run-script@main
         with:
           node-version: ${{ matrix.node-version }}
-          skip-node-setup: true # Node is already setup in the previous step, we just need to reuse it
+          skip-npm-setup: true # Node/npm environment is already setup in the previous step, we just need to reuse it
           cache-reset: ${{ inputs.cache-reset }}
           install-script: ${{ needs.config.outputs.install-script }}
           # Run the build script and install the dependencies for the built api of the demo app
