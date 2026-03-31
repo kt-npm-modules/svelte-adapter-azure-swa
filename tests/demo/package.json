@@ -46,7 +46,7 @@
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"svelte": "^5.55.1",
 		"svelte-adapter-azure-swa": "file:../..",
-		"svelte-check": "^4.4.5",
+		"svelte-check": "^4.4.6",
 		"tailwindcss": "^4.2.2",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.57.2",
@@ -58,6 +58,6 @@
 		"node": ">=20 <21 || >=22 <23"
 	},
 	"dependencies": {
-		"@sentry/sveltekit": "^10.46.0"
+		"@sentry/sveltekit": "^10.47.0"
 	}
 }
