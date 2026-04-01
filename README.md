@@ -4,6 +4,8 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=kt-npm-modules_svelte-adapter-azure-swa&metric=coverage)](https://sonarcloud.io/summary/new_code?id=kt-npm-modules_svelte-adapter-azure-swa)
 [![License](https://img.shields.io/npm/l/@ktarmyshov/svelte-adapter-azure-swa)](./LICENSE)
 
+> **Why RC?** This adapter is published as `1.0.0-rc.x` because its server bundling pipeline currently depends on Rolldown RC; once Rolldown is stable, this adapter will move to stable too.
+
 # @ktarmyshov/svelte-adapter-azure-swa
 
 `@ktarmyshov/svelte-adapter-azure-swa` is a SvelteKit adapter for deploying applications to Azure Static Web Apps.
