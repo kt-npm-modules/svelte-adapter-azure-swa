@@ -5,6 +5,7 @@ on:
     - cron: '29 5 1 * *' # At 05:XX on day-of-month 1 (UTC)
     # Just for testing purposes - run every 5 minutes
     # - cron: '*/5 * * * *' # Every 5 minutes
+  workflow_dispatch:
 
 permissions:
   contents: read
