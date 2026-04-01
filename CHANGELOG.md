@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-rc.1
+
+### Patch Changes
+
+- 5ab4343: dependabot: directory '/', update typescript-eslint from 8.57.2 to 8.58.0
+- 78a87a0: dependabot: directory '/', update @sentry/sveltekit from 10.46.0 to 10.47.0
+- 78a87a0: dependabot: directory '/', update svelte-check from 4.4.5 to 4.4.6
+- 9725dff: dependabot: directory '/', update @playwright/test from 1.58.2 to 1.59.0
+- 9725dff: dependabot: directory '/', update playwright from 1.58.2 to 1.59.0
+
 ## 1.0.0-rc.0
 
 ### Major Changes
