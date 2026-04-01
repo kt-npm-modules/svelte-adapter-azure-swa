@@ -8,6 +8,11 @@
 	"changesets": [
 		"1-fix-empty-form-workaround",
 		"190-@ktarmyshov-svelte-adapter-azure-swa-svelte",
+		"193-@ktarmyshov-svelte-adapter-azure-swa-typescript-eslint",
+		"198-@ktarmyshov-svelte-adapter-azure-swa-@sentry-sveltekit",
+		"198-@ktarmyshov-svelte-adapter-azure-swa-svelte-check",
+		"199-@ktarmyshov-svelte-adapter-azure-swa-@playwright-test",
+		"199-@ktarmyshov-svelte-adapter-azure-swa-playwright",
 		"legal-mails-joke"
 	]
 }
