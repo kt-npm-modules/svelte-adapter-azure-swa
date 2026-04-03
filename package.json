@@ -63,6 +63,7 @@
 		"@sveltejs/kit": "^2.55.0",
 		"@types/node": "^25.5.0",
 		"@types/set-cookie-parser": "^2.4.10",
+		"@vitest/browser": "^4.1.2",
 		"@vitest/coverage-istanbul": "^4.1.2",
 		"eslint": "^10.1.0",
 		"eslint-config-prettier": "^10.1.8",
@@ -71,15 +72,14 @@
 		"prettier": "^3.8.1",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.57.2",
-		"vitest": "^4.1.2"
+		"vitest": "^4.1.2",
+		"vitest-browser-svelte": "^2.1.0"
 	},
 	"dependencies": {
-		"@vitest/browser": "^4.1.2",
 		"lodash": "^4.17.23",
 		"rolldown": "^1.0.0-rc.12",
 		"rolldown-plugin-sourcemaps": "^0.1.2",
-		"set-cookie-parser": "^3.1.0",
-		"vitest-browser-svelte": "^2.1.0"
+		"set-cookie-parser": "^3.1.0"
 	},
 	"files": [
 		"src"
