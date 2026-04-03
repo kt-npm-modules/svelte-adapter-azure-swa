@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-rc.2
+
+### Patch Changes
+
+- b80dbe8: dependabot: directory '/', update @playwright/test from 1.59.0 to 1.59.1
+- b80dbe8: dependabot: directory '/', update playwright from 1.59.0 to 1.59.1
+- 425fe42: Update dependencies
+
 ## 1.0.0-rc.1
 
 ### Patch Changes
