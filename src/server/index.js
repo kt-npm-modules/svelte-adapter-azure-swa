@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { mergeWith } from 'es-toolkit/compat';
 import assert from 'node:assert';
 import { writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
@@ -120,7 +120,7 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options) {
 			}
 		}
 	};
-	_options = _.mergeWith(defaultRolldownOptions(), _options, (objValue, srcValue) => {
+	_options = mergeWith(defaultRolldownOptions(), _options, (objValue, srcValue) => {
 		if (Array.isArray(objValue) && Array.isArray(srcValue)) {
 			return objValue.concat(srcValue);
 		}
