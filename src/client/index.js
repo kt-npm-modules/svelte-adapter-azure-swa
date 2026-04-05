@@ -1,5 +1,5 @@
 import { globSync } from 'glob';
-import { merge } from 'es-toolkit/compat';
+import { merge } from 'es-toolkit/object';
 import assert from 'node:assert';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,7 +48,7 @@ function prepareRolldownOptions(builder, outDir) {
 			dir: outDir
 		}
 	};
-	_options = merge(defaultRolldownOptions(), _options);
+	merge(_options, defaultRolldownOptions());
 	return _options;
 }
 
