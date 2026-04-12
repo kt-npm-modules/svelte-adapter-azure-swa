@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.0-rc.2
+
+### Patch Changes
+
+- b80dbe8: dependabot: directory '/', update @playwright/test from 1.59.0 to 1.59.1
+- b80dbe8: dependabot: directory '/', update playwright from 1.59.0 to 1.59.1
+- f9ce48d: dependabot: directory '/', update @eslint/compat from 2.0.3 to 2.0.4
+- f9ce48d: dependabot: directory '/', update @sveltejs/kit from 2.55.0 to 2.56.1
+- f9ce48d: dependabot: directory '/', update eslint from 10.1.0 to 10.2.0
+- f9ce48d: dependabot: directory '/', update vite from 8.0.3 to 8.0.5
+- 37969a0: dependabot: directory '/', update @inlang/paraglide-js from 2.15.1 to 2.15.2
+- 37969a0: dependabot: directory '/', update @sveltejs/kit from 2.56.1 to 2.57.0
+- 37969a0: dependabot: directory '/', update @vitest/browser-playwright from 4.1.2 to 4.1.3
+- 37969a0: dependabot: directory '/', update @vitest/browser from 4.1.2 to 4.1.3
+- 37969a0: dependabot: directory '/', update @vitest/coverage-istanbul from 4.1.2 to 4.1.3
+- 37969a0: dependabot: directory '/', update svelte from 5.55.1 to 5.55.2
+- 37969a0: dependabot: directory '/', update vite from 8.0.5 to 8.0.7
+- 37969a0: dependabot: directory '/', update vitest from 4.1.2 to 4.1.3
+- 3de6566: Replace lodash with es-toolkit
+  - Contributed by [@sukeshpabolu](https://github.com/sukeshpabolu).
+
+- 425fe42: Update dependencies
+
 ## 1.0.0-rc.1
 
 ### Patch Changes
