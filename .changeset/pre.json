@@ -13,6 +13,22 @@
 		"198-@ktarmyshov-svelte-adapter-azure-swa-svelte-check",
 		"199-@ktarmyshov-svelte-adapter-azure-swa-@playwright-test",
 		"199-@ktarmyshov-svelte-adapter-azure-swa-playwright",
+		"201-@ktarmyshov-svelte-adapter-azure-swa-@playwright-test",
+		"201-@ktarmyshov-svelte-adapter-azure-swa-playwright",
+		"204-@ktarmyshov-svelte-adapter-azure-swa-@eslint-compat",
+		"204-@ktarmyshov-svelte-adapter-azure-swa-@sveltejs-kit",
+		"204-@ktarmyshov-svelte-adapter-azure-swa-eslint",
+		"204-@ktarmyshov-svelte-adapter-azure-swa-vite",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-@inlang-paraglide-js",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-@sveltejs-kit",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-@vitest-browser-playwright",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-@vitest-browser",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-@vitest-coverage-istanbul",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-svelte",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-vite",
+		"205-@ktarmyshov-svelte-adapter-azure-swa-vitest",
+		"crisp-pears-battle",
+		"dry-feet-bathe",
 		"legal-mails-joke"
 	]
 }
