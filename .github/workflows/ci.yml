@@ -18,7 +18,7 @@ permissions:
   pull-requests: write # to create comments (actions/github-script)
 
 env:
-  DEFAULT_MATRIX_NODE_VERSION: '[20, 22]'
+  DEFAULT_MATRIX_NODE_VERSION: '["20", "22"]'
   DEFAULT_CACHE_RESET: false
   PUBLIC_SWA: false
   CI: true
@@ -115,9 +115,11 @@ jobs:
       cache-reset: ${{ steps.cache-reset.outputs.cache-reset }}
     steps:
       - id: matrix-node-version
+        shell: bash
         run: |
           # Set the node version to use in the matrix
-          echo "matrix-node-version=${{ vars.MATRIX_NODE_VERSION || env.DEFAULT_MATRIX_NODE_VERSION || '' }}" >> "$GITHUB_OUTPUT"
+          value='${{ vars.MATRIX_NODE_VERSION || env.DEFAULT_MATRIX_NODE_VERSION || '' }}'
+          printf 'matrix-node-version=%s\n' "$value" >> "$GITHUB_OUTPUT"
 
       - id: sonar
         run: |
