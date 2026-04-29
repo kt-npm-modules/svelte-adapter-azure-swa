@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-rc.3
+
+### Patch Changes
+
+- 551ead8: dependabot: directory '/', update @azure/functions
+- 551ead8: dependabot: directory '/', update @inlang/paraglide-js
+- 551ead8: dependabot: directory '/', update @sentry/sveltekit
+- 551ead8: dependabot: directory '/', update @sveltejs/kit
+- 551ead8: dependabot: directory '/', update es-toolkit
+- 551ead8: dependabot: directory '/', update eslint-plugin-svelte
+- 551ead8: dependabot: directory '/', update prettier-plugin-tailwindcss
+- 551ead8: dependabot: directory '/', update svelte
+- 551ead8: dependabot: directory '/', update typescript-eslint
+- 551ead8: dependabot: directory '/', update vite
+
 ## 1.0.0-rc.2
 
 ### Patch Changes
