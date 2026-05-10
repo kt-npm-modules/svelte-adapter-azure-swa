@@ -1,4 +1,4 @@
-import type { AzureStaticWebAppsConfigurationFile } from './swa-config-gen';
+import type { AzureStaticWebAppsConfigurationFile } from './swa-config-gen.js';
 // types and documentation adapted from https://docs.microsoft.com/en-us/azure/static-web-apps/configuration
 // @ts-expect-error the schema does not yet include node:22, although official documentation mentions it, so we force it in here
 export interface StaticWebAppConfig extends AzureStaticWebAppsConfigurationFile {
