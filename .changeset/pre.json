@@ -1,5 +1,5 @@
 {
-	"mode": "pre",
+	"mode": "exit",
 	"tag": "rc",
 	"initialVersions": {
 		"@ktarmyshov/svelte-adapter-azure-swa": "0.24.0",

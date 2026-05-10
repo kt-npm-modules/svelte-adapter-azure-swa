@@ -76,7 +76,7 @@
 	},
 	"dependencies": {
 		"es-toolkit": "^1.45.1",
-		"rolldown": "^1.0.0-rc.12",
+		"rolldown": "^1.0.0",
 		"rolldown-plugin-sourcemaps": "^0.1.2",
 		"set-cookie-parser": "^3.1.0"
 	},
