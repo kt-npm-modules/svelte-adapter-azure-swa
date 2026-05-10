@@ -1,5 +1,94 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- a181abb: FEATURE: Rolldown replaces Rollup in the adapter.
+
+  BREAKING: `options.serverRollup` is replaced with `options.serverRolldown`.
+  - Contributed by [@sukeshpabolu](https://github.com/sukeshpabolu).
+
+### Patch Changes
+
+- a181abb: FIX: Restore empty form POST handling in Azure Static Web Apps cloud runtime
+  - Updated the historical empty POST workaround for the current Azure request shape.
+  - Fixed a case where Azure could drop `content-type` for empty form submissions, causing SvelteKit form actions to fail with `415 Unsupported Media Type`.
+  - Scoped the workaround to browser navigation form POST requests so generic POST handling remains unchanged.
+
+- 17f92ef: dependabot: directory '/', update svelte from 5.55.0 to 5.55.1
+- 5ab4343: dependabot: directory '/', update typescript-eslint from 8.57.2 to 8.58.0
+- 78a87a0: dependabot: directory '/', update @sentry/sveltekit from 10.46.0 to 10.47.0
+- 78a87a0: dependabot: directory '/', update svelte-check from 4.4.5 to 4.4.6
+- 9725dff: dependabot: directory '/', update @playwright/test from 1.58.2 to 1.59.0
+- 9725dff: dependabot: directory '/', update playwright from 1.58.2 to 1.59.0
+- b80dbe8: dependabot: directory '/', update @playwright/test from 1.59.0 to 1.59.1
+- b80dbe8: dependabot: directory '/', update playwright from 1.59.0 to 1.59.1
+- f9ce48d: dependabot: directory '/', update @eslint/compat from 2.0.3 to 2.0.4
+- f9ce48d: dependabot: directory '/', update @sveltejs/kit from 2.55.0 to 2.56.1
+- f9ce48d: dependabot: directory '/', update eslint from 10.1.0 to 10.2.0
+- f9ce48d: dependabot: directory '/', update vite from 8.0.3 to 8.0.5
+- 37969a0: dependabot: directory '/', update @inlang/paraglide-js from 2.15.1 to 2.15.2
+- 37969a0: dependabot: directory '/', update @sveltejs/kit from 2.56.1 to 2.57.0
+- 37969a0: dependabot: directory '/', update @vitest/browser-playwright from 4.1.2 to 4.1.3
+- 37969a0: dependabot: directory '/', update @vitest/browser from 4.1.2 to 4.1.3
+- 37969a0: dependabot: directory '/', update @vitest/coverage-istanbul from 4.1.2 to 4.1.3
+- 37969a0: dependabot: directory '/', update svelte from 5.55.1 to 5.55.2
+- 37969a0: dependabot: directory '/', update vite from 8.0.5 to 8.0.7
+- 37969a0: dependabot: directory '/', update vitest from 4.1.2 to 4.1.3
+- d0dbba8: dependabot: directory '/', update @eslint/compat
+- d0dbba8: dependabot: directory '/', update @inlang/paraglide-js
+- d0dbba8: dependabot: directory '/', update @sentry/sveltekit
+- d0dbba8: dependabot: directory '/', update @sveltejs/kit
+- d0dbba8: dependabot: directory '/', update @types/node
+- d0dbba8: dependabot: directory '/', update @vitest/browser-playwright
+- d0dbba8: dependabot: directory '/', update @vitest/browser
+- d0dbba8: dependabot: directory '/', update @vitest/coverage-istanbul
+- d0dbba8: dependabot: directory '/', update globals
+- d0dbba8: dependabot: directory '/', update prettier
+- d0dbba8: dependabot: directory '/', update svelte
+- d0dbba8: dependabot: directory '/', update typescript-eslint
+- d0dbba8: dependabot: directory '/', update vite
+- d0dbba8: dependabot: directory '/', update vitest-browser-svelte
+- d0dbba8: dependabot: directory '/', update vitest
+- 8be3a9f: dependabot: directory '/', update @azure/functions
+- 8be3a9f: dependabot: directory '/', update @azure/static-web-apps-cli
+- 8be3a9f: dependabot: directory '/', update @changesets/cli
+- 8be3a9f: dependabot: directory '/', update @sentry/sveltekit
+- 8be3a9f: dependabot: directory '/', update @tailwindcss/vite
+- 8be3a9f: dependabot: directory '/', update @vitest/browser-playwright
+- 8be3a9f: dependabot: directory '/', update @vitest/browser
+- 8be3a9f: dependabot: directory '/', update @vitest/coverage-istanbul
+- 8be3a9f: dependabot: directory '/', update eslint
+- 8be3a9f: dependabot: directory '/', update monocart-coverage-reports
+- 8be3a9f: dependabot: directory '/', update tailwindcss
+- 8be3a9f: dependabot: directory '/', update typescript-eslint
+- 8be3a9f: dependabot: directory '/', update vite
+- 8be3a9f: dependabot: directory '/', update vitest
+- 551ead8: dependabot: directory '/', update @azure/functions
+- 551ead8: dependabot: directory '/', update @inlang/paraglide-js
+- 551ead8: dependabot: directory '/', update @sentry/sveltekit
+- 551ead8: dependabot: directory '/', update @sveltejs/kit
+- 551ead8: dependabot: directory '/', update es-toolkit
+- 551ead8: dependabot: directory '/', update eslint-plugin-svelte
+- 551ead8: dependabot: directory '/', update prettier-plugin-tailwindcss
+- 551ead8: dependabot: directory '/', update svelte
+- 551ead8: dependabot: directory '/', update typescript-eslint
+- 551ead8: dependabot: directory '/', update vite
+- 2e8d050: dependabot: directory '/', update @inlang/paraglide-js
+- 2e8d050: dependabot: directory '/', update @sentry/sveltekit
+- 2e8d050: dependabot: directory '/', update @sveltejs/kit
+- 2e8d050: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- 2e8d050: dependabot: directory '/', update es-toolkit
+- 2e8d050: dependabot: directory '/', update eslint
+- 2e8d050: dependabot: directory '/', update globals
+- 2e8d050: dependabot: directory '/', update svelte-check
+- 2e8d050: dependabot: directory '/', update typescript-eslint
+- 3de6566: Replace lodash with es-toolkit
+  - Contributed by [@sukeshpabolu](https://github.com/sukeshpabolu).
+
+- 425fe42: Update dependencies
+
 ## 1.0.0-rc.3
 
 ### Patch Changes
