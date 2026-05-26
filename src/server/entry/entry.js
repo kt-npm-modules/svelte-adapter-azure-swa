@@ -4,15 +4,15 @@ import { debug, testWorkarounds } from 'ENV';
 import { manifest } from 'MANIFEST';
 import { Server } from 'SERVER';
 import {
-	getClientIPFromHeaders,
-	getClientPrincipalFromHeaders,
-	splitCookiesFromHeaders
+  getClientIPFromHeaders,
+  getClientPrincipalFromHeaders,
+  splitCookiesFromHeaders
 } from './headers.js';
 
 installPolyfills();
 
 const server = new Server(manifest);
-const initialized = server.init({ env: process.env });
+const initialized = server.init({ env: /** @type {Record<string, string>} */ (process.env) });
 
 /**
  * @typedef {import('@azure/functions').InvocationContext} InvocationContext
@@ -101,7 +101,7 @@ app.http('sk_render', {
 function toRequest(httpRequest, testWorkaroundsInfo) {
 	// because we proxy all requests to the render function, the original URL in the request is /api/sk_render
 	// this header contains the URL the user requested
-	const originalUrl = httpRequest.headers.get('x-ms-original-url');
+	const originalUrl = /** @type {string} */ (httpRequest.headers.get('x-ms-original-url'));
 
 	// SWA can strip the content-type header from empty POST requests,
 	// but SvelteKit form actions require it.

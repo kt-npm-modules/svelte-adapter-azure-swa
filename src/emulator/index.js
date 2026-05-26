@@ -44,7 +44,7 @@ export function emulatePlatform(config, prerender, options) {
 			claimsPrincipalData: {}
 		};
 		if ('claims' in clientPrincipal) {
-			/** @type {App.Platform['user']['claimsPrincipalData']} */
+			/** @type {NonNullable<App.Platform['user']>['claimsPrincipalData']} */
 			const claimsPrincipalData = {};
 			user.claimsPrincipalData = clientPrincipal.claims.reduce((acc, claim) => {
 				acc[claim.typ] = claim.val;

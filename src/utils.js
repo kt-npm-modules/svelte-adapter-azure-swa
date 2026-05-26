@@ -69,14 +69,14 @@ function loadMapSource2JSDir(dirs, log) {
 export function sentryRewriteSourcesFactory(dirs, options = undefined) {
 	// We need to build map source (from source map files) -> js file directory
 	/** @type {Map<string, string>} */
-	let mapSource2JSDir = undefined;
+	let mapSource2JSDir;
 
 	const log = options?.log;
 	const prefixDir = options?.prefixDir ?? '';
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	return (source, map) => {
-		if (!mapSource2JSDir) {
+		if (!mapSource2JSDir && log) {
 			mapSource2JSDir = loadMapSource2JSDir(dirs, log);
 		}
 		const mapDir = mapSource2JSDir.get(source);
