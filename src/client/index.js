@@ -1,6 +1,6 @@
 import { merge } from 'es-toolkit/object';
 import assert from 'node:assert';
-import { globSync } from 'node:fs';
+import { globSync } from 'tinyglobby';
 import path from 'node:path';
 import { rolldown } from 'rolldown';
 import sourcemaps from 'rolldown-plugin-sourcemaps';

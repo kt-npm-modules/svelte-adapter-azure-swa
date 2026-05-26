@@ -78,7 +78,8 @@
 		"es-toolkit": "^1.45.1",
 		"rolldown": "^1.0.0",
 		"rolldown-plugin-sourcemaps": "^0.1.2",
-		"set-cookie-parser": "^3.1.0"
+		"set-cookie-parser": "^3.1.0",
+		"tinyglobby": "^0.2.16"
 	},
 	"files": [
 		"src"
