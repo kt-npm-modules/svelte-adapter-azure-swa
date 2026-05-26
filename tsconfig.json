@@ -4,11 +4,11 @@
 		"checkJs": true,
 		"noEmit": true,
 		"noImplicitAny": true,
-		"target": "es2023",
+		"target": "es2022",
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
 		"allowSyntheticDefaultImports": true,
-		"lib": ["es2023"]
+		"lib": ["es2022"]
 	},
 	"include": ["src"]
 }
