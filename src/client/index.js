@@ -9,7 +9,7 @@ import sourcemaps from 'rolldown-plugin-sourcemaps';
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
  * @typedef {import('rolldown').RolldownOptions} RolldownOptions
- * @typedef {import('..').Options} Options
+ * @typedef {import('../index.js').Options} Options
  */
 
 /** @returns {RolldownOptions} */

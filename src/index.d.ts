@@ -1,9 +1,9 @@
 import { HttpRequestUser, InvocationContext } from '@azure/functions';
 import { Adapter } from '@sveltejs/kit';
 import { RolldownOptions } from 'rolldown';
-import { ClientPrincipal, ClientPrincipalWithClaims, CustomStaticWebAppConfig } from './types/swa';
+import type { ClientPrincipal, ClientPrincipalWithClaims, CustomStaticWebAppConfig } from './types/swa.d.ts';
 
-export * from './types/swa';
+export type * from './types/swa.d.ts';
 
 type ExternalOption = string[];
 

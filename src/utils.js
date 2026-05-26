@@ -65,7 +65,7 @@ function loadMapSource2JSDir(dirs, log) {
 	return mapSource2JSDir;
 }
 
-/** @type {import('.').sentryRewriteSourcesFactory} */
+/** @type {import('./index.js').sentryRewriteSourcesFactory} */
 export function sentryRewriteSourcesFactory(dirs, options = undefined) {
 	// We need to build map source (from source map files) -> js file directory
 	/** @type {Map<string, string>} */

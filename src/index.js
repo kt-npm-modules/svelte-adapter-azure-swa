@@ -9,7 +9,7 @@ import { emulatePlatform } from './emulator/index.js';
 import { bundleServer } from './server/index.js';
 import { writeSWAConfig } from './swa-config/index.js';
 
-/** @type {import('.').default} */
+/** @type {import('./index.js').default} */
 export default function (options = {}) {
 	return {
 		name: 'adapter-azure-swa',
