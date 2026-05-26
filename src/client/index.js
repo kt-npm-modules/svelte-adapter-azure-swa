@@ -2,7 +2,6 @@ import { merge } from 'es-toolkit/object';
 import assert from 'node:assert';
 import { globSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { rolldown } from 'rolldown';
 import sourcemaps from 'rolldown-plugin-sourcemaps';
 
@@ -36,9 +35,7 @@ function prepareRolldownOptions(builder, outDir) {
 			// This removes `src/` as well as the file extension from each
 			// file, so e.g. src/nested/foo.js becomes nested/foo
 			path.relative(clientDir, file.slice(0, file.length - path.extname(file).length)),
-			// This expands the relative paths to absolute paths, so e.g.
-			// src/nested/foo becomes /project/src/nested/foo.js
-			fileURLToPath(new URL(file, import.meta.url))
+			file
 		])
 	);
 	/** @type RolldownOptions */
