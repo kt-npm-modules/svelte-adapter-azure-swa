@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { rolldown } from 'rolldown';
 import { describe, expect, test, vi } from 'vitest';
 import azureAdapter from '../../src/index';

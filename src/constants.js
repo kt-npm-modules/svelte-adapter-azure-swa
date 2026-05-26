@@ -1,4 +1,4 @@
-import { join } from 'path';
+import { join } from 'node:path';
 
 export const DEFAULT_OUT_DIR_PATH = 'build';
 export const CLIENT_DEFAULT_OUT_DIR_PATH = join(DEFAULT_OUT_DIR_PATH, 'static');

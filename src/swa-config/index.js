@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import { writeFileSync } from 'node:fs';
 import { SERVER_FUNC_DIR_NAME } from '../constants.js';
 
 /**
