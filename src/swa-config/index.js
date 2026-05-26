@@ -80,12 +80,12 @@ export async function writeSWAConfig(builder, outDir, options) {
 	let swaConfig = options.customStaticWebAppConfig || {};
 	swaConfig = generateConfig(swaConfig, builder.config.kit.appDir);
 
-	if (!builder.prerendered.paths.includes('/') && swaConfig.routes) {
+	if (!builder.prerendered.paths.includes('/')) {
 		// Azure SWA requires an index.html to be present
 		// If the root was not pre-rendered, add a placeholder index.html
 		// Route all requests for the index to the SSR function
 		writeFileSync(`${outDir}/index.html`, '');
-		swaConfig.routes.push(
+		swaConfig.routes?.push(
 			{
 				route: '/index.html',
 				rewrite: SSR_FUNC_ROUTE

@@ -35,7 +35,7 @@ function list_files(dir, filter) {
 
 /**
  * @param {string[]} dirs directories to search
- * @param {Console['log']} log logger function
+ * @param {Console['log']} [log] logger function
  * @returns {Map<string, string>} Map of source file paths to directory of the source map & js file
  */
 function loadMapSource2JSDir(dirs, log) {
@@ -76,7 +76,7 @@ export function sentryRewriteSourcesFactory(dirs, options = undefined) {
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	return (source, map) => {
-		if (!mapSource2JSDir && log) {
+		if (!mapSource2JSDir) {
 			mapSource2JSDir = loadMapSource2JSDir(dirs, log);
 		}
 		const mapDir = mapSource2JSDir.get(source);
