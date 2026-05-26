@@ -1,6 +1,6 @@
-import { globSync } from 'glob';
 import { merge } from 'es-toolkit/object';
 import assert from 'node:assert';
+import { globSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rolldown } from 'rolldown';
