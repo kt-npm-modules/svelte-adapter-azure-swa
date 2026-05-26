@@ -4,9 +4,9 @@ import { debug, testWorkarounds } from 'ENV';
 import { manifest } from 'MANIFEST';
 import { Server } from 'SERVER';
 import {
-  getClientIPFromHeaders,
-  getClientPrincipalFromHeaders,
-  splitCookiesFromHeaders
+	getClientIPFromHeaders,
+	getClientPrincipalFromHeaders,
+	splitCookiesFromHeaders
 } from './headers.js';
 
 installPolyfills();
