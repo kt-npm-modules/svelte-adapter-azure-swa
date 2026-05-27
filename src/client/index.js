@@ -1,10 +1,10 @@
-import { globSync } from 'glob';
 import { merge } from 'es-toolkit/object';
 import assert from 'node:assert';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rolldown } from 'rolldown';
 import sourcemaps from 'rolldown-plugin-sourcemaps';
+import { globSync } from 'tinyglobby';
 
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
