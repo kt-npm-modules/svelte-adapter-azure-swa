@@ -1,10 +1,9 @@
-import { globSync } from 'glob';
 import { merge } from 'es-toolkit/object';
 import assert from 'node:assert';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { rolldown } from 'rolldown';
 import sourcemaps from 'rolldown-plugin-sourcemaps';
+import { convertPathToPattern, globSync } from 'tinyglobby';
 
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
@@ -31,14 +30,13 @@ function defaultRolldownOptions() {
  */
 function prepareRolldownOptions(builder, outDir) {
 	const clientDir = builder.getClientDirectory();
+	const cwd = process.cwd();
 	const input = Object.fromEntries(
-		globSync(`${clientDir}/**/*.js`).map((file) => [
+		globSync(`${convertPathToPattern(clientDir)}/**/*.js`).map((file) => [
 			// This removes `src/` as well as the file extension from each
 			// file, so e.g. src/nested/foo.js becomes nested/foo
 			path.relative(clientDir, file.slice(0, file.length - path.extname(file).length)),
-			// This expands the relative paths to absolute paths, so e.g.
-			// src/nested/foo becomes /project/src/nested/foo.js
-			fileURLToPath(new URL(file, import.meta.url))
+			path.resolve(cwd, file)
 		])
 	);
 	/** @type RolldownOptions */

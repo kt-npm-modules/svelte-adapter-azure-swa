@@ -9,3 +9,4 @@ demo-test-results/
 .devcontainer/
 artifacts/
 .tmp/
+.claude/settings.local.json
