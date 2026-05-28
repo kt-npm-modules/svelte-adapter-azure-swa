@@ -14,7 +14,9 @@ if (process.env.PUBLIC_SWA_CLI == 'true') {
 		timeout: 120 * 1000,
 		command:
 			'mkdir -p .tmp && TIMESTAMP="$(date +"%Y%m%d-%H%M%S")" && npm run swa 2>&1 | tee .tmp/swa-$TIMESTAMP.log',
-		port: 4280
+		port: 4280,
+		stdout: 'pipe',
+		stderr: 'pipe'
 	};
 	baseURL = 'http://localhost:4280';
 } else if (process.env.CI == 'true') {
