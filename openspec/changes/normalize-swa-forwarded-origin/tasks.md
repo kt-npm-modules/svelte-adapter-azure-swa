@@ -27,7 +27,7 @@
 
 - [x] 4.1 Inspect existing diagnostic routes under [tests/demo/src/routes/](tests/demo/src/routes/) (especially `diagnostic-headers-nav-fallback` and `diagnostic-headers-rewrite`) and the e2e suite at [tests/demo/e2e/diagnostic-headers.test.ts](tests/demo/e2e/diagnostic-headers.test.ts) to identify any assertion that checks `host`, `x-forwarded-host`, or `x-forwarded-proto`. Do NOT add new diagnostic routes.
 - [x] 4.2 Skipped — the diagnostic SvelteKit route only sees the downstream `Request.headers` AFTER the adapter has consumed and excluded `x-ms-original-url`, so any e2e assertion gated on `facts.xMsOriginalUrlPresent` would be effectively dead/silent in the normal pipeline. Tightening is not possible without surfacing the raw inbound state, which would require a new diagnostic surface (out of scope). The capability is covered by the new unit tests in [tests/unit/copy-headers.test.js](tests/unit/copy-headers.test.js) (group 3.x), which exercise `buildDownstreamHeaders` directly with synthetic `x-ms-original-url` inputs.
-- [x] 4.3 No-op: no existing assertion in [tests/demo/e2e/diagnostic-headers.test.ts](tests/demo/e2e/diagnostic-headers.test.ts) was checking the *internal* host on these routes, so nothing to update.
+- [x] 4.3 No-op: no existing assertion in [tests/demo/e2e/diagnostic-headers.test.ts](tests/demo/e2e/diagnostic-headers.test.ts) was checking the _internal_ host on these routes, so nothing to update.
 
 ## 5. README documentation
 
