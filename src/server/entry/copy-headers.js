@@ -16,9 +16,22 @@
  *     its facts under `AdapterTestWorkaroundsInfo.emptyFormContentTypeStrip`
  *     (when `testWorkarounds` is `true` and the empty-POST-form heuristic
  *     matches; the heuristic itself is unchanged from previous behaviour)
+ *   - normalize the downstream origin headers (`host`, `x-forwarded-host`,
+ *     `x-forwarded-proto`) from `x-ms-original-url` when that header is
+ *     present and parses as a valid absolute URL. The three writes are
+ *     unconditional and overwrite any inbound values — `x-ms-original-url`
+ *     is the single trusted source for the public origin. When the header
+ *     is absent or unparseable, no normalization happens and the inbound
+ *     values pass through unchanged. See
+ *     `openspec/specs/adapter-forwarded-origin/spec.md` (capability
+ *     `adapter-forwarded-origin`) for the full contract.
  *
  * Out of scope (kept in `entry.js`):
  *   - constructing the SvelteKit `Request.url` from `x-ms-original-url`
+ *     (entry.js continues to pass the raw inbound string into
+ *     `new Request(originalUrl, …)` exactly as before; this helper performs
+ *     its own local `URL` parse only to derive the normalized origin
+ *     headers, and does not return or share that parse with `toRequest`)
  *   - the response/header mirroring of the test-workaround payload
  */
 
@@ -64,7 +77,7 @@
 
 /**
  * @typedef {object} CopyHeadersResult
- * @property {Record<string, string>} downstreamHeaders Inbound headers minus `x-ms-original-url` (and minus `Authorization` when `preserveAuthorization` is `false`). Suitable for `new Headers(...)`.
+ * @property {Record<string, string>} downstreamHeaders Inbound headers minus `x-ms-original-url` (and minus `Authorization` when `preserveAuthorization` is `false`), with `host`, `x-forwarded-host`, and `x-forwarded-proto` overwritten from `x-ms-original-url` when that header is present and parses as a valid absolute URL (otherwise these three pass through their inbound values unchanged). Suitable for `new Headers(...)`.
  * @property {AdapterTestWorkaroundsInfo|null} testWorkaroundsInfo Diagnostic facts when `testWorkarounds` is `true`, otherwise `null`. The empty-form namespace is present only on POST requests that match the heuristic; the auth namespace is present on every method.
  * @property {boolean} emptyPostFormContentTypeApplied `true` iff the empty-POST-form heuristic matched and the helper set `Content-Type: application/x-www-form-urlencoded` on `httpRequest.headers` (mirrors the prior in-place mutation).
  */
@@ -168,6 +181,34 @@ export function buildDownstreamHeaders(httpRequest, options) {
 		if (!preserveAuthorization && key.toLowerCase() === 'authorization') return;
 		downstreamHeaders[key] = value;
 	});
+
+	// Normalize the downstream origin headers from `x-ms-original-url` so that
+	// `Request.url` (built by entry.js from the raw inbound value) and the
+	// downstream origin headers describe the same public origin. SWA-injected
+	// `host` is the internal Azure Functions hop, and inbound `x-forwarded-host`
+	// / `x-forwarded-proto` may be missing, stale, or client-spoofed — we treat
+	// `x-ms-original-url` as the single trusted source and unconditionally
+	// overwrite the three headers when it parses. Absent or unparseable URL →
+	// pass through unchanged; we do not throw.
+	//
+	// This parse is local to the helper. entry.js's `toRequest` continues to
+	// pass the raw `x-ms-original-url` string into `new Request(originalUrl, …)`
+	// unchanged — we deliberately do NOT route this parsed URL there.
+	const originalUrlHeader = httpRequest.headers.get('x-ms-original-url');
+	if (originalUrlHeader) {
+		/** @type {URL|null} */
+		let originalUrl;
+		try {
+			originalUrl = new URL(originalUrlHeader);
+		} catch {
+			originalUrl = null;
+		}
+		if (originalUrl) {
+			downstreamHeaders['host'] = originalUrl.host;
+			downstreamHeaders['x-forwarded-host'] = originalUrl.host;
+			downstreamHeaders['x-forwarded-proto'] = originalUrl.protocol.replace(/:$/, '');
+		}
+	}
 
 	return {
 		downstreamHeaders,

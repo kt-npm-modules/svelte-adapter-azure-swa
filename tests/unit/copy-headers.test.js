@@ -431,3 +431,191 @@ describe('buildDownstreamHeaders — auth namespace semantics', () => {
 		expect(testWorkaroundsInfo?.auth?.authorizationStripped).toBe(true);
 	});
 });
+
+describe('buildDownstreamHeaders — origin-header normalization from x-ms-original-url', () => {
+	test('valid x-ms-original-url overwrites internal host with originalUrl.host', () => {
+		const httpRequest = fakeHttpRequest({
+			method: 'GET',
+			headers: {
+				'x-ms-original-url': 'https://example.com/foo?q=1',
+				host: 'internal.azurewebsites.net'
+			}
+		});
+		const { downstreamHeaders } = buildDownstreamHeaders(httpRequest, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		const headers = new Headers(downstreamHeaders);
+		expect(headers.get('host')).toBe('example.com');
+	});
+
+	test('x-forwarded-host is set when absent and overwritten when stale', () => {
+		// Absent inbound x-forwarded-host → set from originalUrl.host.
+		const noInbound = fakeHttpRequest({
+			method: 'GET',
+			headers: { 'x-ms-original-url': 'https://example.com/foo' }
+		});
+		const noInboundResult = buildDownstreamHeaders(noInbound, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		expect(new Headers(noInboundResult.downstreamHeaders).get('x-forwarded-host')).toBe(
+			'example.com'
+		);
+
+		// Stale inbound x-forwarded-host → still overwritten.
+		const staleInbound = fakeHttpRequest({
+			method: 'GET',
+			headers: {
+				'x-ms-original-url': 'https://example.com/foo',
+				'x-forwarded-host': 'stale.internal'
+			}
+		});
+		const staleInboundResult = buildDownstreamHeaders(staleInbound, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		expect(new Headers(staleInboundResult.downstreamHeaders).get('x-forwarded-host')).toBe(
+			'example.com'
+		);
+	});
+
+	test('x-forwarded-proto is the bare scheme without trailing colon for https and http', () => {
+		const httpsReq = fakeHttpRequest({
+			method: 'GET',
+			headers: { 'x-ms-original-url': 'https://example.com/foo' }
+		});
+		const httpsRes = buildDownstreamHeaders(httpsReq, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		const httpsValue = new Headers(httpsRes.downstreamHeaders).get('x-forwarded-proto');
+		expect(httpsValue).toBe('https');
+		expect(httpsValue).not.toContain(':');
+
+		const httpReq = fakeHttpRequest({
+			method: 'GET',
+			headers: { 'x-ms-original-url': 'http://example.com/foo' }
+		});
+		const httpRes = buildDownstreamHeaders(httpReq, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		expect(new Headers(httpRes.downstreamHeaders).get('x-forwarded-proto')).toBe('http');
+	});
+
+	test('spoofed inbound x-forwarded-host and x-forwarded-proto are overwritten', () => {
+		const httpRequest = fakeHttpRequest({
+			method: 'GET',
+			headers: {
+				'x-ms-original-url': 'https://example.com/foo',
+				'x-forwarded-host': 'attacker.example.org',
+				'x-forwarded-proto': 'http'
+			}
+		});
+		const { downstreamHeaders } = buildDownstreamHeaders(httpRequest, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		const headers = new Headers(downstreamHeaders);
+		expect(headers.get('x-forwarded-host')).toBe('example.com');
+		expect(headers.get('x-forwarded-proto')).toBe('https');
+	});
+
+	test('originalUrl.host preserves the port in host and x-forwarded-host', () => {
+		const httpRequest = fakeHttpRequest({
+			method: 'GET',
+			headers: { 'x-ms-original-url': 'https://example.com:8443/foo' }
+		});
+		const { downstreamHeaders } = buildDownstreamHeaders(httpRequest, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		const headers = new Headers(downstreamHeaders);
+		expect(headers.get('host')).toBe('example.com:8443');
+		expect(headers.get('x-forwarded-host')).toBe('example.com:8443');
+	});
+
+	test('unrelated headers are preserved and x-ms-original-url is still excluded', () => {
+		const httpRequest = fakeHttpRequest({
+			method: 'GET',
+			headers: {
+				'x-ms-original-url': 'https://example.com/foo',
+				'Content-Type': 'application/json',
+				'X-Custom': 'bar',
+				'x-forwarded-for': '203.0.113.5'
+			}
+		});
+		const { downstreamHeaders } = buildDownstreamHeaders(httpRequest, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		const headers = new Headers(downstreamHeaders);
+		expect(headers.get('content-type')).toBe('application/json');
+		expect(headers.get('x-custom')).toBe('bar');
+		expect(headers.get('x-forwarded-for')).toBe('203.0.113.5');
+		// Regression: existing exclusion of x-ms-original-url itself.
+		expect(headers.get('x-ms-original-url')).toBeNull();
+	});
+
+	test('absent x-ms-original-url leaves origin headers untouched and does not synthesize x-forwarded-proto', () => {
+		const httpRequest = fakeHttpRequest({
+			method: 'GET',
+			headers: {
+				host: 'internal.azurewebsites.net',
+				'x-forwarded-host': 'client.example'
+			}
+		});
+		const { downstreamHeaders } = buildDownstreamHeaders(httpRequest, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		const headers = new Headers(downstreamHeaders);
+		expect(headers.get('host')).toBe('internal.azurewebsites.net');
+		expect(headers.get('x-forwarded-host')).toBe('client.example');
+		expect(headers.get('x-forwarded-proto')).toBeNull();
+	});
+
+	test('invalid x-ms-original-url does not throw and does not normalize', () => {
+		const httpRequest = fakeHttpRequest({
+			method: 'GET',
+			headers: {
+				'x-ms-original-url': 'not a url',
+				host: 'internal.azurewebsites.net'
+			}
+		});
+		const invoke = () =>
+			buildDownstreamHeaders(httpRequest, {
+				preserveAuthorization: false,
+				testWorkarounds: false
+			});
+		expect(invoke).not.toThrow();
+		const { downstreamHeaders } = invoke();
+		const headers = new Headers(downstreamHeaders);
+		expect(headers.get('host')).toBe('internal.azurewebsites.net');
+		expect(headers.get('x-forwarded-host')).toBeNull();
+		expect(headers.get('x-forwarded-proto')).toBeNull();
+	});
+
+	test('composes with preserveAuthorization: false — Authorization stripped, origin normalized', () => {
+		const httpRequest = fakeHttpRequest({
+			method: 'GET',
+			headers: {
+				'x-ms-original-url': 'https://example.com/foo',
+				host: 'internal.azurewebsites.net',
+				Authorization: 'Bearer foo'
+			}
+		});
+		const { downstreamHeaders } = buildDownstreamHeaders(httpRequest, {
+			preserveAuthorization: false,
+			testWorkarounds: false
+		});
+		const headers = new Headers(downstreamHeaders);
+		// adapter-authorization-policy: strip is unchanged.
+		expect(headers.get('authorization')).toBeNull();
+		// adapter-forwarded-origin: normalization fires independently.
+		expect(headers.get('host')).toBe('example.com');
+		expect(headers.get('x-forwarded-host')).toBe('example.com');
+		expect(headers.get('x-forwarded-proto')).toBe('https');
+	});
+});

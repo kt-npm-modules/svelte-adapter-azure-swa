@@ -399,6 +399,24 @@ The default-`false` behavior is based on the empirical observation (see [issue #
 
 > **Bearer-auth behind SWA caveat.** Applications that need a client-supplied bearer token to traverse Azure SWA cleanly **should not rely on `Authorization`** unless they fully understand their SWA routing and runtime behavior, regardless of this option. Because Azure SWA's behavior around `Authorization` is not under the adapter's control, the safest pattern is to use an app-specific custom header (e.g. `x-app-authorization`) for application bearer auth and treat `Authorization` as platform-owned.
 
+### Public-origin header normalization (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto`)
+
+Azure Static Web Apps proxies requests to a managed Azure Functions backend. From the function's point of view the inbound request describes the **internal** hop — `host` is typically `<something>.azurewebsites.net`, and `x-forwarded-host` / `x-forwarded-proto` may be missing, stale, or client-spoofed — while the **public** URL is supplied separately via the `x-ms-original-url` header. The adapter already uses `x-ms-original-url` to construct `Request.url` and excludes that header from the downstream SvelteKit `Request.headers`.
+
+To keep `Request.url` and the origin-identifying headers self-consistent, the adapter additionally **normalizes** three downstream headers from the same trusted `x-ms-original-url` value before constructing the SvelteKit `Request`. This is unconditional — there is no adapter option for it — and applies whenever `x-ms-original-url` is present and parses as a valid absolute URL.
+
+| Downstream header   | Source                                                                 |
+| ------------------- | ---------------------------------------------------------------------- |
+| `Host`              | `originalUrl.host` (includes the port when present)                    |
+| `X-Forwarded-Host`  | `originalUrl.host`                                                     |
+| `X-Forwarded-Proto` | `originalUrl.protocol` with the trailing colon stripped (e.g. `https`) |
+
+**Trust model.** `x-ms-original-url` is set by Azure SWA itself; the adapter treats it as the single trusted source for the public origin. Any inbound `x-forwarded-host` / `x-forwarded-proto` value — whether provided by an upstream proxy, replayed from a previous hop, or spoofed by a client — is **overwritten** by the values derived from `x-ms-original-url`. SvelteKit code reading `request.headers.get('host')`, `x-forwarded-host`, or `x-forwarded-proto` therefore sees the same public origin as `event.url`.
+
+**Fallback behavior.** When `x-ms-original-url` is absent (e.g. local development outside the SWA flow) or does not parse as an absolute URL, the adapter does **not** touch `host`, `x-forwarded-host`, or `x-forwarded-proto` — those headers pass through with their inbound values exactly as before. No new error path is introduced by the normalization step.
+
+This is a separate concern from [`preserveAuthorization`](#preserveauthorization) — Authorization handling is governed by that option and is unaffected by origin-header normalization. Both behaviors compose: with the default options, an inbound request carrying `Authorization` and `x-ms-original-url` produces a downstream SvelteKit `Request` whose `Authorization` is stripped _and_ whose `host` / `x-forwarded-host` / `x-forwarded-proto` describe the public origin.
+
 ## Instrumentation, sourcemaps, and observability
 
 ### Instrumentation support

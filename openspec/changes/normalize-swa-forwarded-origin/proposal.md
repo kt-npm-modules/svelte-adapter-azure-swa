@@ -17,9 +17,11 @@ The adapter already uses `x-ms-original-url` to construct the SvelteKit `Request
 ## Capabilities
 
 ### New Capabilities
+
 - `adapter-forwarded-origin`: Defines the adapter's policy for normalizing the downstream origin-identifying headers (`host`, `x-forwarded-host`, `x-forwarded-proto`) from the trusted public `x-ms-original-url`, including the absent/invalid fallback and the interaction with the existing `x-ms-original-url`-driven `Request.url` construction.
 
 ### Modified Capabilities
+
 <!-- None. `adapter-authorization-policy` is intentionally untouched: this change does not modify Authorization behaviour, `preserveAuthorization`, the `x-adapter-test-workarounds` payload, or the existing `x-ms-original-url`-driven `Request.url` construction. -->
 
 ## Impact

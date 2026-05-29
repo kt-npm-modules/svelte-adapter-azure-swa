@@ -1,8 +1,9 @@
 ## Context
 
-Azure Static Web Apps fronts SvelteKit apps deployed via this adapter. SWA terminates the public hostname and proxies the request to a managed Azure Functions backend; from the Functions invocation's point of view the inbound request describes the *internal* hop (`host: <something>.azurewebsites.net`, possibly missing `x-forwarded-host`/`x-forwarded-proto`), while the public URL is supplied separately via the `x-ms-original-url` header. The adapter already takes that into account in [src/server/entry/entry.js](src/server/entry/entry.js)'s `toRequest`: `Request.url` is built from `x-ms-original-url`, and `x-ms-original-url` is filtered out of the downstream headers by the `buildDownstreamHeaders` helper in [src/server/entry/copy-headers.js](src/server/entry/copy-headers.js).
+Azure Static Web Apps fronts SvelteKit apps deployed via this adapter. SWA terminates the public hostname and proxies the request to a managed Azure Functions backend; from the Functions invocation's point of view the inbound request describes the _internal_ hop (`host: <something>.azurewebsites.net`, possibly missing `x-forwarded-host`/`x-forwarded-proto`), while the public URL is supplied separately via the `x-ms-original-url` header. The adapter already takes that into account in [src/server/entry/entry.js](src/server/entry/entry.js)'s `toRequest`: `Request.url` is built from `x-ms-original-url`, and `x-ms-original-url` is filtered out of the downstream headers by the `buildDownstreamHeaders` helper in [src/server/entry/copy-headers.js](src/server/entry/copy-headers.js).
 
 The remaining inconsistency (issue #218, scope 1) is the origin-identifying headers. Even after `Request.url` is correct, `Request.headers` still carries:
+
 - `host` from the internal Azure Functions hop,
 - a possibly missing, stale, or client-spoofed `x-forwarded-host`,
 - a possibly missing, stale, or client-spoofed `x-forwarded-proto`.
@@ -14,6 +15,7 @@ Scope 2 of issue #218 (Authorization) was already shipped by the archived `strip
 ## Goals / Non-Goals
 
 **Goals:**
+
 - When `x-ms-original-url` is present and parses as a valid absolute URL, normalize the downstream `host`, `x-forwarded-host`, and `x-forwarded-proto` from that URL so `Request.url` and `Request.headers` describe the same public origin.
 - Treat `x-ms-original-url` as the trusted source for the public origin (it is already trusted for `Request.url`); deliberately overwrite any client-provided `x-forwarded-host`/`x-forwarded-proto` rather than honour them.
 - Keep the change deterministic, pure, and unit-testable directly on the helper — no new I/O, no logging, no time, no env reads.
@@ -21,12 +23,13 @@ Scope 2 of issue #218 (Authorization) was already shipped by the archived `strip
 - Preserve existing fallback behaviour when `x-ms-original-url` is absent or invalid; introduce no new crash path beyond what `toRequest` already does today.
 
 **Non-Goals:**
+
 - Do not change Authorization behaviour or `preserveAuthorization`. That is `adapter-authorization-policy`'s concern.
 - Do not add new adapter options. The normalization is unconditional whenever `x-ms-original-url` is usable.
 - Do not change `Request.url` construction. The existing `new Request(originalUrl, …)` call site is unchanged.
 - Do not add new diagnostic routes or new transport headers. Existing demo/e2e diagnostics may be tightened in their assertions but no new endpoint is created.
 - Do not modify GitHub Actions workflows.
-- Do not normalize other forwarded-* headers (`x-forwarded-for`, `x-forwarded-port`, `forwarded`, etc.). The proposal scopes the contract to `host`, `x-forwarded-host`, `x-forwarded-proto`.
+- Do not normalize other forwarded-\* headers (`x-forwarded-for`, `x-forwarded-port`, `forwarded`, etc.). The proposal scopes the contract to `host`, `x-forwarded-host`, `x-forwarded-proto`.
 
 ## Decisions
 
@@ -35,8 +38,9 @@ Scope 2 of issue #218 (Authorization) was already shipped by the archived `strip
 The `x-ms-original-url` exclusion is already centralized in [src/server/entry/copy-headers.js](src/server/entry/copy-headers.js)'s `buildDownstreamHeaders`. The new normalization needs the same input (`x-ms-original-url`) and acts on the same output (the downstream headers map), so it belongs at the same seam. Returning the normalized map keeps `toRequest` in `entry.js` minimal — it still owns `new Request(originalUrl, …)` and is unchanged in behaviour.
 
 **Alternatives considered:**
-- *A separate helper next to `buildDownstreamHeaders`.* Rejected: it would force two passes over the headers and an extra import in `entry.js`. The normalization is a one-liner conceptually ("after the copy, set three keys"), and the helper already owns the only other origin-related rule (`x-ms-original-url` exclusion).
-- *Doing it in `toRequest`.* Rejected: `toRequest` would have to re-read `x-ms-original-url`, re-`URL.parse` it, and mutate a `Headers` instance after construction. Worse, the unit-coverage layer in [tests/unit/copy-headers.test.js](tests/unit/copy-headers.test.js) would no longer exercise the normalization without spinning up `entry.js`'s mocked `ENV`/`MANIFEST`/`SERVER`. Keeping the rule in the helper preserves the test seam.
+
+- _A separate helper next to `buildDownstreamHeaders`._ Rejected: it would force two passes over the headers and an extra import in `entry.js`. The normalization is a one-liner conceptually ("after the copy, set three keys"), and the helper already owns the only other origin-related rule (`x-ms-original-url` exclusion).
+- _Doing it in `toRequest`._ Rejected: `toRequest` would have to re-read `x-ms-original-url`, re-`URL.parse` it, and mutate a `Headers` instance after construction. Worse, the unit-coverage layer in [tests/unit/copy-headers.test.js](tests/unit/copy-headers.test.js) would no longer exercise the normalization without spinning up `entry.js`'s mocked `ENV`/`MANIFEST`/`SERVER`. Keeping the rule in the helper preserves the test seam.
 
 ### Decision 2: Parse `x-ms-original-url` separately inside `buildDownstreamHeaders` for header normalization only; leave `Request.url` construction untouched
 
@@ -45,9 +49,10 @@ The `x-ms-original-url` exclusion is already centralized in [src/server/entry/co
 This means the WHATWG `URL` parser may run twice for one request when `x-ms-original-url` is present and parseable — once inside the helper for header normalization, once inside `new Request(originalUrl, …)` for `Request.url`. That duplication is deliberate: it is the price of leaving the existing `Request.url` construction strictly unchanged, which the proposal mandates.
 
 **Alternatives considered:**
-- *Refactor `toRequest` to share the helper's parsed `URL`.* Rejected: out of scope — the proposal explicitly states "Do not change `Request.url` behavior except preserving the existing `x-ms-original-url` construction." Sharing the parse would require routing a `URL` (or pre-built string) from the helper into `toRequest` and rewriting the `new Request(...)` call site, which is a refactor we are not asked to do.
-- *Parse only inside `toRequest` and pass `host`/`protocol` strings into the helper.* Rejected: it splits the "trusted public origin" concept across two files, forces `toRequest` to grow new logic, and would couple the unit-testable helper to a caller-provided pre-parse — losing the test seam at [tests/unit/copy-headers.test.js](tests/unit/copy-headers.test.js).
-- *Use string slicing instead of `new URL(...)`.* Rejected: `URL` is the standard, polyfilled (`installPolyfills` runs at module top), and gives us a consistent definition of "host" (host:port, IDN-encoded) and "protocol" (with colon, which we strip).
+
+- _Refactor `toRequest` to share the helper's parsed `URL`._ Rejected: out of scope — the proposal explicitly states "Do not change `Request.url` behavior except preserving the existing `x-ms-original-url` construction." Sharing the parse would require routing a `URL` (or pre-built string) from the helper into `toRequest` and rewriting the `new Request(...)` call site, which is a refactor we are not asked to do.
+- _Parse only inside `toRequest` and pass `host`/`protocol` strings into the helper._ Rejected: it splits the "trusted public origin" concept across two files, forces `toRequest` to grow new logic, and would couple the unit-testable helper to a caller-provided pre-parse — losing the test seam at [tests/unit/copy-headers.test.js](tests/unit/copy-headers.test.js).
+- _Use string slicing instead of `new URL(...)`._ Rejected: `URL` is the standard, polyfilled (`installPolyfills` runs at module top), and gives us a consistent definition of "host" (host:port, IDN-encoded) and "protocol" (with colon, which we strip).
 
 ### Decision 3: `x-forwarded-proto` is the protocol scheme without the trailing colon
 
@@ -57,17 +62,18 @@ This means the WHATWG `URL` parser may run twice for one request when `x-ms-orig
 
 Three observable input states and what the helper does in each:
 
-| State                                         | Today's behaviour                                   | New behaviour                                                                 |
-| --------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Header absent                                 | `originalUrl` is `null`; `new Request(null, …)` runs | unchanged; helper does NOT touch `host`/`x-forwarded-host`/`x-forwarded-proto`|
-| Header present, parses as absolute URL        | `Request.url` set to that URL                        | `Request.url` set as today **and** the three headers overwritten              |
-| Header present, does NOT parse as absolute URL| `new Request(...)` may throw (existing path)         | helper does NOT touch the three headers; `entry.js` continues to its existing path; no new crash beyond what's there today |
+| State                                          | Today's behaviour                                    | New behaviour                                                                                                              |
+| ---------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Header absent                                  | `originalUrl` is `null`; `new Request(null, …)` runs | unchanged; helper does NOT touch `host`/`x-forwarded-host`/`x-forwarded-proto`                                             |
+| Header present, parses as absolute URL         | `Request.url` set to that URL                        | `Request.url` set as today **and** the three headers overwritten                                                           |
+| Header present, does NOT parse as absolute URL | `new Request(...)` may throw (existing path)         | helper does NOT touch the three headers; `entry.js` continues to its existing path; no new crash beyond what's there today |
 
 The helper guards the parse with `try { new URL(originalUrl) } catch { /* skip */ }`. It does NOT swallow downstream errors from `entry.js`'s `new Request(originalUrl, …)` — that's an existing crash path the proposal explicitly leaves intact ("must not introduce a new crash path beyond existing behavior").
 
 **Alternatives considered:**
-- *Emit a synthetic `host: localhost` when the URL is missing.* Rejected: it would mask real misconfiguration and contradict the goal of "self-consistent with `Request.url`".
-- *Throw a typed error on invalid `x-ms-original-url`.* Rejected: out of scope; the proposal forbids new crash paths.
+
+- _Emit a synthetic `host: localhost` when the URL is missing._ Rejected: it would mask real misconfiguration and contradict the goal of "self-consistent with `Request.url`".
+- _Throw a typed error on invalid `x-ms-original-url`._ Rejected: out of scope; the proposal forbids new crash paths.
 
 ### Decision 5: Always overwrite incoming `x-forwarded-host` and `x-forwarded-proto` when normalizing
 
@@ -75,7 +81,7 @@ When `x-ms-original-url` is present and parseable, we treat it as the trusted pu
 
 - SWA itself does not reliably set these headers — observed inputs include "missing", "stale" (pointing at a previous hop), and "passed through from the client". Treating any of those as authoritative would defeat the whole point of normalization.
 - A client-supplied `x-forwarded-host: attacker.example.com` reaching a function whose only origin signal is "trust the headers" is exactly the spoofing class the proposal calls out. `x-ms-original-url` is set by SWA itself; it is the only origin signal we trust.
-- This matches how reverse proxies typically use these headers: the *last* trusted hop overwrites them; we are the last trusted hop.
+- This matches how reverse proxies typically use these headers: the _last_ trusted hop overwrites them; we are the last trusted hop.
 
 ### Decision 6: Set, not append, on `Host`
 
