@@ -1,6 +1,7 @@
 declare module 'ENV' {
 	export const debug: boolean;
 	export const testWorkarounds: boolean;
+	export const preserveAuthorization: boolean;
 }
 
 declare module 'SERVER' {

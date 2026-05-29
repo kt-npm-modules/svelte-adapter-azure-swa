@@ -176,12 +176,14 @@ function writeEnvironment(builder, tmpDir, options) {
 	const { envFilePath } = getPaths(builder, tmpDir);
 	const debug = options.debug ?? false;
 	const testWorkarounds = options.testWorkarounds ?? false;
+	const preserveAuthorization = options.preserveAuthorization ?? false;
 	// Write environment file
 	writeFileSync(
 		envFilePath,
 		[
 			`export const debug = ${debug.toString()};`,
-			`export const testWorkarounds = ${testWorkarounds.toString()};`
+			`export const testWorkarounds = ${testWorkarounds.toString()};`,
+			`export const preserveAuthorization = ${preserveAuthorization.toString()};`
 		].join('\n')
 	);
 }
