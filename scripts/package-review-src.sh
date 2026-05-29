@@ -3,8 +3,10 @@ set -euo pipefail
 
 # Packages project source for ChatGPT code review.
 #
-# Honors all (nested) .gitignore files via `git ls-files`, so anything that
-# git would ignore stays out of the archive. Must be run inside a git repo.
+# Copies everything git would consider part of the project (tracked files +
+# untracked files that aren't ignored), honoring all nested .gitignore rules
+# via `git ls-files`. Reusable across repos without per-project tweaks.
+# Must be run inside a git repo.
 #
 # Usage:
 #   ./scripts/package-review-src.sh
@@ -29,63 +31,76 @@ rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 mkdir -p "$ARTIFACTS_DIR"
 
-# Copies a file or directory into staging, honoring all nested .gitignore
-# rules via `git ls-files`. Missing paths are silently skipped — the script
-# is intended to be reusable across repos that may not share the same layout.
-copy_if_exists() {
-  local path="$1"
-  [[ -e "$ROOT_DIR/$path" ]] || return 0
-
-  if [[ -d "$ROOT_DIR/$path" ]]; then
-    while IFS= read -r -d '' f; do
-      mkdir -p "$STAGING_DIR/$(dirname "$f")"
-      cp "$ROOT_DIR/$f" "$STAGING_DIR/$f"
-    done < <(git -C "$ROOT_DIR" ls-files -z --cached --others --exclude-standard -- "$path")
-  else
-    # Single file: skip if git considers it ignored.
-    if git -C "$ROOT_DIR" check-ignore -q "$path"; then
-      return 0
-    fi
-    mkdir -p "$STAGING_DIR/$(dirname "$path")"
-    cp "$ROOT_DIR/$path" "$STAGING_DIR/$path"
-  fi
-}
-
 echo "Preparing review package..."
 
-copy_if_exists "src"
-copy_if_exists "tests"
-copy_if_exists ".github"
+# Copy everything git tracks plus untracked-but-not-ignored files. This honors
+# all (nested) .gitignore rules without maintaining a per-project allowlist.
+# `git ls-files --cached` reports paths from the index, which can include files
+# that were deleted on disk but not yet staged — skip those, the archive should
+# reflect the working tree, not the index.
+while IFS= read -r -d '' f; do
+  [[ -e "$ROOT_DIR/$f" ]] || continue
+  mkdir -p "$STAGING_DIR/$(dirname "$f")"
+  cp "$ROOT_DIR/$f" "$STAGING_DIR/$f"
+done < <(git -C "$ROOT_DIR" ls-files -z --cached --others --exclude-standard)
 
-copy_if_exists "tsconfig.json"
-copy_if_exists "tsconfig-test.json"
-copy_if_exists "tsconfig-release.json"
+# Paths to strip from the staged tree, on top of .gitignore. Each entry is
+# matched against the basename at any depth (i.e. `**/<entry>`) and removed
+# recursively, so the same list works for files and directories. Glob chars
+# (`*`, `?`) are passed through to find.
+EXTRA_EXCLUDES=(
+  # Lockfiles — noisy, useless for review.
+  'package-lock.json'
+  'yarn.lock'
+  'pnpm-lock.yaml'
+  'bun.lockb'
 
-copy_if_exists "vite.config.ts"
-copy_if_exists "vitest.config.ts"
+  # AI / IDE assistant configs.
+  '.claude'
+  '.cursor'
+  '.aider*'
+  '.windsurf'
+  '.continue'
 
-copy_if_exists "README.md"
-copy_if_exists "package.json"
-copy_if_exists "LICENSE"
-copy_if_exists "CHANGELOG.md"
+  # Release / process metadata, not code.
+  'CHANGELOG.md'
+  'LICENSE'
 
-copy_if_exists ".changeset"
+  # macOS filesystem noise.
+  '.DS_Store'
+  '._*'
+  'Icon?'
+  '.apdisk'
+  '.AppleDouble'
+  '.Spotlight-V100'
+  '.Trashes'
+  '.fseventsd'
+  '.TemporaryItems'
+  '__MACOSX'
+)
 
-# Strip macOS noise.
-find "$STAGING_DIR" \( \
-  -name '.DS_Store' -o \
-  -name '._*' -o \
-  -name 'Icon?' -o \
-  -name '.apdisk' \
-\) -type f -delete
-find "$STAGING_DIR" -type d \( \
-  -name '.AppleDouble' -o \
-  -name '.Spotlight-V100' -o \
-  -name '.Trashes' -o \
-  -name '.fseventsd' -o \
-  -name '.TemporaryItems' -o \
-  -name '__MACOSX' \
-\) -prune -exec rm -rf {} +
+# Optional excludes — uncomment per task when these aren't relevant to the
+# review (e.g. you're reviewing application code, not CI/release plumbing).
+# EXTRA_EXCLUDES+=(
+#   '.changeset'
+#   'openspec'
+#   '.github'
+#   '.githooks'
+#   '__snapshots__'
+#   '.vscode'
+#   '.idea'
+#   '.editorconfig'
+#   '.prettierrc'
+#   '.prettierignore'
+#   '.npmrc'
+#   '.nvmrc'
+#   '.sonarcloud.properties'
+#   'sonar-project.properties'
+# )
+
+for pattern in "${EXTRA_EXCLUDES[@]}"; do
+  find "$STAGING_DIR" -depth -name "$pattern" -exec rm -rf {} +
+done
 
 {
   echo "Included project tree:"
