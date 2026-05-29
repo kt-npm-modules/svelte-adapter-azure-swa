@@ -40,14 +40,16 @@ The previous draft of this proposal exposed a raw header echo route. That is uns
 
 - Add one `actions/upload-artifact@v7` step to the `azure` job in [.github/workflows/ci-swa.yml](.github/workflows/ci-swa.yml), matching the repository's existing upload-artifact convention (see Decision 12 in design.md). The artifact contains only `tests/demo/playwright-report` — i.e. the sanitized fact attachments. Raw headers/cookies/principals/tokens are never written to disk by the test, so cannot end up in the artifact.
 
-Explicitly **out of scope** for this change: any modification to `src/server/entry/entry.js`, `toRequest`, adapter options, header-normalization logic, or any decision about what SWA *should* do or what the adapter should do about it. The CI hook above touches `.github/`, not `src/`, and is the minimum needed for the runbook procedure to work. This change adds a **safe-by-design diagnostic surface** only.
+Explicitly **out of scope** for this change: any modification to `src/server/entry/entry.js`, `toRequest`, adapter options, header-normalization logic, or any decision about what SWA _should_ do or what the adapter should do about it. The CI hook above touches `.github/`, not `src/`, and is the minimum needed for the runbook procedure to work. This change adds a **safe-by-design diagnostic surface** only.
 
 ## Capabilities
 
 ### New Capabilities
+
 - `demo-diagnostics`: A safe-by-design diagnostic probe exposed by the demo app for empirically observing how Azure Static Web Apps forwards `Authorization` and forwarded/host headers to the managed Function across all adapter-supported HTTP methods. The probe never exposes raw secrets — only server-computed sanitized facts (booleans, host-kind classifications, scheme tokens). Covers the route contract (per-method delivery channel), the dual-`Authorization` server-side comparator, and the Playwright probe matrix that exercises both SWA routing paths against both the local SWA CLI emulator and a real Azure deployment.
 
 ### Modified Capabilities
+
 <!-- None. Adapter behavior is unchanged. -->
 
 ## Impact

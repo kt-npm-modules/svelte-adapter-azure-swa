@@ -141,6 +141,7 @@ jobs:
     env:
       NODE_API_RUNTIME_MAJOR: ${{ matrix.node-version }}
       NODE_API_RUNTIME: node:${{ matrix.node-version }}
+      PLAYWRIGHT_REPORT_NAME: playwright-report-azure-node${{ matrix.node-version }}
     steps:
       - id: app-token
         uses: kt-workflows/actions/create-github-app-token@main
@@ -213,6 +214,14 @@ jobs:
           run-script: npm test --prefix ./tests/demo
         env:
           PLAYWRIGHT_TEST_BASE_URL: ${{ steps.build-deploy.outputs.static_web_app_url }}
+
+      - name: Upload Playwright report artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.PLAYWRIGHT_REPORT_NAME }}
+          path: tests/demo/playwright-report
+          if-no-files-found: error
 
   # Stable aggregate required-* checks for branch protection rules.
   # This avoids depending directly on individual matrix job statuses.

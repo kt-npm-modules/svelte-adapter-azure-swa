@@ -39,5 +39,13 @@ export default defineConfig({
 		baseURL
 	},
 	testDir: 'e2e',
+	// Emit an HTML report so the diagnostic-headers probe attachments are
+	// retrievable both locally (open the report directly) and from the CI
+	// `playwright-report-azure-node<v>` artifact uploaded by ci-swa.yml.
+	// `open: 'never'` keeps `npm run test:swa` non-interactive.
+	reporter: [
+		['list'],
+		['html', { outputFolder: 'playwright-report', open: 'never' }]
+	],
 	globalTeardown: fileURLToPath(new URL('./e2e/global-teardown.mjs', import.meta.url))
 });

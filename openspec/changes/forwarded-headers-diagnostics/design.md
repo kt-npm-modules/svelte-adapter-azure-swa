@@ -29,7 +29,7 @@ This change is the evidence-gathering step that precedes that policy decision. *
 
 - No changes to adapter source under `src/`. No edits to `src/server/entry/entry.js`, `toRequest`, or any adapter normalization behavior.
 - No new adapter options. No `testWorkarounds` switches. No env-controlled adapter behavior.
-- No header-normalization logic. No decision about what SWA *should* do or what the adapter *should* do about it.
+- No header-normalization logic. No decision about what SWA _should_ do or what the adapter _should_ do about it.
 - No raw-header observability. The previous draft's raw `request.headers` dump is explicitly removed; if a fact we later need isn't on the diagnostic-fact object, the follow-up change adds it as another sanitized field rather than re-introducing raw exposure.
 - Not a permanent test gate. The probe asserts only HTTP 200 + sanitized fact shape; it is a diagnostic capture, not a regression test.
 
@@ -37,7 +37,7 @@ This change is the evidence-gathering step that precedes that policy decision. *
 
 ### Decision 1: Echo route lives under SvelteKit, not in `func/`
 
-The probe lives at `tests/demo/src/routes/diagnostic-headers/+server.ts` as a SvelteKit endpoint. Reason: this gives us the post-`toRequest` view — exactly the input that adapter-rendered SvelteKit endpoints receive — which is what the upcoming policy change will operate on. An `api/` Function-Apps endpoint under `tests/demo/func/` would observe the *pre*-`toRequest` view and miss anything `toRequest` introduces or strips.
+The probe lives at `tests/demo/src/routes/diagnostic-headers/+server.ts` as a SvelteKit endpoint. Reason: this gives us the post-`toRequest` view — exactly the input that adapter-rendered SvelteKit endpoints receive — which is what the upcoming policy change will operate on. An `api/` Function-Apps endpoint under `tests/demo/func/` would observe the _pre_-`toRequest` view and miss anything `toRequest` introduces or strips.
 
 **Alternatives considered:** placing the probe under `tests/demo/func/api/` — rejected because it sees the wrong layer. We could add both, but a second probe doubles maintenance for a one-shot evidence-gathering step.
 
@@ -59,7 +59,7 @@ The diagnose helper builds a single internal `DiagnosticFacts` object and emits 
 
 The object MUST NOT contain: any raw `Authorization` value or substring beyond the scheme; raw `x-test-authorization` value; raw `Cookie`; raw `x-ms-client-principal`; raw token; any other arbitrary unknown header value; any full URL with host/query.
 
-**Why this is safer than the prior draft:** any caller — including an attacker probing the deployed demo — only learns back booleans/classifications about inputs *they themselves sent*. They learn nothing they didn't already know.
+**Why this is safer than the prior draft:** any caller — including an attacker probing the deployed demo — only learns back booleans/classifications about inputs _they themselves sent_. They learn nothing they didn't already know.
 
 **Alternatives considered:** denylist on a raw echo (e.g. "echo all headers except `Authorization`/`Cookie`") — rejected. Denylists fail open: any new sensitive header SWA introduces (e.g. `x-ms-token-aad-id-token`, `x-ms-client-principal-name`) leaks until someone notices and patches the list. An allowlist of sanitized facts fails closed.
 
@@ -78,12 +78,12 @@ The diagnose helper:
 
 The four observable outcomes follow directly:
 
-| Outcome | `authorizationPresent` | `testAuthorizationPresent` | `authorizationEqualsTestAuthorization` |
-|---|---|---|---|
-| **Preserved** (SWA passes client `Authorization` through) | `true` | `true` | `true` |
-| **Overwritten / injected** (SWA replaces client `Authorization`) | `true` | `true` | `false` |
-| **Stripped** (SWA removes `Authorization` entirely) | `false` | `true` | `null` |
-| **Custom headers not reaching app** (`x-test-authorization` filtered out) | (any) | `false` | `null` |
+| Outcome                                                                   | `authorizationPresent` | `testAuthorizationPresent` | `authorizationEqualsTestAuthorization` |
+| ------------------------------------------------------------------------- | ---------------------- | -------------------------- | -------------------------------------- |
+| **Preserved** (SWA passes client `Authorization` through)                 | `true`                 | `true`                     | `true`                                 |
+| **Overwritten / injected** (SWA replaces client `Authorization`)          | `true`                 | `true`                     | `false`                                |
+| **Stripped** (SWA removes `Authorization` entirely)                       | `false`                | `true`                     | `null`                                 |
+| **Custom headers not reaching app** (`x-test-authorization` filtered out) | (any)                  | `false`                    | `null`                                 |
 
 This is the core empirical question for the policy decision.
 
@@ -117,7 +117,7 @@ For each of the proxy-relevant headers, the helper emits only a presence boolean
 
 These fields are exactly enough to answer the questions issue #218 raises ("does the inbound `host` look like the public URL or the internal Function host? does `x-ms-original-url` carry the public URL? do `x-forwarded-*` reach the function?") without emitting the values.
 
-**Alternatives considered:** echoing the host *value* on the assumption it's non-secret — rejected. The internal `<guid>.azurewebsites.net` host kind is non-secret in form (it's well-known SWA infra) but the specific `<guid>` is the customer's deployment id and not something we should hand back to arbitrary callers. The `hostKind` enum captures the part we need.
+**Alternatives considered:** echoing the host _value_ on the assumption it's non-secret — rejected. The internal `<guid>.azurewebsites.net` host kind is non-secret in form (it's well-known SWA infra) but the specific `<guid>` is the customer's deployment id and not something we should hand back to arbitrary callers. The `hostKind` enum captures the part we need.
 
 ### Decision 7: Single channel per method, dictated by HTTP semantics
 
@@ -138,23 +138,23 @@ Every probe generates fresh per-run `diagnosticBearer` and `probeId`. "Controls"
 
 **Auth probes — one per method:**
 
-| # | Probe key | Method | Extra request headers | Body | Routing path |
-|---|---|---|---|---|---|
-| 1 | `get-auth` | `GET` | `Authorization` + controls | — | navigationFallback |
-| 2 | `head-auth` | `HEAD` | `Authorization` + controls | — | navigationFallback |
-| 3 | `post-auth-form` | `POST` | `Authorization` + controls + `Content-Type: application/x-www-form-urlencoded` | `foo=bar` | explicit rewrite |
-| 4 | `put-auth-json` | `PUT` | `Authorization` + controls + `Content-Type: application/json` | `{"foo":"bar"}` | explicit rewrite |
-| 5 | `patch-auth-json` | `PATCH` | `Authorization` + controls + `Content-Type: application/json` | `{"foo":"bar"}` | explicit rewrite |
-| 6 | `delete-auth` | `DELETE` | `Authorization` + controls | — | explicit rewrite |
-| 7 | `options-auth` | `OPTIONS` | `Authorization` + controls | — | navigationFallback |
+| #   | Probe key         | Method    | Extra request headers                                                          | Body            | Routing path       |
+| --- | ----------------- | --------- | ------------------------------------------------------------------------------ | --------------- | ------------------ |
+| 1   | `get-auth`        | `GET`     | `Authorization` + controls                                                     | —               | navigationFallback |
+| 2   | `head-auth`       | `HEAD`    | `Authorization` + controls                                                     | —               | navigationFallback |
+| 3   | `post-auth-form`  | `POST`    | `Authorization` + controls + `Content-Type: application/x-www-form-urlencoded` | `foo=bar`       | explicit rewrite   |
+| 4   | `put-auth-json`   | `PUT`     | `Authorization` + controls + `Content-Type: application/json`                  | `{"foo":"bar"}` | explicit rewrite   |
+| 5   | `patch-auth-json` | `PATCH`   | `Authorization` + controls + `Content-Type: application/json`                  | `{"foo":"bar"}` | explicit rewrite   |
+| 6   | `delete-auth`     | `DELETE`  | `Authorization` + controls                                                     | —               | explicit rewrite   |
+| 7   | `options-auth`    | `OPTIONS` | `Authorization` + controls                                                     | —               | navigationFallback |
 
 **Additional forwarded-header probes (do not replace the per-method auth probes above):**
 
-| # | Probe key | Method | Extra request headers | Body | Routing path | Purpose |
-|---|---|---|---|---|---|---|
-| 8  | `get-baseline-no-auth` | `GET` | controls only (no `Authorization`) | — | navigationFallback | establishes the no-auth baseline; lets us tell "stripped" from "preserved" without the test's bearer present |
-| 9  | `get-baseline-no-auth-repeat` | `GET` | controls only (no `Authorization`), fresh values | — | navigationFallback | inject-stability check across two no-auth requests |
-| 10 | `get-spoof-forwarded` | `GET` | controls + `X-Forwarded-Host: evil.example` + `X-Forwarded-Proto: gopher` | — | navigationFallback | surfaces whether the spoofing surface reaches the function |
+| #   | Probe key                     | Method | Extra request headers                                                     | Body | Routing path       | Purpose                                                                                                      |
+| --- | ----------------------------- | ------ | ------------------------------------------------------------------------- | ---- | ------------------ | ------------------------------------------------------------------------------------------------------------ |
+| 8   | `get-baseline-no-auth`        | `GET`  | controls only (no `Authorization`)                                        | —    | navigationFallback | establishes the no-auth baseline; lets us tell "stripped" from "preserved" without the test's bearer present |
+| 9   | `get-baseline-no-auth-repeat` | `GET`  | controls only (no `Authorization`), fresh values                          | —    | navigationFallback | inject-stability check across two no-auth requests                                                           |
+| 10  | `get-spoof-forwarded`         | `GET`  | controls + `X-Forwarded-Host: evil.example` + `X-Forwarded-Proto: gopher` | —    | navigationFallback | surfaces whether the spoofing surface reaches the function                                                   |
 
 The auth probes give one direct `preserved | overwritten | stripped | custom-headers-not-reaching-app` classification per HTTP method on real Azure. The HEAD probe doubles as the response-header pass-through observation (see "Channel observability tradeoff" below) — since `head-auth` already exercises the auth path, no separate `head-baseline` is needed; if `x-diag-*` headers are mangled by the edge, the HEAD auth probe will fail to decode, which is the same finding.
 
@@ -213,18 +213,18 @@ This rule applies identically to `Authorization` and `x-test-authorization`.
 
 **Examples (test these in the unit test for the diagnose helper):**
 
-| Header value | Emitted scheme |
-|---|---|
-| `Bearer abc.def.ghi` | `"bearer"` |
-| `Basic dXNlcjpwYXNz` | `"basic"` |
-| `bearer abc` | `"bearer"` |
-| `Digest username="…"` | `"digest"` |
-| `SECRET_WITHOUT_SCHEME` | `null` (no whitespace) |
-| `Bearer ` (trailing space, no credential) | `null` (regex requires `\S` after whitespace) |
-| `   Bearer abc` (leading whitespace) | `null` (anchored to start) |
-| `MyVeryLongCustomSchemeName abc` | `null` (token longer than 16 chars) |
-| `Foo:bar abc` (`:` is not in the allowed scheme alphabet) | `null` |
-| `null` / absent header | `null` |
+| Header value                                              | Emitted scheme                                |
+| --------------------------------------------------------- | --------------------------------------------- |
+| `Bearer abc.def.ghi`                                      | `"bearer"`                                    |
+| `Basic dXNlcjpwYXNz`                                      | `"basic"`                                     |
+| `bearer abc`                                              | `"bearer"`                                    |
+| `Digest username="…"`                                     | `"digest"`                                    |
+| `SECRET_WITHOUT_SCHEME`                                   | `null` (no whitespace)                        |
+| `Bearer ` (trailing space, no credential)                 | `null` (regex requires `\S` after whitespace) |
+| `   Bearer abc` (leading whitespace)                      | `null` (anchored to start)                    |
+| `MyVeryLongCustomSchemeName abc`                          | `null` (token longer than 16 chars)           |
+| `Foo:bar abc` (`:` is not in the allowed scheme alphabet) | `null`                                        |
+| `null` / absent header                                    | `null`                                        |
 
 **Alternatives considered:** stop at any whitespace and emit whatever was before — rejected, leaks substrings of malformed values. Hash the value and emit the hash — rejected, hashes of unknown values are still observability we don't need; the boolean comparator already distinguishes preserved/overwritten without needing to inspect the value's shape.
 

@@ -10,3 +10,4 @@ demo-test-results/
 artifacts/
 .tmp/
 .claude/settings.local.json
+playwright-report/
