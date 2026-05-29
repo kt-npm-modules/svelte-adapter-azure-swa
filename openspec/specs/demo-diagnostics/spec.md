@@ -401,15 +401,6 @@ This change SHALL NOT modify any other CI behavior: the existing build, deploy, 
 - **WHEN** the artifact is produced from a CI run
 - **THEN** every per-mode `<route-mode>/<probe-key>.json` attachment in the report SHALL contain only the sanitized `DiagnosticFacts` object — no `diagnosticBearer`, `probeId`, raw request headers, raw response headers, or full URLs
 
-### Requirement: Adapter behavior is unchanged
-
-This change SHALL NOT modify any adapter code, adapter options, or `toRequest` semantics. No file under `src/` MAY be edited, no new adapter option MAY be introduced, and no header-normalization logic MAY be added as part of this change.
-
-#### Scenario: No adapter source files are modified
-
-- **WHEN** the change is implemented
-- **THEN** the diff SHALL NOT touch any file under `src/` (in particular not `src/server/entry/entry.js`) and SHALL NOT add or alter adapter options
-
 ### Requirement: Each diagnostic route is reached through the SWA routing channel its name promises
 
 The two diagnostic routes SHALL be reachable through distinct SWA routing channels so that requests captured at each path can be attributed cleanly to the routing configuration that delivered them. This requirement is satisfied entirely through the existing `customStaticWebAppConfig.routes` adapter option and the existing `navigationFallback` behavior emitted by [src/swa-config/index.js](src/swa-config/index.js); no new adapter option, no edit under `src/`, and no change to adapter request handling are introduced.
@@ -460,20 +451,6 @@ This requirement is satisfied entirely through the existing adapter API surface.
 - **THEN** the diff SHALL NOT add, rename, or remove any adapter option in `src/index.js` or any file under `src/`
 - **AND** the only adapter API surface used to register the explicit rewrite SHALL be the existing `customStaticWebAppConfig.routes` option
 
-### Requirement: Adapter request behavior is unchanged
-
-This change SHALL NOT modify any adapter request-handling code. No file under `src/` MAY be edited. `toRequest` semantics SHALL remain unchanged. No header-normalization logic SHALL be introduced. No `Authorization` stripping, moving, renaming, or normalization SHALL occur as a result of this change. No new adapter option SHALL be added.
-
-#### Scenario: No adapter source files are modified
-
-- **WHEN** the change is implemented
-- **THEN** the diff SHALL NOT touch any file under `src/` (in particular not `src/server/entry/entry.js`, `src/swa-config/index.js`, or `src/index.js`) and SHALL NOT add, alter, or remove any adapter option
-
-#### Scenario: Authorization handling is not modified
-
-- **WHEN** the change is implemented
-- **THEN** the diff SHALL NOT introduce code under `src/` or under the demo's adapter-config surface that strips, renames, moves, or normalizes the `Authorization` header on inbound requests
-
 ### Requirement: CI workflows are unchanged for this change
 
 This change SHALL NOT modify any file under `.github/workflows/`. The Playwright report artifact uploaded by the previous archived change's `azure` job step in [.github/workflows/ci-swa.yml](.github/workflows/ci-swa.yml) is reused as-is; the new per-mode attachments are written to the same `tests/demo/playwright-report` directory and ride along with the existing artifact. No new artifact upload step, no new artifact name, and no other CI configuration change SHALL be introduced as part of this change.
@@ -487,3 +464,93 @@ This change SHALL NOT modify any file under `.github/workflows/`. The Playwright
 
 - **WHEN** the deployed `azure` job in CI-SWA runs the Playwright suite against an Azure SWA preview URL
 - **THEN** the existing `actions/upload-artifact@v7` step (added by the previous archived change) SHALL upload `tests/demo/playwright-report` containing both `nav-fallback/<probe-key>.json` and `rewrite/<probe-key>.json` per-mode attachment groups, with no additional CI step required
+
+### Requirement: Diagnostic-headers e2e asserts the fixed default Authorization behaviour
+
+The existing Playwright suite at [tests/demo/e2e/diagnostic-headers.test.ts](tests/demo/e2e/diagnostic-headers.test.ts) SHALL continue to use the existing diagnostic routes `/diagnostic-headers-nav-fallback` and `/diagnostic-headers-rewrite`, the existing route-mode matrix, and the existing per-mode attachment naming (`nav-fallback/<probe-key>.json` and `rewrite/<probe-key>.json`). This change does NOT redesign the routes, the matrix, or the attachment layout, and does NOT relax the existing safety posture (no Azure-injected bearer values land on disk or in logs). Only the expected values asserted at the SvelteKit level shift, and the new `x-adapter-test-workarounds.auth` assertions are added on top.
+
+After the adapter fix is in effect with default options, the SvelteKit-level `DiagnosticFacts` returned by both `/diagnostic-headers-nav-fallback` and `/diagnostic-headers-rewrite` SHALL report:
+
+- `authorizationPresent === false` on every probe (auth probes and no-auth baselines) on both the local SWA CLI emulator and a real Azure SWA deployment.
+- `testAuthorizationPresent === true` on every probe (the `x-test-authorization` test control header is unaffected by the fix).
+- `authorizationEqualsTestAuthorization === null` because `Authorization` was stripped before SvelteKit observed it (so the comparator's left operand is absent).
+
+These assertions SHALL hold for every adapter-supported HTTP method exercised by the existing 16-probe matrix and for both routing channels. The SvelteKit-level diagnostic route is NOT expected to prove Azure injection after the fix — the adapter intentionally hides the injected `Authorization` from SvelteKit. Pre-strip Authorization observation lives in the adapter-level `x-adapter-test-workarounds.auth` namespace described below.
+
+#### Scenario: Authorization is absent from SvelteKit facts on local SWA CLI
+
+- **WHEN** the e2e suite is run with `PUBLIC_SWA_CLI=true` (local SWA CLI emulator) and the adapter is configured with default options (no `preserveAuthorization`)
+- **THEN** every probe's `DiagnosticFacts` SHALL report `authorizationPresent === false`
+- **AND** every probe's `DiagnosticFacts` SHALL report `authorizationEqualsTestAuthorization === null`
+
+#### Scenario: Authorization is absent from SvelteKit facts on real Azure SWA
+
+- **WHEN** the e2e suite is run with `CI=true` and `PUBLIC_SWA_CLI` is not `true` (real Azure SWA deployment) and the adapter is configured with default options
+- **THEN** every probe's `DiagnosticFacts` SHALL report `authorizationPresent === false`
+- **AND** every probe's `DiagnosticFacts` SHALL report `authorizationEqualsTestAuthorization === null`
+
+#### Scenario: `x-test-authorization` is preserved end-to-end
+
+- **WHEN** an e2e probe sends `x-test-authorization: Bearer <diagnosticBearer>` to either route in either environment
+- **THEN** the corresponding `DiagnosticFacts.testAuthorizationPresent` SHALL be `true`
+
+### Requirement: Diagnostic-headers e2e sends `x-test-workaround-authorization` and asserts the four adapter-level matrix cells
+
+The Playwright auth probes SHALL additionally send a test control header `x-test-workaround-authorization: Bearer <diagnosticBearer>` carrying the same per-test bearer value as `x-test-authorization` and `Authorization` (where applicable). This header is the comparator the adapter's `auth` namespace uses for the `rawAuthorizationEqualsTestWorkaroundAuthorization` field; it is never interpreted as authentication. The Playwright no-auth baseline probes SHALL also send `x-test-workaround-authorization` (so the comparator's right operand is always present in the diagnostic surface; only the inbound `Authorization` differs between probes).
+
+The e2e suite SHALL parse the response header `x-adapter-test-workarounds` (when present) into the `AdapterTestWorkaroundsInfo` shape and assert the four matrix cells as below. The environment branching SHALL use the same `PUBLIC_SWA_CLI` / `CI` predicate the existing empty-form test in [tests/demo/e2e/demo.test.ts](tests/demo/e2e/demo.test.ts) uses (`isSwaCli = process.env.PUBLIC_SWA_CLI === 'true'; isLiveAzure = process.env.CI === 'true' && !isSwaCli`). At least one auth probe per environment and one baseline per environment SHALL assert the corresponding cell.
+
+The four matrix cells:
+
+- **Local SWA CLI auth probe** (auth probe under `PUBLIC_SWA_CLI=true`):
+  - `auth.rawAuthorizationPresent === true`
+  - `auth.testWorkaroundAuthorizationPresent === true`
+  - `auth.rawAuthorizationEqualsTestWorkaroundAuthorization === true`
+  - `auth.authorizationStripped === true`
+- **Real Azure SWA auth probe** (auth probe under `CI=true && !isSwaCli`):
+  - `auth.rawAuthorizationPresent === true`
+  - `auth.testWorkaroundAuthorizationPresent === true`
+  - `auth.rawAuthorizationEqualsTestWorkaroundAuthorization === false`
+  - `auth.authorizationStripped === true`
+- **Local SWA CLI no-Authorization baseline** (no-auth baseline under `PUBLIC_SWA_CLI=true`):
+  - `auth.rawAuthorizationPresent === false`
+  - `auth.testWorkaroundAuthorizationPresent === true`
+  - `auth.rawAuthorizationEqualsTestWorkaroundAuthorization === null`
+  - `auth.authorizationStripped === false`
+- **Real Azure SWA no-Authorization baseline** (no-auth baseline under `CI=true && !isSwaCli`):
+  - `auth.rawAuthorizationPresent === true`
+  - `auth.testWorkaroundAuthorizationPresent === true`
+  - `auth.rawAuthorizationEqualsTestWorkaroundAuthorization === false`
+  - `auth.authorizationStripped === true`
+
+These four cells SHALL be the canary that surfaces drift in real-Azure behaviour. If Azure ever stops injecting/overwriting `Authorization`, the real-Azure cells will fail in CI and prompt a deliberate revisit of this workaround.
+
+#### Scenario: Probes send `x-test-workaround-authorization` alongside the existing controls
+
+- **WHEN** any probe in the suite issues a request to either route
+- **THEN** the request SHALL include `x-test-workaround-authorization: Bearer <diagnosticBearer>` together with the existing `x-test-authorization`, `x-test-probe-id`, and `x-test-expected-probe-id` headers
+
+#### Scenario: Auth probe matches local SWA CLI cell
+
+- **WHEN** an auth probe runs under `PUBLIC_SWA_CLI=true` (local SWA CLI emulator) and the response carries `x-adapter-test-workarounds`
+- **THEN** the parsed `auth` namespace SHALL match the local SWA CLI auth probe cell exactly: `rawAuthorizationPresent === true`, `testWorkaroundAuthorizationPresent === true`, `rawAuthorizationEqualsTestWorkaroundAuthorization === true`, `authorizationStripped === true`
+
+#### Scenario: Auth probe matches real Azure SWA cell
+
+- **WHEN** an auth probe runs under `CI=true && !isSwaCli` (real Azure SWA deployment) and the response carries `x-adapter-test-workarounds`
+- **THEN** the parsed `auth` namespace SHALL match the real Azure SWA auth probe cell exactly: `rawAuthorizationPresent === true`, `testWorkaroundAuthorizationPresent === true`, `rawAuthorizationEqualsTestWorkaroundAuthorization === false`, `authorizationStripped === true`
+
+#### Scenario: No-auth baseline matches local SWA CLI cell
+
+- **WHEN** a no-auth baseline probe runs under `PUBLIC_SWA_CLI=true` and the response carries `x-adapter-test-workarounds`
+- **THEN** the parsed `auth` namespace SHALL match the local SWA CLI baseline cell exactly: `rawAuthorizationPresent === false`, `testWorkaroundAuthorizationPresent === true`, `rawAuthorizationEqualsTestWorkaroundAuthorization === null`, `authorizationStripped === false`
+
+#### Scenario: No-auth baseline matches real Azure SWA cell
+
+- **WHEN** a no-auth baseline probe runs under `CI=true && !isSwaCli` and the response carries `x-adapter-test-workarounds`
+- **THEN** the parsed `auth` namespace SHALL match the real Azure SWA baseline cell exactly: `rawAuthorizationPresent === true`, `testWorkaroundAuthorizationPresent === true`, `rawAuthorizationEqualsTestWorkaroundAuthorization === false`, `authorizationStripped === true`
+
+#### Scenario: Existing empty-form workaround behaviour is not regressed
+
+- **WHEN** the existing empty-form e2e test (in `tests/demo/e2e/demo.test.ts` and via the `/empty-post-form` page action) is run after this change
+- **THEN** it SHALL continue to pass with the empty-form workaround facts moved under `emptyFormContentTypeStrip` in the same single `x-adapter-test-workarounds` transport header (no new transport headers are introduced) — the test's expectations are updated to read `emptyFormContentTypeStrip.emptyPostWorkaround` rather than the legacy top-level `emptyPostWorkaround`, and the `auth` namespace lives alongside it under the same payload
