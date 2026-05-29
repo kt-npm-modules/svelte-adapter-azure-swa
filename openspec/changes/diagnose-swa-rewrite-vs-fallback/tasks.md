@@ -17,18 +17,35 @@
 - [ ] 3.3 Run `npm run build:swa --prefix tests/demo` (or whichever existing demo script runs `writeSWAConfig`) and inspect `tests/demo/build/staticwebapp.config.json`. Confirm: the generated `routes` array contains the new entry; the entry appears **before** the auto-generated catch-all `*`-method rewrite (so it takes precedence); no other routes were added or modified
 - [ ] 3.4 Confirm `git diff src/` is empty (no adapter source changes) and `git diff` for the demo only touches `tests/demo/svelte.config.js` for this section
 
-## 4. Update the Playwright probe matrix (do not redesign — minimal structural changes)
+## 4. Update the Playwright probe matrix (parameterize by path — do not duplicate tests)
 
-- [ ] 4.1 Open `tests/demo/e2e/diagnostic-headers.test.ts`. Replace the file-scope `const PROBE_PATH = '/diagnostic-headers'` with a `RouteMode = 'nav-fallback' | 'rewrite'` type alias and a `ROUTE_PATHS` lookup mapping each mode to its full URL path (`/diagnostic-headers-nav-fallback`, `/diagnostic-headers-rewrite`). Define a `ROUTE_MODES: readonly RouteMode[]` array
-- [ ] 4.2 Add a `routeMode: RouteMode` field to the `runAuthProbe` and `runForwardedProbe` option types. Inside each helper, derive the URL path from `ROUTE_PATHS[routeMode]` and pass it to `fetchWithMethod` (in place of the hard-coded `PROBE_PATH`)
-- [ ] 4.3 Update the `attachFacts` call sites in both helpers to use `${routeMode}/${probeKey}.json` instead of `diagnostic-headers/${probeKey}.json`
-- [ ] 4.4 Update the `testInfo.annotations.push(...)` call inside `runAuthProbe` so the `description` includes the route mode (e.g. `"nav-fallback GET get-auth: preserved"`)
-- [ ] 4.5 Wrap each existing `test.describe('diagnostic-headers / auth probes', ...)` block (or its body) with a `for (const routeMode of ROUTE_MODES) { ... }` loop so the seven existing auth probes register twice — once per route mode. Pass `routeMode` to `runAuthProbe`. Per-mode test titles MUST be distinct (e.g. include the mode in the `test.describe` title or the per-test title) so Playwright doesn't collapse duplicates
-- [ ] 4.6 Wrap the existing `get-baseline-no-auth` `test()` with the same `for (const routeMode of ROUTE_MODES)` loop, so two baselines register (one per mode). Pass `routeMode` to `runForwardedProbe`
-- [ ] 4.7 Remove the `get-baseline-no-auth-repeat` and `get-spoof-forwarded` tests entirely (Decision 6 in design.md). Do not leave the helper code paths supporting them — the helpers carry over unchanged because they don't reference the dropped probes by name
-- [ ] 4.8 Confirm the helper signatures (`controlHeaders`, `freshControls`, `getFacts`, `decodeFactValue`, `kebabToCamel`, `attachFacts`, `classifyAuthorization`, `assertCoreShape`, `resolveOrigin`, `fetchWithMethod`) are unchanged — only their callers thread `routeMode` through
-- [ ] 4.9 The `assertCoreShape` string-search guard for `diagnosticBearer` and `probeId` remains unchanged and applies to every probe in both modes
-- [ ] 4.10 Run `npm run test:swa --prefix tests/demo` locally. Confirm: 16 probes pass (14 auth + 2 baseline); `tests/demo/playwright-report` contains `nav-fallback/<probe-key>.json` and `rewrite/<probe-key>.json` attachments; `npx playwright show-report tests/demo/playwright-report` shows them grouped by mode in the UI; no attachment contains the per-test `diagnosticBearer` or `probeId` (string-search the attachment files)
+The pattern is: take the existing probe definitions, fetch helper, decode logic, assertions, outcome classification, and attachment creation as-is. Thread one new value — the request path — through them. Run the existing matrix once per route mode.
+
+- [ ] 4.1 Open `tests/demo/e2e/diagnostic-headers.test.ts`. Remove the file-scope `const PROBE_PATH = '/diagnostic-headers'`. Add:
+      ```ts
+      const ROUTE_MODES = [
+        { key: 'nav-fallback', path: '/diagnostic-headers-nav-fallback' },
+        { key: 'rewrite', path: '/diagnostic-headers-rewrite' }
+      ] as const;
+      type RouteMode = (typeof ROUTE_MODES)[number];
+      ```
+- [ ] 4.2 Change `fetchWithMethod` to take the path as a parameter (drop the hard-coded `PROBE_PATH` reference):
+      ```ts
+      async function fetchWithMethod(request, testInfo, path, method, headers, body) {
+        const headersWithOrigin = { Origin: resolveOrigin(testInfo), ...headers };
+        return request.fetch(path, { method, headers: headersWithOrigin, data: body });
+      }
+      ```
+      Keep its TypeScript types in line with the existing signature — only `path: string` is new.
+- [ ] 4.3 Add a `routeMode: RouteMode` field to the `runAuthProbe` and `runForwardedProbe` option types. Inside each helper:
+      - Pass `routeMode.path` to `fetchWithMethod`.
+      - Replace the `attachFacts(testInfo, probeKey, facts)` call with `attachFacts(testInfo, \`${routeMode.key}/${probeKey}\`, facts)` — i.e. produce `nav-fallback/get-auth.json` and `rewrite/get-auth.json` rather than `diagnostic-headers/get-auth.json`. The signature of `attachFacts` itself does not need to change; it already takes the full probe key string.
+      - Inside `runAuthProbe`, change the `testInfo.annotations.push(...)` call so the `description` includes the route mode key (e.g. `"nav-fallback GET get-auth: preserved"`).
+- [ ] 4.4 Wrap each existing `test()` registration with a single `for (const routeMode of ROUTE_MODES) { ... }` loop. Each existing `test('get-auth — …', …)` becomes `test(\`${routeMode.key} get-auth — …\`, …)` and forwards `routeMode` into the corresponding `runAuthProbe`/`runForwardedProbe` call. Per-mode test titles MUST be distinct so Playwright doesn't collapse duplicates — embedding `routeMode.key` in the `test()` title is sufficient. The probe definitions, body strings, content types, and method choices stay byte-for-byte the same as today.
+- [ ] 4.5 Remove the `get-baseline-no-auth-repeat` and `get-spoof-forwarded` tests entirely (Decision 6 in design.md). Do not leave the helper code paths supporting them — the helpers carry over unchanged because they don't reference the dropped probes by name. After this step, the only forwarded probe in the file is `get-baseline-no-auth`, run once per route mode.
+- [ ] 4.6 Confirm the helper signatures (`controlHeaders`, `freshControls`, `getFacts`, `decodeFactValue`, `kebabToCamel`, `attachFacts`, `classifyAuthorization`, `assertCoreShape`, `resolveOrigin`) are unchanged. Only `fetchWithMethod` gains a `path` parameter; only `runAuthProbe` and `runForwardedProbe` gain a `routeMode` parameter and pass `routeMode.path` / `routeMode.key` through. No new helper is introduced; no probe definition is duplicated; no probe-key string is changed (only its prefix when attaching).
+- [ ] 4.7 The `assertCoreShape` string-search guard for `diagnosticBearer` and `probeId` remains unchanged and applies to every probe in both modes
+- [ ] 4.8 Run `npm run test:swa --prefix tests/demo` locally. Confirm: 16 probes pass (14 auth + 2 baseline); `tests/demo/playwright-report` contains `nav-fallback/<probe-key>.json` and `rewrite/<probe-key>.json` attachments; `npx playwright show-report tests/demo/playwright-report` shows them grouped by mode in the UI; no attachment contains the per-test `diagnosticBearer` or `probeId` (string-search the attachment files)
 
 ## 5. Update the runbook
 
