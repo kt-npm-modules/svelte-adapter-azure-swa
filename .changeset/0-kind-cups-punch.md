@@ -1,5 +1,5 @@
 ---
-'svelte-adapter-azure-swa': minor
+'@ktarmyshov/svelte-adapter-azure-swa': minor
 ---
 
 Normalize Azure Static Web Apps forwarded origin headers from `x-ms-original-url`.

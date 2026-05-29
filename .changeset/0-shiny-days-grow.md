@@ -1,5 +1,5 @@
 ---
-'svelte-adapter-azure-swa': minor
+'@ktarmyshov/svelte-adapter-azure-swa': minor
 ---
 
 Strip Azure Static Web Apps injected `Authorization` headers by default before constructing the SvelteKit request.

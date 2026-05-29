@@ -1,5 +1,5 @@
 ---
-'svelte-adapter-azure-swa': minor
+'@ktarmyshov/svelte-adapter-azure-swa': minor
 ---
 
 Normalize the public-origin headers (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto`) on every SvelteKit request when Azure SWA's `x-ms-original-url` is present.
