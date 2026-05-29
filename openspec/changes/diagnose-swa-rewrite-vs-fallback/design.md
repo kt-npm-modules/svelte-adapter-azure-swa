@@ -90,8 +90,8 @@ Concretely:
 
    ```ts
    const ROUTE_MODES = [
-     { key: 'nav-fallback', path: '/diagnostic-headers-nav-fallback' },
-     { key: 'rewrite', path: '/diagnostic-headers-rewrite' }
+   	{ key: 'nav-fallback', path: '/diagnostic-headers-nav-fallback' },
+   	{ key: 'rewrite', path: '/diagnostic-headers-rewrite' }
    ] as const;
    type RouteMode = (typeof ROUTE_MODES)[number];
    ```
@@ -100,8 +100,8 @@ Concretely:
 
    ```ts
    async function fetchWithMethod(request, testInfo, path, method, headers, body) {
-     const headersWithOrigin = { Origin: resolveOrigin(testInfo), ...headers };
-     return request.fetch(path, { method, headers: headersWithOrigin, data: body });
+   	const headersWithOrigin = { Origin: resolveOrigin(testInfo), ...headers };
+   	return request.fetch(path, { method, headers: headersWithOrigin, data: body });
    }
    ```
 
@@ -109,10 +109,10 @@ Concretely:
 
 3. **`runAuthProbe` and `runForwardedProbe` gain a `routeMode: RouteMode` option** and:
    - pass `routeMode.path` to `fetchWithMethod`
-   - call `attachFacts(testInfo, \`${routeMode.key}/${probeKey}\`, facts)` so attachments land at `nav-fallback/get-auth.json`, `rewrite/get-auth.json`, etc. — `attachFacts`'s signature itself does not change; it already accepts the full probe-key string
+   - call `attachFacts(testInfo, \`${routeMode.key}/${probeKey}\`, facts)`so attachments land at`nav-fallback/get-auth.json`, `rewrite/get-auth.json`, etc. — `attachFacts`'s signature itself does not change; it already accepts the full probe-key string
    - inside `runAuthProbe`, the `testInfo.annotations.push({...})` `description` includes the mode key (e.g. `"nav-fallback GET get-auth: preserved"`)
 
-4. **A single `for (const routeMode of ROUTE_MODES)` loop wraps the existing `test()` registrations** so each one runs once per mode. Each existing `test('get-auth — …', …)` becomes `test(\`${routeMode.key} get-auth — …\`, …)` and forwards `routeMode` to its helper. Per-mode titles must be distinct (the `routeMode.key` prefix in the test title is sufficient) so Playwright doesn't collapse duplicates. The probe definitions, body strings, content types, and method choices stay byte-for-byte the same as today.
+4. **A single `for (const routeMode of ROUTE_MODES)` loop wraps the existing `test()` registrations** so each one runs once per mode. Each existing `test('get-auth — …', …)` becomes `test(\`${routeMode.key} get-auth — …\`, …)`and forwards`routeMode`to its helper. Per-mode titles must be distinct (the`routeMode.key` prefix in the test title is sufficient) so Playwright doesn't collapse duplicates. The probe definitions, body strings, content types, and method choices stay byte-for-byte the same as today.
 
 5. **The `get-baseline-no-auth-repeat` and `get-spoof-forwarded` tests are removed entirely** — see "Pruned forwarded probes" below.
 

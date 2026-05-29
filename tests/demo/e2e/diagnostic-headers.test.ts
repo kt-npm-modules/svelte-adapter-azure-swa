@@ -1,6 +1,6 @@
 /**
- * Playwright diagnostic probe matrix for /diagnostic-headers — see
- * openspec/changes/forwarded-headers-diagnostics/specs/demo-diagnostics/spec.md.
+ * Playwright diagnostic probe matrix for /diagnostic-headers-nav-fallback and
+ * /diagnostic-headers-rewrite — see openspec/changes/diagnose-swa-rewrite-vs-fallback/.
  *
  * SAFETY-BY-DESIGN: tests generate a fresh diagnosticBearer + probeId per test,
  * use them only as request input, and attach ONLY the sanitized DiagnosticFacts
@@ -8,10 +8,18 @@
  * or otherwise persisted. A defense-in-depth string-search guard inside
  * assertCoreShape rejects any attachment that would contain them.
  *
- * Probe matrix:
+ * Route modes (parameterized by URL path; each existing probe runs once per mode):
+ *   - nav-fallback → /diagnostic-headers-nav-fallback
+ *       reached via SWA navigationFallback (GET/HEAD/OPTIONS) and the
+ *       auto-generated catch-all '*'-method rewrite (POST/PUT/PATCH/DELETE).
+ *   - rewrite      → /diagnostic-headers-rewrite
+ *       reached via an explicit per-path rewrite added through the existing
+ *       customStaticWebAppConfig.routes adapter option, for every method.
+ *
+ * Probe matrix (16 probes total — 8 per route mode):
  *   1. get-auth, head-auth, post-auth-form, put-auth-json,
  *      patch-auth-json, delete-auth, options-auth   ← one auth probe per method
- *   2. get-baseline-no-auth, get-baseline-no-auth-repeat, get-spoof-forwarded
+ *   2. get-baseline-no-auth                          ← one no-auth baseline
  *
  * PATCH and DELETE are tested directly — not sampled by proxy from POST/PUT.
  */
@@ -21,7 +29,11 @@ import { randomBytes, randomUUID } from 'node:crypto';
 
 type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
 
-const PROBE_PATH = '/diagnostic-headers';
+const ROUTE_MODES = [
+	{ key: 'nav-fallback', path: '/diagnostic-headers-nav-fallback' },
+	{ key: 'rewrite', path: '/diagnostic-headers-rewrite' }
+] as const;
+type RouteMode = (typeof ROUTE_MODES)[number];
 
 interface ControlValues {
 	diagnosticBearer: string;
@@ -92,7 +104,7 @@ async function attachFacts(
 	probeKey: string,
 	facts: Record<string, unknown>
 ): Promise<void> {
-	await testInfo.attach(`diagnostic-headers/${probeKey}.json`, {
+	await testInfo.attach(`${probeKey}.json`, {
 		body: JSON.stringify(facts, null, 2),
 		contentType: 'application/json'
 	});
@@ -151,137 +163,152 @@ function resolveOrigin(testInfo: TestInfo): string {
 async function fetchWithMethod(
 	request: APIRequestContext,
 	testInfo: TestInfo,
+	path: string,
 	method: HttpMethod,
 	headers: Record<string, string>,
 	body?: string
 ): Promise<Awaited<ReturnType<APIRequestContext['fetch']>>> {
 	const headersWithOrigin: Record<string, string> = { Origin: resolveOrigin(testInfo), ...headers };
-	return request.fetch(PROBE_PATH, { method, headers: headersWithOrigin, data: body });
+	return request.fetch(path, { method, headers: headersWithOrigin, data: body });
 }
 
 async function runAuthProbe(options: {
 	probeKey: string;
 	method: HttpMethod;
+	routeMode: RouteMode;
 	request: APIRequestContext;
 	testInfo: TestInfo;
 	extraHeaders?: Record<string, string>;
 	body?: string;
 }): Promise<void> {
-	const { probeKey, method, request, testInfo, extraHeaders, body } = options;
+	const { probeKey, method, routeMode, request, testInfo, extraHeaders, body } = options;
 	const controls = freshControls();
 	const headers = controlHeaders(controls, { authorization: true, extra: extraHeaders });
-	const response = await fetchWithMethod(request, testInfo, method, headers, body);
+	const response = await fetchWithMethod(request, testInfo, routeMode.path, method, headers, body);
 	expect(response.status()).toBe(200);
 	const facts = await getFacts(response, method);
 	assertCoreShape(facts, method, controls);
-	await attachFacts(testInfo, probeKey, facts);
+	await attachFacts(testInfo, `${routeMode.key}/${probeKey}`, facts);
 	const outcome = classifyAuthorization(facts);
 	testInfo.annotations.push({
 		type: 'authorization-outcome',
-		description: `${method} ${probeKey}: ${outcome}`
+		description: `${routeMode.key} ${method} ${probeKey}: ${outcome}`
 	});
 }
 
 async function runForwardedProbe(options: {
 	probeKey: string;
+	routeMode: RouteMode;
 	request: APIRequestContext;
 	testInfo: TestInfo;
 	extraHeaders?: Record<string, string>;
 }): Promise<void> {
-	const { probeKey, request, testInfo, extraHeaders } = options;
+	const { probeKey, routeMode, request, testInfo, extraHeaders } = options;
 	const controls = freshControls();
 	const headers = controlHeaders(controls, { authorization: false, extra: extraHeaders });
-	const response = await fetchWithMethod(request, testInfo, 'GET', headers);
+	const response = await fetchWithMethod(request, testInfo, routeMode.path, 'GET', headers);
 	expect(response.status()).toBe(200);
 	const facts = await getFacts(response, 'GET');
 	assertCoreShape(facts, 'GET', controls);
-	await attachFacts(testInfo, probeKey, facts);
+	await attachFacts(testInfo, `${routeMode.key}/${probeKey}`, facts);
 }
 
 // ---------------------------------------------------------------------------
-// Auth probes — one per adapter-supported HTTP method, tested directly.
-// PATCH and DELETE are NOT sampled by proxy from POST/PUT.
+// Auth probes — one per adapter-supported HTTP method, per route mode, tested
+// directly. PATCH and DELETE are NOT sampled by proxy from POST/PUT.
 // ---------------------------------------------------------------------------
 
-test.describe('diagnostic-headers / auth probes', () => {
-	test('get-auth — GET with Authorization', async ({ request }, testInfo) => {
-		await runAuthProbe({ probeKey: 'get-auth', method: 'GET', request, testInfo });
-	});
+for (const routeMode of ROUTE_MODES) {
+	test.describe(`diagnostic-headers / ${routeMode.key} / auth probes`, () => {
+		test(`${routeMode.key} get-auth — GET with Authorization`, async ({ request }, testInfo) => {
+			await runAuthProbe({ probeKey: 'get-auth', method: 'GET', routeMode, request, testInfo });
+		});
 
-	test('head-auth — HEAD with Authorization', async ({ request }, testInfo) => {
-		await runAuthProbe({ probeKey: 'head-auth', method: 'HEAD', request, testInfo });
-	});
+		test(`${routeMode.key} head-auth — HEAD with Authorization`, async ({ request }, testInfo) => {
+			await runAuthProbe({ probeKey: 'head-auth', method: 'HEAD', routeMode, request, testInfo });
+		});
 
-	test('post-auth-form — POST with Authorization + form body', async ({ request }, testInfo) => {
-		await runAuthProbe({
-			probeKey: 'post-auth-form',
-			method: 'POST',
-			request,
-			testInfo,
-			extraHeaders: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: 'foo=bar'
+		test(`${routeMode.key} post-auth-form — POST with Authorization + form body`, async ({
+			request
+		}, testInfo) => {
+			await runAuthProbe({
+				probeKey: 'post-auth-form',
+				method: 'POST',
+				routeMode,
+				request,
+				testInfo,
+				extraHeaders: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: 'foo=bar'
+			});
+		});
+
+		test(`${routeMode.key} put-auth-json — PUT with Authorization + JSON body`, async ({
+			request
+		}, testInfo) => {
+			await runAuthProbe({
+				probeKey: 'put-auth-json',
+				method: 'PUT',
+				routeMode,
+				request,
+				testInfo,
+				extraHeaders: { 'Content-Type': 'application/json' },
+				body: '{"foo":"bar"}'
+			});
+		});
+
+		test(`${routeMode.key} patch-auth-json — PATCH with Authorization + JSON body (direct)`, async ({
+			request
+		}, testInfo) => {
+			await runAuthProbe({
+				probeKey: 'patch-auth-json',
+				method: 'PATCH',
+				routeMode,
+				request,
+				testInfo,
+				extraHeaders: { 'Content-Type': 'application/json' },
+				body: '{"foo":"bar"}'
+			});
+		});
+
+		test(`${routeMode.key} delete-auth — DELETE with Authorization (direct)`, async ({
+			request
+		}, testInfo) => {
+			await runAuthProbe({
+				probeKey: 'delete-auth',
+				method: 'DELETE',
+				routeMode,
+				request,
+				testInfo
+			});
+		});
+
+		test(`${routeMode.key} options-auth — OPTIONS with Authorization`, async ({
+			request
+		}, testInfo) => {
+			await runAuthProbe({
+				probeKey: 'options-auth',
+				method: 'OPTIONS',
+				routeMode,
+				request,
+				testInfo
+			});
 		});
 	});
 
-	test('put-auth-json — PUT with Authorization + JSON body', async ({ request }, testInfo) => {
-		await runAuthProbe({
-			probeKey: 'put-auth-json',
-			method: 'PUT',
-			request,
-			testInfo,
-			extraHeaders: { 'Content-Type': 'application/json' },
-			body: '{"foo":"bar"}'
+	// -------------------------------------------------------------------------
+	// Forwarded-header probes (additional, GET-only). Per-mode no-auth baseline.
+	// -------------------------------------------------------------------------
+
+	test.describe(`diagnostic-headers / ${routeMode.key} / forwarded probes`, () => {
+		test(`${routeMode.key} get-baseline-no-auth — GET, no Authorization`, async ({
+			request
+		}, testInfo) => {
+			await runForwardedProbe({
+				probeKey: 'get-baseline-no-auth',
+				routeMode,
+				request,
+				testInfo
+			});
 		});
 	});
-
-	test('patch-auth-json — PATCH with Authorization + JSON body (direct)', async ({
-		request
-	}, testInfo) => {
-		await runAuthProbe({
-			probeKey: 'patch-auth-json',
-			method: 'PATCH',
-			request,
-			testInfo,
-			extraHeaders: { 'Content-Type': 'application/json' },
-			body: '{"foo":"bar"}'
-		});
-	});
-
-	test('delete-auth — DELETE with Authorization (direct)', async ({ request }, testInfo) => {
-		await runAuthProbe({ probeKey: 'delete-auth', method: 'DELETE', request, testInfo });
-	});
-
-	test('options-auth — OPTIONS with Authorization', async ({ request }, testInfo) => {
-		await runAuthProbe({ probeKey: 'options-auth', method: 'OPTIONS', request, testInfo });
-	});
-});
-
-// ---------------------------------------------------------------------------
-// Forwarded-header probes (additional, GET-only).
-// ---------------------------------------------------------------------------
-
-test.describe('diagnostic-headers / forwarded probes', () => {
-	test('get-baseline-no-auth — GET, no Authorization', async ({ request }, testInfo) => {
-		await runForwardedProbe({ probeKey: 'get-baseline-no-auth', request, testInfo });
-	});
-
-	test('get-baseline-no-auth-repeat — second baseline run, fresh values', async ({
-		request
-	}, testInfo) => {
-		await runForwardedProbe({ probeKey: 'get-baseline-no-auth-repeat', request, testInfo });
-	});
-
-	test('get-spoof-forwarded — GET with spoofed X-Forwarded-* headers', async ({
-		request
-	}, testInfo) => {
-		await runForwardedProbe({
-			probeKey: 'get-spoof-forwarded',
-			request,
-			testInfo,
-			extraHeaders: {
-				'X-Forwarded-Host': 'evil.example',
-				'X-Forwarded-Proto': 'gopher'
-			}
-		});
-	});
-});
+}

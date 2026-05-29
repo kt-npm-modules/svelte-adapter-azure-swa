@@ -45,7 +45,13 @@ const _adapterSWA = adapterSWA({
 	customStaticWebAppConfig: {
 		platform: {
 			apiRuntime: NODE_API_RUNTIME
-		}
+		},
+		// Explicit per-path rewrite for the diagnostic-rewrite probe — see
+		// openspec/changes/diagnose-swa-rewrite-vs-fallback/. User-supplied
+		// routes are spread into the generated routes array before the
+		// auto-generated catch-all '*'-method rewrite, so this entry takes
+		// precedence on every adapter-supported method (no `methods` filter).
+		routes: [{ route: '/diagnostic-headers-rewrite', rewrite: '/api/sk_render' }]
 	},
 	emulate: {
 		role: 'authenticated'
