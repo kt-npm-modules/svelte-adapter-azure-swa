@@ -3,11 +3,12 @@ set -euo pipefail
 
 # Packages project source for ChatGPT code review.
 #
+# Honors all (nested) .gitignore files via `git ls-files`, so anything that
+# git would ignore stays out of the archive. Must be run inside a git repo.
+#
 # Usage:
 #   ./scripts/package-review-src.sh
-#   ./scripts/package-review-src.sh --full
 #   ./scripts/package-review-src.sh my-prefix
-#   ./scripts/package-review-src.sh my-prefix --full
 #
 # Output:
 #   ./artifacts/<name>-YYYYMMDD-HHMMSS.tgz
@@ -19,19 +20,7 @@ ARTIFACTS_DIR="$ROOT_DIR/artifacts"
 STAGING_DIR="$ARTIFACTS_DIR/.review-src-staging"
 
 TIMESTAMP="$(date +"%Y%m%d-%H%M%S")"
-NAME_PREFIX="adapter-src-review"
-FULL_MODE="false"
-
-for arg in "$@"; do
-  case "$arg" in
-    --full)
-      FULL_MODE="true"
-      ;;
-    *)
-      NAME_PREFIX="$arg"
-      ;;
-  esac
-done
+NAME_PREFIX="${1:-adapter-src-review}"
 
 ARCHIVE_NAME="${NAME_PREFIX}-${TIMESTAMP}.tgz"
 ARCHIVE_PATH="$ARTIFACTS_DIR/$ARCHIVE_NAME"
@@ -40,24 +29,31 @@ rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 mkdir -p "$ARTIFACTS_DIR"
 
+# Copies a file or directory into staging, honoring all nested .gitignore
+# rules via `git ls-files`. Missing paths are silently skipped — the script
+# is intended to be reusable across repos that may not share the same layout.
 copy_if_exists() {
   local path="$1"
-  if [[ -e "$ROOT_DIR/$path" ]]; then
+  [[ -e "$ROOT_DIR/$path" ]] || return 0
+
+  if [[ -d "$ROOT_DIR/$path" ]]; then
+    while IFS= read -r -d '' f; do
+      mkdir -p "$STAGING_DIR/$(dirname "$f")"
+      cp "$ROOT_DIR/$f" "$STAGING_DIR/$f"
+    done < <(git -C "$ROOT_DIR" ls-files -z --cached --others --exclude-standard -- "$path")
+  else
+    # Single file: skip if git considers it ignored.
+    if git -C "$ROOT_DIR" check-ignore -q "$path"; then
+      return 0
+    fi
     mkdir -p "$STAGING_DIR/$(dirname "$path")"
-    cp -R "$ROOT_DIR/$path" "$STAGING_DIR/$path"
+    cp "$ROOT_DIR/$path" "$STAGING_DIR/$path"
   fi
 }
 
 echo "Preparing review package..."
-echo "Mode: $([[ "$FULL_MODE" == "true" ]] && echo full || echo standard)"
 
-if [[ ! -d "$ROOT_DIR/src" ]]; then
-  echo "Error: src directory not found"
-  exit 1
-fi
-
-# Standard payload
-cp -R "$ROOT_DIR/src" "$STAGING_DIR/src"
+copy_if_exists "src"
 copy_if_exists "tests"
 copy_if_exists ".github"
 
@@ -75,27 +71,20 @@ copy_if_exists "CHANGELOG.md"
 
 copy_if_exists ".changeset"
 
-
-# Optional extras in full mode
-if [[ "$FULL_MODE" == "true" ]]; then
-  copy_if_exists "package-lock.json"
-  copy_if_exists "pnpm-lock.yaml"
-  copy_if_exists "yarn.lock"
-
-  copy_if_exists ".npmignore"
-
-  copy_if_exists "scripts"
-  copy_if_exists "examples"
-  copy_if_exists "docs"
-  copy_if_exists "CHANGELOG.md"
-fi
-
+# Strip macOS noise.
+find "$STAGING_DIR" \( \
+  -name '.DS_Store' -o \
+  -name '._*' -o \
+  -name 'Icon?' -o \
+  -name '.apdisk' \
+\) -type f -delete
 find "$STAGING_DIR" -type d \( \
-  -name node_modules -o \
-  -name dist -o \
-  -name build -o \
-  -name coverage -o \
-  -name .git \
+  -name '.AppleDouble' -o \
+  -name '.Spotlight-V100' -o \
+  -name '.Trashes' -o \
+  -name '.fseventsd' -o \
+  -name '.TemporaryItems' -o \
+  -name '__MACOSX' \
 \) -prune -exec rm -rf {} +
 
 {
@@ -111,32 +100,6 @@ find "$STAGING_DIR" -type d \( \
   fi
 } > "$STAGING_DIR/TREE.txt"
 
-cat > "$STAGING_DIR/REVIEW_NOTES.txt" <<'EOF'
-Suggested prompt when uploading this archive:
-
-Need a full review of this npm chessboard package source.
-
-Focus:
-- architecture
-- public API
-- renderer/state boundaries
-- drag-and-drop readiness
-- extension model
-- TypeScript quality
-- package readiness
-
-Less important:
-- visual polish
-- tests
-- docs wording
-
-Please provide:
-1. high-level architectural review
-2. critical issues
-3. medium issues
-4. recommended priority order
-EOF
-
 (
   cd "$STAGING_DIR"
   tar -czf "$ARCHIVE_PATH" .
@@ -147,3 +110,5 @@ rm -rf "$STAGING_DIR"
 echo
 echo "Archive created:"
 echo "  $ARCHIVE_PATH"
+
+open "$ARTIFACTS_DIR"
