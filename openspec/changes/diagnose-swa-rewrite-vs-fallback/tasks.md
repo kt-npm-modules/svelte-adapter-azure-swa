@@ -53,4 +53,4 @@ The pattern is: take the existing probe definitions, fetch helper, decode logic,
 - [x] 6.8 Run `npm run lint`
 - [x] 6.9 Run `npm run check`
 - [x] 6.10 Run `openspec validate diagnose-swa-rewrite-vs-fallback --strict` and resolve any reported issues
-- [ ] 6.11 After pushing the PR, watch the `swa / azure (<node-version>)` job in the CI workflow; confirm the existing `playwright-report-azure-node<v>` artifact appears on the run summary page and contains both per-mode attachment groups captured against the deployed Azure SWA URL; download one attachment from each mode and confirm `requestUrlPathname` is the expected URL path
+- [x] 6.11 After pushing the PR, watch the `swa / azure (<node-version>)` job in the CI workflow; confirm the existing `playwright-report-azure-node<v>` artifact appears on the run summary page and contains both per-mode attachment groups captured against the deployed Azure SWA URL; download one attachment from each mode and confirm `requestUrlPathname` is the expected URL path
