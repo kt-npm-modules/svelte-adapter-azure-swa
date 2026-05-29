@@ -59,6 +59,13 @@ function controlHeaders(
 	const bearer = `Bearer ${controls.diagnosticBearer}`;
 	const out: Record<string, string> = {
 		'x-test-authorization': bearer,
+		// Adapter-level pre-strip Authorization comparator. Test control header
+		// only — the adapter never interprets its value as auth. Sent on every
+		// probe (auth and baseline) so the comparator's right operand is
+		// always present in the diagnostic surface; only the inbound
+		// Authorization differs between probes. See
+		// openspec/changes/strip-swa-authorization/specs/adapter-authorization-policy/spec.md.
+		'x-test-workaround-authorization': bearer,
 		'x-test-probe-id': controls.probeId,
 		'x-test-expected-probe-id': controls.probeId
 	};
@@ -125,11 +132,59 @@ function classifyAuthorization(facts: Record<string, unknown>): AuthorizationOut
 	return equal === true ? 'preserved' : 'overwritten';
 }
 
+// ---------------------------------------------------------------------------
+// Adapter-level pre-strip Authorization diagnostics. The adapter publishes
+// its `AdapterTestWorkaroundsInfo` JSON on the `x-adapter-test-workarounds`
+// response header (single transport header, namespaced payload) when
+// `testWorkarounds` is enabled in the demo's adapter config. The `auth`
+// namespace tells us what the adapter saw BEFORE stripping Authorization.
+// ---------------------------------------------------------------------------
+
+interface AuthWorkaroundInfo {
+	rawAuthorizationPresent: boolean;
+	testWorkaroundAuthorizationPresent: boolean;
+	rawAuthorizationEqualsTestWorkaroundAuthorization: boolean | null;
+	authorizationStripped: boolean;
+}
+
+/**
+ * Read and parse the adapter's `x-adapter-test-workarounds` response header
+ * and return the `auth` namespace, or `null` when the header is absent /
+ * unparseable / missing the namespace. Never throws — diagnostic-headers
+ * tests should still record the SvelteKit-level facts even if the adapter-
+ * level header didn't ride along on the response (e.g. on `HEAD` where the
+ * body is empty but headers still arrive).
+ */
+function readAuthWorkaroundInfo(
+	response: Awaited<ReturnType<APIRequestContext['fetch']>>
+): AuthWorkaroundInfo | null {
+	const headers = response.headers();
+	const raw = headers['x-adapter-test-workarounds'];
+	if (!raw) return null;
+	try {
+		const parsed = JSON.parse(raw) as { auth?: AuthWorkaroundInfo };
+		return parsed.auth ?? null;
+	} catch {
+		return null;
+	}
+}
+
+// Mirrors the env-branching used by tests/demo/e2e/demo.test.ts so the four
+// matrix cells of the auth workaround info can be asserted per-environment.
+const isSwaCli = process.env.PUBLIC_SWA_CLI === 'true';
+const isLiveAzure = process.env.CI === 'true' && !isSwaCli;
+
 /**
  * Per-probe core assertion: status 200, expected method echoed, the four core
  * comparator keys present, and the safety-by-design string-search guard that
  * neither the test's diagnosticBearer nor probeId appear anywhere in the
  * serialized facts.
+ *
+ * After the strip-swa-authorization adapter fix is in effect with default
+ * options, the SvelteKit-level diagnostic facts MUST report Authorization
+ * absent on every probe (auth and baseline) on both routes in both
+ * environments — the adapter strips Authorization before SvelteKit sees it.
+ * x-test-authorization / probe-id controls remain present.
  */
 function assertCoreShape(
 	facts: Record<string, unknown>,
@@ -145,9 +200,86 @@ function assertCoreShape(
 	] as const) {
 		expect(facts).toHaveProperty(key);
 	}
+	// SvelteKit-level expectations under the default adapter policy.
+	// authorizationPresent is false because the adapter stripped Authorization
+	// before constructing the SvelteKit Request. authorizationEqualsTest...
+	// is null because the comparator's left operand is absent.
+	expect(facts.authorizationPresent).toBe(false);
+	expect(facts.testAuthorizationPresent).toBe(true);
+	expect(facts.authorizationEqualsTestAuthorization).toBe(null);
 	const serialized = JSON.stringify(facts);
 	expect(serialized).not.toContain(controls.diagnosticBearer);
 	expect(serialized).not.toContain(controls.probeId);
+}
+
+/**
+ * Assert the adapter-level `auth` namespace against the four matrix cells:
+ *
+ *   Auth probe + isSwaCli:    (true, true, true,  true)
+ *   Auth probe + isLiveAzure: (true, true, false, true)
+ *   Baseline   + isSwaCli:    (false, true, null, false)
+ *   Baseline   + isLiveAzure: (true, true, false, true)
+ *
+ * The whole point of this change is that x-adapter-test-workarounds.auth
+ * exposes sanitized pre-strip Authorization behaviour; if that header /
+ * namespace is missing, the test SHALL fail. The assertion is strict on
+ * every method including HEAD — local evidence shows HEAD does carry the
+ * response header on SWA CLI, so a method-specific exception is not
+ * justified at this point. If a future real-Azure CI run demonstrates
+ * that HEAD responses strip this header in production, surface that as a
+ * deliberate failure and add a narrow method-specific exception here with
+ * the evidence cited.
+ *
+ * The `auth` namespace SHALL NOT contain raw header values — only booleans
+ * and the tri-state. The string-search guard rejects the test's bearer if
+ * it ever leaks in.
+ */
+function assertAuthWorkaroundCell(
+	auth: AuthWorkaroundInfo | null,
+	probeKind: 'auth' | 'baseline',
+	_method: HttpMethod,
+	controls: ControlValues
+): void {
+	expect(auth, 'x-adapter-test-workarounds.auth must be present and parseable').not.toBeNull();
+	if (auth === null) return; // satisfies TS — expect.not.toBeNull above already failed
+	// Belt-and-braces safety: the namespace must be booleans-only.
+	const serialized = JSON.stringify(auth);
+	expect(serialized).not.toContain(controls.diagnosticBearer);
+	expect(serialized).not.toContain(controls.probeId);
+
+	if (probeKind === 'auth') {
+		if (isSwaCli) {
+			expect(auth).toEqual({
+				rawAuthorizationPresent: true,
+				testWorkaroundAuthorizationPresent: true,
+				rawAuthorizationEqualsTestWorkaroundAuthorization: true,
+				authorizationStripped: true
+			});
+		} else if (isLiveAzure) {
+			expect(auth).toEqual({
+				rawAuthorizationPresent: true,
+				testWorkaroundAuthorizationPresent: true,
+				rawAuthorizationEqualsTestWorkaroundAuthorization: false,
+				authorizationStripped: true
+			});
+		}
+	} else {
+		if (isSwaCli) {
+			expect(auth).toEqual({
+				rawAuthorizationPresent: false,
+				testWorkaroundAuthorizationPresent: true,
+				rawAuthorizationEqualsTestWorkaroundAuthorization: null,
+				authorizationStripped: false
+			});
+		} else if (isLiveAzure) {
+			expect(auth).toEqual({
+				rawAuthorizationPresent: true,
+				testWorkaroundAuthorizationPresent: true,
+				rawAuthorizationEqualsTestWorkaroundAuthorization: false,
+				authorizationStripped: true
+			});
+		}
+	}
 }
 
 function resolveOrigin(testInfo: TestInfo): string {
@@ -188,6 +320,8 @@ async function runAuthProbe(options: {
 	expect(response.status()).toBe(200);
 	const facts = await getFacts(response, method);
 	assertCoreShape(facts, method, controls);
+	const auth = readAuthWorkaroundInfo(response);
+	assertAuthWorkaroundCell(auth, 'auth', method, controls);
 	await attachFacts(testInfo, `${routeMode.key}/${probeKey}`, facts);
 	const outcome = classifyAuthorization(facts);
 	testInfo.annotations.push({
@@ -210,6 +344,8 @@ async function runForwardedProbe(options: {
 	expect(response.status()).toBe(200);
 	const facts = await getFacts(response, 'GET');
 	assertCoreShape(facts, 'GET', controls);
+	const auth = readAuthWorkaroundInfo(response);
+	assertAuthWorkaroundCell(auth, 'baseline', 'GET', controls);
 	await attachFacts(testInfo, `${routeMode.key}/${probeKey}`, facts);
 }
 

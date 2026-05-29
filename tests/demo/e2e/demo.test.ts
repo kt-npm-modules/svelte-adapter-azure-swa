@@ -65,7 +65,7 @@ test(`POST empty-body edge case currently does not expose workaround marker`, as
 	assert(workaroundHeaderStr, 'workaround header must be present');
 	const workaroundHeader = JSON.parse(workaroundHeaderStr);
 	expect(workaroundHeader).toBeDefined();
-	expect(workaroundHeader.emptyPostWorkaround).toBe(false);
+	expect(workaroundHeader.emptyFormContentTypeStrip?.emptyPostWorkaround).toBe(false);
 });
 
 test('POST empty-body edge case currently does not expose workaround marker via native fetch', async () => {
@@ -84,7 +84,7 @@ test('POST empty-body edge case currently does not expose workaround marker via 
 	assert(workaroundHeaderStr, 'workaround header must be present');
 	const workaroundHeader = JSON.parse(workaroundHeaderStr);
 	expect(workaroundHeader).toBeDefined();
-	expect(workaroundHeader.emptyPostWorkaround).toBe(false);
+	expect(workaroundHeader.emptyFormContentTypeStrip?.emptyPostWorkaround).toBe(false);
 });
 
 test('empty form submit via page action', async ({ page }) => {

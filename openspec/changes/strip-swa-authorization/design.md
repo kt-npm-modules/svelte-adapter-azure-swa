@@ -195,6 +195,7 @@ The README option entry for `preserveAuthorization` says three things: (1) defau
    4. `npm run test:swa --prefix tests/demo`
 
    Confirm: SvelteKit-level facts no longer report `Authorization` presence; `x-adapter-test-workarounds.auth` reports the local-CLI cells correctly; the empty-form test still passes; the new unit tests pass.
+
 3. Run `openspec validate strip-swa-authorization --strict` and resolve any issues.
 4. Push the branch and open a PR. CI's `swa / azure (<node-version>)` job runs against the deployed Azure SWA preview URL and asserts the real-Azure cells.
 5. Update the change archive at completion.

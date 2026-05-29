@@ -382,8 +382,22 @@ The adapter also exposes options such as:
 
 - `debug`
 - `testWorkarounds`
+- `preserveAuthorization`
 
 These are useful for diagnostics, platform-probe behavior, and test flows, but they are not part of the main deployment path.
+
+#### `preserveAuthorization`
+
+Controls how the adapter handles the inbound `Authorization` request header before constructing the SvelteKit `Request`.
+
+- **Default**: `false` — the adapter strips the inbound `Authorization` header so SvelteKit endpoints, hooks, and SSR loads do not observe it.
+- **`true`** — the adapter forwards the inbound `Authorization` header byte-for-byte. Opt in only if you explicitly want the platform-supplied value.
+
+The default-`false` behavior is based on the empirical observation (see [issue #218](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/218)) that real Azure Static Web Apps routinely **injects or overwrites** the inbound `Authorization` header on its managed Functions surface — across all adapter-supported HTTP methods and through both `navigationFallback` and explicit per-path `rewrite` routing, even when the client never sent an `Authorization` header. The local Azure SWA CLI emulator does not reproduce this behavior. Without the strip, every app deployed through the adapter is silently exposed to a platform-injected bearer token in `request.headers.get('authorization')`, typically interpreted by user code as the end-user's credential. Stripping by default closes that exposure.
+
+`preserveAuthorization: true` is an escape hatch for users who intentionally want the raw platform `Authorization` header — for example, to introspect the Azure-injected token. Most applications should not enable it.
+
+> **Bearer-auth behind SWA caveat.** Applications that need a client-supplied bearer token to traverse Azure SWA cleanly **should not rely on `Authorization`** unless they fully understand their SWA routing and runtime behavior, regardless of this option. Because Azure SWA's behavior around `Authorization` is not under the adapter's control, the safest pattern is to use an app-specific custom header (e.g. `x-app-authorization`) for application bearer auth and treat `Authorization` as platform-owned.
 
 ## Instrumentation, sourcemaps, and observability
 
