@@ -223,6 +223,60 @@ jobs:
           path: tests/demo/playwright-report
           if-no-files-found: error
 
+  # Wipe the SWA after integration tests so we don't leave the test app
+  # publicly reachable on the production lane (or a PR preview lane) until
+  # the next CI run / PR close. Push to main -> upload an empty stub on top
+  # of the production environment (replaces app + functions + staticwebapp
+  # config). PR to main -> close the preview environment immediately; the
+  # next push to that PR will re-create it via the azure job's upload step.
+  wipe-azure:
+    needs: [config, azure]
+    if: always() && needs.config.outputs.azure == 'true'
+    environment: development
+    runs-on: ubuntu-latest
+    # Same lane as the azure job - wipe waits for any in-flight deploys on
+    # this lane to drain so a queued next-run upload can't race the wipe.
+    concurrency:
+      group: ${{ needs.config.outputs.concurrency-group }}
+      cancel-in-progress: false
+    steps:
+      - id: app-token
+        uses: kt-workflows/actions/create-github-app-token@main
+        with:
+          app-id: ${{ secrets.WORKFLOW_APP_ID }}
+          private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
+          configure-git: false
+          # Default to github token if secrets are not provided
+          default-to-github-token: true
+
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      # Production lane: upload an empty stub on top - app, functions and
+      # staticwebapp.config.json all get replaced/removed.
+      - name: Wipe production (push to main)
+        if: github.event_name == 'push'
+        uses: ./.github/actions/static-web-apps-deploy-wrapper
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ steps.app-token.outputs.token }} # Used for Github integrations (i.e. PR comments)
+          action: 'upload'
+          app_location: './tests/ci-empty-stub'
+          skip_app_build: true
+          skip_api_build: true
+
+      # Preview lane: tear down the PR preview right after tests. The next
+      # push on this PR will re-create it via the azure job. ci-swa-pr-closed
+      # remains as a safety net for cancelled / never-ran wipe cases.
+      - name: Close preview (PR to main)
+        if: github.event_name == 'pull_request'
+        uses: ./.github/actions/static-web-apps-deploy-wrapper
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ steps.app-token.outputs.token }} # Used for Github integrations (i.e. PR comments)
+          action: 'close'
+
   # Stable aggregate required-* checks for branch protection rules.
   # This avoids depending directly on individual matrix job statuses.
   required-main:
@@ -230,6 +284,7 @@ jobs:
     needs:
       - cli
       - azure
+      - wipe-azure
     runs-on: ubuntu-latest
     steps:
       - name: Verify required jobs for main

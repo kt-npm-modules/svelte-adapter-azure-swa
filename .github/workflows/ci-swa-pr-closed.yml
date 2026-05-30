@@ -1,3 +1,7 @@
+# Safety net: primary preview tear-down lives in ci-swa.yml :: wipe
+# (action: 'close' after integration tests). This workflow catches the
+# edge cases where wipe doesn't run - cancelled CI, paths-filter skips,
+# runner outages. Repeat close on Azure SWA is idempotent.
 name: CI-SWA-PR-CLOSED
 
 on:
