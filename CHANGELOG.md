@@ -1,5 +1,74 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- f4231b9: Normalize Azure Static Web Apps forwarded origin headers from `x-ms-original-url`.
+
+  When Azure SWA routes a public request to the managed SvelteKit function, the adapter already uses `x-ms-original-url` to construct the SvelteKit `Request.url`. The adapter now also uses that same trusted URL to normalize downstream origin headers, so `Host`, `X-Forwarded-Host`, and `X-Forwarded-Proto` match the public request instead of the internal Azure Functions hop.
+
+  If `x-ms-original-url` is absent or invalid, the adapter preserves the previous fallback behavior.
+
+- f4231b9: Normalize the public-origin headers (`Host`, `X-Forwarded-Host`, `X-Forwarded-Proto`) on every SvelteKit request when Azure SWA's `x-ms-original-url` is present.
+
+  Azure Static Web Apps proxies to the managed Azure Functions backend, so the inbound `host` describes the internal `*.azurewebsites.net` hop and `x-forwarded-host` / `x-forwarded-proto` may be missing, stale, or client-spoofed — while `Request.url` is already constructed from the trusted `x-ms-original-url`. This change makes the downstream `Request.headers` self-consistent with `Request.url`: when `x-ms-original-url` is present and parses as a valid absolute URL, the adapter unconditionally sets the three origin headers from that URL, overwriting any inbound values. Absent or invalid `x-ms-original-url` falls back to existing behavior with no normalization and no new error path.
+
+  No public adapter API changes. `preserveAuthorization` and the `Authorization` strip behavior are unaffected. See the README section "Public-origin header normalization" for details.
+
+- f4231b9: Strip Azure Static Web Apps injected `Authorization` headers by default before constructing the SvelteKit request.
+
+  Azure SWA overwrites or injects its own internal bearer token on managed Function requests, including requests where the client did not send `Authorization`. Exposing that platform token to SvelteKit can break auth/session libraries that treat `Authorization` as client-provided bearer auth.
+
+  A new `preserveAuthorization` adapter option is available as an escape hatch. It defaults to `false`; set it to `true` to keep forwarding the raw `Authorization` header unchanged.
+
+### Patch Changes
+
+- 47dffc6: Fix client bundling path handling and CI setup.
+
+  Client entry discovery now uses `tinyglobby` with normalized glob patterns, improving path handling across platforms, especially on Windows. The client bundling input paths are also resolved directly instead of being built relative to the adapter module URL.
+
+  The CI setup now declares the Azure Functions Core Tools requirement explicitly, avoiding reliance on tools that may or may not be preinstalled on the GitHub Actions runner image.
+
+  Contributed by [@SukeshP1995](https://github.com/SukeshP1995).
+
+- a3a25e5: dependabot: directory '/', update @playwright/test
+- a3a25e5: dependabot: directory '/', update @sentry/sveltekit
+- a3a25e5: dependabot: directory '/', update @tailwindcss/vite
+- a3a25e5: dependabot: directory '/', update @types/node
+- a3a25e5: dependabot: directory '/', update @vitest/browser-playwright
+- a3a25e5: dependabot: directory '/', update @vitest/browser
+- a3a25e5: dependabot: directory '/', update @vitest/coverage-istanbul
+- a3a25e5: dependabot: directory '/', update playwright
+- a3a25e5: dependabot: directory '/', update prettier-plugin-svelte
+- a3a25e5: dependabot: directory '/', update tailwindcss
+- a3a25e5: dependabot: directory '/', update typescript-eslint
+- a3a25e5: dependabot: directory '/', update vite
+- a3a25e5: dependabot: directory '/', update vitest
+- efb94aa: dependabot: directory '/', update @azure/functions
+- efb94aa: dependabot: directory '/', update @inlang/paraglide-js
+- efb94aa: dependabot: directory '/', update @sveltejs/kit
+- efb94aa: dependabot: directory '/', update @types/node
+- efb94aa: dependabot: directory '/', update eslint
+- efb94aa: dependabot: directory '/', update rolldown
+- efb94aa: dependabot: directory '/', update svelte
+- efb94aa: dependabot: directory '/', update typescript-eslint
+- efb94aa: dependabot: directory '/', update vite
+- 4cad5be: dependabot: directory '/', update @azure/functions
+- 4cad5be: dependabot: directory '/', update @sentry/sveltekit
+- 4cad5be: dependabot: directory '/', update @sveltejs/kit
+- 4cad5be: dependabot: directory '/', update @vitest/browser-playwright
+- 4cad5be: dependabot: directory '/', update @vitest/browser
+- 4cad5be: dependabot: directory '/', update @vitest/coverage-istanbul
+- 4cad5be: dependabot: directory '/', update es-toolkit
+- 4cad5be: dependabot: directory '/', update eslint-plugin-svelte
+- 4cad5be: dependabot: directory '/', update rolldown
+- 4cad5be: dependabot: directory '/', update svelte
+- 4cad5be: dependabot: directory '/', update typescript-eslint
+- 4cad5be: dependabot: directory '/', update vite
+- 4cad5be: dependabot: directory '/', update vitest
+- 037c687: dependabot: directory '/', update prettier-plugin-svelte
+
 ## 1.0.0
 
 ### Major Changes
