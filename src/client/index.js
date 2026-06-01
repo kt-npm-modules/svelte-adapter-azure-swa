@@ -8,7 +8,7 @@ import { convertPathToPattern, globSync } from 'tinyglobby';
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
  * @typedef {import('rolldown').RolldownOptions} RolldownOptions
- * @typedef {import('..').Options} Options
+ * @typedef {import('../index.js').Options} Options
  */
 
 /** @returns {RolldownOptions} */
