@@ -9,7 +9,7 @@ export default defineConfig({
 			'./tests/unit/json.js'
 		],
 		coverage: {
-			provider: 'istanbul',
+			provider: 'v8',
 			reportsDirectory: './coverage-test',
 			exclude: [
 				...configDefaults.exclude,

@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const istanbulCLIOutput = path.join(process.cwd(), 'test-results/.nyc_output');
+const coverageOutput = path.join(process.cwd(), 'test-results/.nyc_output');
 
 export function generateUUID(): string {
 	return crypto.randomBytes(16).toString('hex');
@@ -17,11 +17,11 @@ export const test = baseTest.extend({
 				(window as any).collectIstanbulCoverage(JSON.stringify((window as any).__coverage__))
 			)
 		);
-		await fs.promises.mkdir(istanbulCLIOutput, { recursive: true });
+		await fs.promises.mkdir(coverageOutput, { recursive: true });
 		await context.exposeFunction('collectIstanbulCoverage', (coverageJSON: string) => {
 			if (coverageJSON)
 				fs.writeFileSync(
-					path.join(istanbulCLIOutput, `playwright_coverage_${generateUUID()}.json`),
+					path.join(coverageOutput, `playwright_coverage_${generateUUID()}.json`),
 					coverageJSON
 				);
 		});
