@@ -2,7 +2,7 @@ import functions from '@azure/functions';
 import { randomUUID } from 'crypto';
 const { InvocationContext } = functions;
 
-/** @type {import('.').emulatePlatform} */
+/** @type {import('./index.js').emulatePlatform} */
 export function emulatePlatform(config, prerender, options) {
 	/** @type {App.Platform['clientPrincipal']} */
 	let clientPrincipal = null;

@@ -27,6 +27,7 @@ The root `tsconfig.json` SHALL NOT emit JavaScript. `compilerOptions.noEmit` MUS
 ### Requirement: Source ESM imports stay nodenext-compatible
 
 Source files under `src/` SHALL use ESM import forms that resolve correctly under `module: nodenext`:
+
 - Relative imports MUST include an explicit file extension (e.g. `.js`, `.d.ts`).
 - Node built-in imports MUST use the `node:` specifier prefix (e.g. `node:path`, not `path`).
 - Imports of CJS dependencies MUST use a form supported by the dependency's actual export shape (named, namespace, or default via `allowSyntheticDefaultImports`).

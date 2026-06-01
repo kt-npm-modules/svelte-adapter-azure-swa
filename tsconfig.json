@@ -5,8 +5,8 @@
 		"noEmit": true,
 		"noImplicitAny": true,
 		"target": "es2022",
-		"module": "esnext",
-		"moduleResolution": "node",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"allowSyntheticDefaultImports": true,
 		"lib": ["es2023"]
 	},

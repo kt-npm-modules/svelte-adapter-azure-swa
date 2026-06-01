@@ -14,9 +14,11 @@ The root `tsconfig.json` uses `"module": "esnext"` with `"moduleResolution": "no
 ## Capabilities
 
 ### New Capabilities
+
 - `build-tooling-tsconfig`: Conventions for the package's root TypeScript configuration — module/resolution mode, what it must enforce, and how it relates to the runtime/publish format.
 
 ### Modified Capabilities
+
 <!-- None — this change does not alter user-facing adapter behavior. -->
 
 ## Impact
@@ -24,5 +26,5 @@ The root `tsconfig.json` uses `"module": "esnext"` with `"moduleResolution": "no
 - **Affected files**: [tsconfig.json](tsconfig.json), and any `.js`/`.d.ts` under [src/](src/) that fails the stricter ESM resolution and needs an explicit `.js` extension or import-style fix.
 - **Affected scripts**: `npm run check` (`tsc --skipLibCheck --noEmit`) — must remain green after the change. CI runs this.
 - **APIs**: None. The package's public exports, runtime behavior, and emitted output are unchanged (`noEmit` is true; this is a checker-only config).
-- **Consumers**: No effect — this changes how *we* type-check, not what we ship.
+- **Consumers**: No effect — this changes how _we_ type-check, not what we ship.
 - **Dependencies**: No new dependencies. TypeScript `^5.9.3` already supports `nodenext`.

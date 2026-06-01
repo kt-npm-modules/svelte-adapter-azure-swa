@@ -14,12 +14,14 @@ The sibling [tests/demo/tsconfig.json](tests/demo/tsconfig.json) extends SvelteK
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Type-check the package under module/resolution semantics that match Node's runtime ESM loader.
 - Catch real ESM-resolution mistakes at `tsc` time (missing extensions, bad CJS-default imports, paths that exist on disk but aren't in `exports`).
 - Keep `npm run check` green at the end of the change. CI must continue to pass.
 - Make zero observable changes to published artifacts (`src/**` is what ships; `noEmit` stays true).
 
 **Non-Goals:**
+
 - Rewriting source from JSDoc-typed `.js` to `.ts`.
 - Touching `tests/demo/*` or `.svelte-kit/*` tsconfigs.
 - Introducing a build/emit step or changing `target`/`lib`.
@@ -34,6 +36,7 @@ Use `"module": "nodenext"` and `"moduleResolution": "nodenext"` together.
 **Rationale**: TypeScript treats these as a paired mode. `nodenext` tracks Node's evolving ESM rules and is the documented choice for packages that publish ESM and target current Node LTS. The package's `engines` already pins Node 20/22, and Node 20+ supports the resolution features `nodenext` validates against.
 
 **Alternatives considered:**
+
 - **`"module": "node20"` / `"moduleResolution": "node20"`** — Pins to Node 20 semantics. Rejected: the package supports both 20 and 22, and there is no reason to lag behind Node's current behavior.
 - **`"module": "esnext"` + `"moduleResolution": "bundler"`** — Used by the demo because Vite/SvelteKit bundle. Rejected for the package: nothing bundles `src/` before publish; consumers receive raw `.js` and load it through Node's resolver, so `bundler` would lie about what works at runtime.
 - **Leave as-is (`esnext` + `node`)** — Rejected: see proposal motivation. The current pairing under-checks ESM resolution.
@@ -41,6 +44,7 @@ Use `"module": "nodenext"` and `"moduleResolution": "nodenext"` together.
 ### Decision 2: Fix new diagnostics in place; do not suppress
 
 If `nodenext` surfaces errors, fix the source rather than adding `// @ts-ignore`, `skipLibCheck` exceptions, or downgrading the option. Expected categories:
+
 - Missing `.js` extensions on relative imports — add the extension.
 - CJS-default-import shape mismatches — switch to namespace import or named import as the dependency requires (`allowSyntheticDefaultImports` stays on, which covers most cases).
 - `package.json` `exports` reachability — if a file is imported that isn't in `exports`, either add it or change the import.
