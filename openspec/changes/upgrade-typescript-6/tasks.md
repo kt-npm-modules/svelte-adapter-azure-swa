@@ -11,7 +11,7 @@
 
 - [x] 1.1 Fix `src/emulator/index.js:47`: restructure the `if (clientPrincipal)` block so `user` is built in a single object literal, with `claimsPrincipalData` lifted into a `const` initialized via a ternary on `'claims' in clientPrincipal`. This avoids the TS6 control-flow narrowing regression. Do NOT modify `src/index.d.ts` — `App.Platform.user: HttpRequestUser | null` is correct (per [Azure SWA docs](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information): anonymous requests have `user === null`), and `claimsPrincipalData` is already declared upstream on `HttpRequestUser` in `@azure/functions`.
 - [x] 1.2 Fix `src/server/entry/entry.js:16` (`server.init({ env: process.env })`) by adding a JSDoc cast `/** @type {Record<string, string>} */ (process.env)`. Confirm no behavioral change vs. SvelteKit's documented `server.init` contract.
-- [x] 1.3 Fix `src/server/entry/entry.js:111` (`new Request(originalUrl, …)`): add an early `if (!originalUrl) throw new Error('x-ms-original-url header missing — Azure SWA misconfiguration')` before the `new Request(...)` call. Place the guard right after the existing header reads so the stack trace is informative.
+- [x] 1.3 Fix `src/server/entry/entry.js:111` (`new Request(originalUrl, …)`): add an `assert(originalUrl, 'x-ms-original-url header is required')` (from `node:assert`) right after the `headers.get(...)` call. `assert` is preferred over a hand-written `if (!x) throw` because Sonar treats it as an invariant rather than an untested branch.
 - [x] 1.4 Fix `src/swa-config/index.js:88` (`swaConfig.routes.push(...)`): add `swaConfig.routes ??= [];` immediately before the push. Match `staticwebapp.config.json` schema (routes is optional).
 - [x] 1.5 Fix `src/utils.js:72` JSDoc on the lazy-init `mapSource2JSDir` from `/** @type {Map<string, string>} */` to `/** @type {Map<string, string> | undefined} */`. No runtime change.
 - [x] 1.6 Fix `src/utils.js` `loadMapSource2JSDir(dirs, log)` JSDoc to mark `log` optional: `@param {Console['log']} [log] logger function (optional — internal calls already use \`log?.(...)\`)`. Verify body already uses `log?.(...)` on every call.
@@ -51,9 +51,12 @@
 
 ## 5. Changeset + PR plumbing
 
-- [ ] 5.1 Author one new patch changeset at `.changeset/<descriptive-slug>.md` capturing the user-visible change: TS6 support, `CHANGELOG.md` shipped in tarball, `check` script tightened. Do NOT mention the source fixes individually — they are bug fixes that became visible only because of the TS6 bump.
-- [ ] 5.2 Run `./scripts/push-update.sh "fix: typescript 6 support; ship CHANGELOG.md in tarball"`. Verify the working dir is `svelte-adapter-azure-swa` (not the primary repo `npm-typescript-template`) **before** running.
-- [ ] 5.3 Open PR `contribution → main` titled `fix: typescript 6 support; ship CHANGELOG.md in tarball`. Reference dependabot #237 in the body.
+- [x] 5.1 Author one new patch changeset at `.changeset/<descriptive-slug>.md` capturing the user-visible change: TS6 support, `CHANGELOG.md` shipped in tarball, `check` script tightened. Do NOT mention the source fixes individually — they are bug fixes that became visible only because of the TS6 bump.
+  - `.changeset/upgrade-typescript-6.md` — patch bump.
+- [x] 5.2 Run `./scripts/push-update.sh "fix: typescript 6 support; ship CHANGELOG.md in tarball"`. Verify the working dir is `svelte-adapter-azure-swa` (not the primary repo `npm-typescript-template`) **before** running.
+  - Verified pwd before push. Pushed to `origin/contribution`.
+- [x] 5.3 Open PR `contribution → main` titled `fix: typescript 6 support; ship CHANGELOG.md in tarball`. Reference dependabot #237 in the body.
+  - Opened as [#238](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/pull/238).
 
 ## 6. Land
 

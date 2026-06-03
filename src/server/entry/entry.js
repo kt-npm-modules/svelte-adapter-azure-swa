@@ -2,6 +2,7 @@ import { app } from '@azure/functions';
 import { installPolyfills } from '@sveltejs/kit/node/polyfills';
 import { debug, preserveAuthorization, testWorkarounds } from 'ENV';
 import { manifest } from 'MANIFEST';
+import assert from 'node:assert';
 import { Server } from 'SERVER';
 import { buildDownstreamHeaders } from './copy-headers.js';
 import {
@@ -96,13 +97,7 @@ function toRequest(httpRequest) {
 	// because we proxy all requests to the render function, the original URL in the request is /api/sk_render
 	// this header contains the URL the user requested
 	const originalUrl = httpRequest.headers.get('x-ms-original-url');
-	if (!originalUrl) {
-		// Azure SWA always sets this header on requests routed to managed
-		// Functions; its absence indicates SWA misconfiguration (or the
-		// function being invoked outside the SWA edge). Failing fast with a
-		// typed error beats a downstream `TypeError: Failed to construct 'Request'`.
-		throw new Error('x-ms-original-url header missing — Azure SWA misconfiguration');
-	}
+	assert(originalUrl, 'x-ms-original-url header is required');
 
 	const { downstreamHeaders, testWorkaroundsInfo } = buildDownstreamHeaders(httpRequest, {
 		preserveAuthorization,
