@@ -35,7 +35,7 @@ function list_files(dir, filter) {
 
 /**
  * @param {string[]} dirs directories to search
- * @param {Console['log']} log logger function
+ * @param {Console['log']} [log] logger function (optional — internal calls already use `log?.(...)`)
  * @returns {Map<string, string>} Map of source file paths to directory of the source map & js file
  */
 function loadMapSource2JSDir(dirs, log) {
@@ -68,7 +68,7 @@ function loadMapSource2JSDir(dirs, log) {
 /** @type {import('./index.js').sentryRewriteSourcesFactory} */
 export function sentryRewriteSourcesFactory(dirs, options = undefined) {
 	// We need to build map source (from source map files) -> js file directory
-	/** @type {Map<string, string>} */
+	/** @type {Map<string, string> | undefined} */
 	let mapSource2JSDir = undefined;
 
 	const log = options?.log;

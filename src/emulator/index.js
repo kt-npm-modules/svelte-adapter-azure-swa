@@ -36,21 +36,26 @@ export function emulatePlatform(config, prerender, options) {
 	}
 
 	if (clientPrincipal) {
+		// Build claimsPrincipalData first so `user` can be assigned in a single
+		// object literal. TS 6.x loses control-flow narrowing on `user` if we
+		// assign first and then mutate inside a nested `if ('claims' in ...)`,
+		// because the nested guard introduces a different discriminant on
+		// `clientPrincipal` and re-widens `user` back to `HttpRequestUser | null`.
+		/** @type {import('@azure/functions').HttpRequestUser['claimsPrincipalData']} */
+		const claimsPrincipalData =
+			'claims' in clientPrincipal
+				? clientPrincipal.claims.reduce((acc, claim) => {
+						acc[claim.typ] = claim.val;
+						return acc;
+					}, /** @type {import('@azure/functions').HttpRequestUser['claimsPrincipalData']} */ ({}))
+				: {};
 		user = {
 			type: 'StaticWebApps',
 			id: clientPrincipal.userId,
 			username: clientPrincipal.userDetails,
 			identityProvider: clientPrincipal.identityProvider,
-			claimsPrincipalData: {}
+			claimsPrincipalData
 		};
-		if ('claims' in clientPrincipal) {
-			/** @type {App.Platform['user']['claimsPrincipalData']} */
-			const claimsPrincipalData = {};
-			user.claimsPrincipalData = clientPrincipal.claims.reduce((acc, claim) => {
-				acc[claim.typ] = claim.val;
-				return acc;
-			}, claimsPrincipalData);
-		}
 	}
 
 	platform = {

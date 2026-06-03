@@ -13,7 +13,11 @@ import {
 installPolyfills();
 
 const server = new Server(manifest);
-const initialized = server.init({ env: process.env });
+// SvelteKit's Server.init expects Record<string, string>; Node's process.env is
+// Record<string, string | undefined>. SvelteKit treats undefined values as empty
+// strings internally — keep the cast minimal and avoid an extra allocation per
+// cold start.
+const initialized = server.init({ env: /** @type {Record<string, string>} */ (process.env) });
 
 /**
  * @typedef {import('@azure/functions').InvocationContext} InvocationContext
@@ -92,6 +96,13 @@ function toRequest(httpRequest) {
 	// because we proxy all requests to the render function, the original URL in the request is /api/sk_render
 	// this header contains the URL the user requested
 	const originalUrl = httpRequest.headers.get('x-ms-original-url');
+	if (!originalUrl) {
+		// Azure SWA always sets this header on requests routed to managed
+		// Functions; its absence indicates SWA misconfiguration (or the
+		// function being invoked outside the SWA edge). Failing fast with a
+		// typed error beats a downstream `TypeError: Failed to construct 'Request'`.
+		throw new Error('x-ms-original-url header missing — Azure SWA misconfiguration');
+	}
 
 	const { downstreamHeaders, testWorkaroundsInfo } = buildDownstreamHeaders(httpRequest, {
 		preserveAuthorization,

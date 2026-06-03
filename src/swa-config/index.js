@@ -85,6 +85,8 @@ export async function writeSWAConfig(builder, outDir, options) {
 		// If the root was not pre-rendered, add a placeholder index.html
 		// Route all requests for the index to the SSR function
 		writeFileSync(`${outDir}/index.html`, '');
+		// `routes` is optional in staticwebapp.config.json — initialize before push.
+		swaConfig.routes ??= [];
 		swaConfig.routes.push(
 			{
 				route: '/index.html',

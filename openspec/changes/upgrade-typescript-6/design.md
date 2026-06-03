@@ -4,14 +4,14 @@ The dependabot bump PR #237 (`typescript` 5.9.3 → 6.0.3) has been failing CI o
 
 Each of the six errors is a real latent issue:
 
-| #   | Site                            | Root cause                                                                                                                                                                          | Latent risk                                                                                                                                                |
-| --- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #   | Site                            | Root cause                                                                                                                                                                                                                                                                                                                                                                                                                          | Latent risk                                                                                                          |
+| --- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | 1   | `src/emulator/index.js:47`      | TS6 control-flow narrowing regression: after the nested `if ('claims' in clientPrincipal)` block, the narrowing on `user` (already assigned to a `HttpRequestUser` literal above) is lost and TS widens it back to `HttpRequestUser \| null`. The declared type is **correct** — Azure SWA docs confirm `request.user === null` for anonymous requests, and `claimsPrincipalData` is already a field of `HttpRequestUser` upstream. | None at runtime. The diagnostic is a TS6 compiler regression around nested-`if` narrowing; the code itself is sound. |
-| 2   | `src/server/entry/entry.js:16`  | `process.env` (`Record<string, string \| undefined>`) is fed into SvelteKit `Server.init({ env: Record<string, string> })`.                                                         | Already de-facto unsafe; SvelteKit treats missing values as empty string. Just needs a JSDoc cast or filter.                                               |
-| 3   | `src/server/entry/entry.js:111` | `httpRequest.headers.get('x-ms-original-url')` returns `string \| null`; passed unguarded to `new Request(originalUrl, ...)`.                                                       | Crash with cryptic `TypeError: Failed to construct 'Request'` if Azure forgets the header.                                                                 |
-| 4   | `src/swa-config/index.js:88`    | `staticwebapp.config.json` schema declares `routes` optional. Existing code does `swaConfig.routes.push(...)` unconditionally.                                                      | Crash if `customStaticWebAppConfig` is provided without a `routes` array.                                                                                  |
-| 5   | `src/utils.js:72`               | `let mapSource2JSDir = undefined` annotated as `Map<string, string>` (no `\| undefined`).                                                                                           | None at runtime — narrow JSDoc typo.                                                                                                                       |
-| 6   | `src/utils.js:80`               | `loadMapSource2JSDir(dirs, log)` declares `log: Console['log']` (required), but caller passes `options?.log` which may be `undefined`.                                              | Crash if `options.log` is unset and the helper internally calls `log(...)` (it does, three times).                                                         |
+| 2   | `src/server/entry/entry.js:16`  | `process.env` (`Record<string, string \| undefined>`) is fed into SvelteKit `Server.init({ env: Record<string, string> })`.                                                                                                                                                                                                                                                                                                         | Already de-facto unsafe; SvelteKit treats missing values as empty string. Just needs a JSDoc cast or filter.         |
+| 3   | `src/server/entry/entry.js:111` | `httpRequest.headers.get('x-ms-original-url')` returns `string \| null`; passed unguarded to `new Request(originalUrl, ...)`.                                                                                                                                                                                                                                                                                                       | Crash with cryptic `TypeError: Failed to construct 'Request'` if Azure forgets the header.                           |
+| 4   | `src/swa-config/index.js:88`    | `staticwebapp.config.json` schema declares `routes` optional. Existing code does `swaConfig.routes.push(...)` unconditionally.                                                                                                                                                                                                                                                                                                      | Crash if `customStaticWebAppConfig` is provided without a `routes` array.                                            |
+| 5   | `src/utils.js:72`               | `let mapSource2JSDir = undefined` annotated as `Map<string, string>` (no `\| undefined`).                                                                                                                                                                                                                                                                                                                                           | None at runtime — narrow JSDoc typo.                                                                                 |
+| 6   | `src/utils.js:80`               | `loadMapSource2JSDir(dirs, log)` declares `log: Console['log']` (required), but caller passes `options?.log` which may be `undefined`.                                                                                                                                                                                                                                                                                              | Crash if `options.log` is unset and the helper internally calls `log(...)` (it does, three times).                   |
 
 In addition, the published tarball has been missing `CHANGELOG.md` since the package's inception — a `files: ["src"]` whitelist masks the changelog because npm only auto-includes README and LICENSE.
 
@@ -56,21 +56,21 @@ The declared `App.Platform.user: HttpRequestUser | null` is **correct** — Azur
 
 ```javascript
 if (clientPrincipal) {
-    /** @type {Record<string, unknown>} */
-    const claimsPrincipalData =
-        'claims' in clientPrincipal
-            ? clientPrincipal.claims.reduce((acc, claim) => {
-                  acc[claim.typ] = claim.val;
-                  return acc;
-              }, /** @type {Record<string, unknown>} */ ({}))
-            : {};
-    user = {
-        type: 'StaticWebApps',
-        id: clientPrincipal.userId,
-        username: clientPrincipal.userDetails,
-        identityProvider: clientPrincipal.identityProvider,
-        claimsPrincipalData
-    };
+	/** @type {Record<string, unknown>} */
+	const claimsPrincipalData =
+		'claims' in clientPrincipal
+			? clientPrincipal.claims.reduce((acc, claim) => {
+					acc[claim.typ] = claim.val;
+					return acc;
+				}, /** @type {Record<string, unknown>} */ ({}))
+			: {};
+	user = {
+		type: 'StaticWebApps',
+		id: clientPrincipal.userId,
+		username: clientPrincipal.userDetails,
+		identityProvider: clientPrincipal.identityProvider,
+		claimsPrincipalData
+	};
 }
 ```
 

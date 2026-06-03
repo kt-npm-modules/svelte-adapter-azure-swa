@@ -9,35 +9,45 @@
 >
 > They are documented and intentional. A future PR may revisit them once upstream schemas catch up.
 
-- [ ] 1.1 Fix `src/emulator/index.js:47`: restructure the `if (clientPrincipal)` block so `user` is built in a single object literal, with `claimsPrincipalData` lifted into a `const` initialized via a ternary on `'claims' in clientPrincipal`. This avoids the TS6 control-flow narrowing regression. Do NOT modify `src/index.d.ts` — `App.Platform.user: HttpRequestUser | null` is correct (per [Azure SWA docs](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information): anonymous requests have `user === null`), and `claimsPrincipalData` is already declared upstream on `HttpRequestUser` in `@azure/functions`.
-- [ ] 1.2 Fix `src/server/entry/entry.js:16` (`server.init({ env: process.env })`) by adding a JSDoc cast `/** @type {Record<string, string>} */ (process.env)`. Confirm no behavioral change vs. SvelteKit's documented `server.init` contract.
-- [ ] 1.3 Fix `src/server/entry/entry.js:111` (`new Request(originalUrl, …)`): add an early `if (!originalUrl) throw new Error('x-ms-original-url header missing — Azure SWA misconfiguration')` before the `new Request(...)` call. Place the guard right after the existing header reads so the stack trace is informative.
-- [ ] 1.4 Fix `src/swa-config/index.js:88` (`swaConfig.routes.push(...)`): add `swaConfig.routes ??= [];` immediately before the push. Match `staticwebapp.config.json` schema (routes is optional).
-- [ ] 1.5 Fix `src/utils.js:72` JSDoc on the lazy-init `mapSource2JSDir` from `/** @type {Map<string, string>} */` to `/** @type {Map<string, string> | undefined} */`. No runtime change.
-- [ ] 1.6 Fix `src/utils.js` `loadMapSource2JSDir(dirs, log)` JSDoc to mark `log` optional: `@param {Console['log']} [log] logger function (optional — internal calls already use \`log?.(...)\`)`. Verify body already uses `log?.(...)` on every call.
-- [ ] 1.7 Run `node_modules/.bin/tsc --skipLibCheck --noEmit` (or `npm run check` once 2.x is done) — must exit 0 with no `error TS` lines.
+- [x] 1.1 Fix `src/emulator/index.js:47`: restructure the `if (clientPrincipal)` block so `user` is built in a single object literal, with `claimsPrincipalData` lifted into a `const` initialized via a ternary on `'claims' in clientPrincipal`. This avoids the TS6 control-flow narrowing regression. Do NOT modify `src/index.d.ts` — `App.Platform.user: HttpRequestUser | null` is correct (per [Azure SWA docs](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information): anonymous requests have `user === null`), and `claimsPrincipalData` is already declared upstream on `HttpRequestUser` in `@azure/functions`.
+- [x] 1.2 Fix `src/server/entry/entry.js:16` (`server.init({ env: process.env })`) by adding a JSDoc cast `/** @type {Record<string, string>} */ (process.env)`. Confirm no behavioral change vs. SvelteKit's documented `server.init` contract.
+- [x] 1.3 Fix `src/server/entry/entry.js:111` (`new Request(originalUrl, …)`): add an early `if (!originalUrl) throw new Error('x-ms-original-url header missing — Azure SWA misconfiguration')` before the `new Request(...)` call. Place the guard right after the existing header reads so the stack trace is informative.
+- [x] 1.4 Fix `src/swa-config/index.js:88` (`swaConfig.routes.push(...)`): add `swaConfig.routes ??= [];` immediately before the push. Match `staticwebapp.config.json` schema (routes is optional).
+- [x] 1.5 Fix `src/utils.js:72` JSDoc on the lazy-init `mapSource2JSDir` from `/** @type {Map<string, string>} */` to `/** @type {Map<string, string> | undefined} */`. No runtime change.
+- [x] 1.6 Fix `src/utils.js` `loadMapSource2JSDir(dirs, log)` JSDoc to mark `log` optional: `@param {Console['log']} [log] logger function (optional — internal calls already use \`log?.(...)\`)`. Verify body already uses `log?.(...)` on every call.
+- [x] 1.7 Run `node_modules/.bin/tsc --skipLibCheck --noEmit` (or `npm run check` once 2.x is done) — must exit 0 with no `error TS` lines.
 
 ## 2. Toolchain bump
 
-- [ ] 2.1 Update `devDependencies.typescript` in `package.json` from `^5.9.3` to `^6.0.3`.
-- [ ] 2.2 Run `npm install` and commit the resulting `package-lock.json` (workspaces lockfile is shared at root).
-- [ ] 2.3 Update `scripts.check` from `"tsc --skipLibCheck --noEmit"` to `"tsc --project tsconfig.json --noEmit"`.
-- [ ] 2.4 Verify `scripts.check:test` does not exist for this repo (root has only `check`); if it does, drop the `--skipLibCheck` flag from it. (Spec mentions both for forward-compat.)
-- [ ] 2.5 Confirm `tsconfig.json` already carries `skipLibCheck: true` so the CLI flag is genuinely redundant. (It does — verified.)
+- [x] 2.1 Update `devDependencies.typescript` in `package.json` from `^5.9.3` to `^6.0.3`.
+- [x] 2.2 Run `npm install` and commit the resulting `package-lock.json` (workspaces lockfile is shared at root).
+- [x] 2.3 Update `scripts.check` from `"tsc --skipLibCheck --noEmit"` to `"tsc --project tsconfig.json --noEmit"`.
+- [x] 2.4 Verify `scripts.check:test` does not exist for this repo (root has only `check`); if it does, drop the `--skipLibCheck` flag from it. (Spec mentions both for forward-compat.)
+  - Verified: root has only `check` and workspace-scoped `check:all`. No `check:test`.
+- [x] 2.5 Confirm `tsconfig.json` already carries `skipLibCheck: true` so the CLI flag is genuinely redundant. (It does — verified.)
+  - **Correction during apply:** `tsconfig.json` did NOT carry `skipLibCheck: true`. Added it explicitly so the CLI flag is now genuinely redundant. Without it, dropping the CLI flag and pinning to `--project tsconfig.json` surfaced ~30 vite/picomatch upstream type errors.
 
 ## 3. Published-tarball polish
 
-- [ ] 3.1 Update `package.json` `files` from `["src"]` to `["src", "CHANGELOG.md"]`.
-- [ ] 3.2 Run `npm pack --dry-run --ignore-scripts`; verify `CHANGELOG.md` appears in the listed contents and no `tests/`, `openspec/`, `.github/`, `.changeset/`, or `scripts/` paths leak through.
+- [x] 3.1 Update `package.json` `files` from `["src"]` to `["src", "CHANGELOG.md"]`.
+- [x] 3.2 Run `npm pack --dry-run --ignore-scripts`; verify `CHANGELOG.md` appears in the listed contents and no `tests/`, `openspec/`, `.github/`, `.changeset/`, or `scripts/` paths leak through.
+  - Verified: `CHANGELOG.md` (50.5kB) listed, no leakage.
 
 ## 4. Verification (full battery, local)
 
-- [ ] 4.1 `npm run check` exits 0 (root, against TS6).
-- [ ] 4.2 `npm run check:all` exits 0 (root + workspaces; demo is svelte-check, not TS6-affected — but make sure nothing else regressed).
-- [ ] 4.3 `npm run lint` and `npm run lint:all` exit 0.
-- [ ] 4.4 `npm run test` exits 0.
-- [ ] 4.5 `npm pack --dry-run --ignore-scripts` lists `CHANGELOG.md`, `LICENSE`, `README.md`, `package.json`, and `src/**` only.
-- [ ] 4.6 Confirm zero NEW diagnostic-suppression comments were added by this change: `git diff main -- src/ | grep -E '^\+.*@ts-(expect-error|ignore|nocheck)'` MUST return nothing. (The two pre-existing suppressions in `swa.d.ts` and `headers.js` are out of scope and remain untouched — `^\+` ensures we only flag added lines.)
+- [x] 4.1 `npm run check` exits 0 (root, against TS6).
+- [x] 4.2 `npm run check:all` exits 0 (root + workspaces; demo is svelte-check, not TS6-affected — but make sure nothing else regressed).
+  - Demo svelte-check: 0 errors (2 pre-existing warnings unrelated to this change).
+- [x] 4.3 `npm run lint` and `npm run lint:all` exit 0.
+  - One pre-existing `Unused eslint-disable directive` warning in generated `swa-config-gen.d.ts` is not from this change.
+- [x] 4.4 `npm run test` exits 0.
+  - 4 spec files, 58 tests passing.
+- [x] 4.4b (added per user) `npm run test:swa` in `tests/demo/` — runs the full SWA emulator e2e suite against the rebuilt adapter.
+  - 29 passed (19.4s); originalUrl null-guard and env cast exercised end-to-end without regression.
+- [x] 4.5 `npm pack --dry-run --ignore-scripts` lists `CHANGELOG.md`, `LICENSE`, `README.md`, `package.json`, and `src/**` only.
+  - 24 files / 33.6 kB / `CHANGELOG.md` 50.5kB present. No `tests/`, `openspec/`, `.github/`, `.changeset/`, `scripts/` leakage.
+- [x] 4.6 Confirm zero NEW diagnostic-suppression comments were added by this change: `git diff main -- src/ | grep -E '^\+.*@ts-(expect-error|ignore|nocheck)'` MUST return nothing. (The two pre-existing suppressions in `swa.d.ts` and `headers.js` are out of scope and remain untouched — `^\+` ensures we only flag added lines.)
+  - Zero new suppressions ✓.
 
 ## 5. Changeset + PR plumbing
 
