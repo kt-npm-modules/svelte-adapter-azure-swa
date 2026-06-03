@@ -6,7 +6,7 @@ Each of the six errors is a real latent issue:
 
 | #   | Site                            | Root cause                                                                                                                                                                          | Latent risk                                                                                                                                                |
 | --- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `src/emulator/index.js:47`      | `App.Platform.user` is typed as `HttpRequestUser \| null` but the codebase mutates it as if it had `claimsPrincipalData`. The custom field is set in two places but never declared. | Type liar — `claimsPrincipalData` is read by hooks downstream; consumers reading `event.platform.user.claimsPrincipalData` get a TS error from their side. |
+| 1   | `src/emulator/index.js:47`      | TS6 control-flow narrowing regression: after the nested `if ('claims' in clientPrincipal)` block, the narrowing on `user` (already assigned to a `HttpRequestUser` literal above) is lost and TS widens it back to `HttpRequestUser \| null`. The declared type is **correct** — Azure SWA docs confirm `request.user === null` for anonymous requests, and `claimsPrincipalData` is already a field of `HttpRequestUser` upstream. | None at runtime. The diagnostic is a TS6 compiler regression around nested-`if` narrowing; the code itself is sound. |
 | 2   | `src/server/entry/entry.js:16`  | `process.env` (`Record<string, string \| undefined>`) is fed into SvelteKit `Server.init({ env: Record<string, string> })`.                                                         | Already de-facto unsafe; SvelteKit treats missing values as empty string. Just needs a JSDoc cast or filter.                                               |
 | 3   | `src/server/entry/entry.js:111` | `httpRequest.headers.get('x-ms-original-url')` returns `string \| null`; passed unguarded to `new Request(originalUrl, ...)`.                                                       | Crash with cryptic `TypeError: Failed to construct 'Request'` if Azure forgets the header.                                                                 |
 | 4   | `src/swa-config/index.js:88`    | `staticwebapp.config.json` schema declares `routes` optional. Existing code does `swaConfig.routes.push(...)` unconditionally.                                                      | Crash if `customStaticWebAppConfig` is provided without a `routes` array.                                                                                  |
@@ -31,7 +31,9 @@ The repo also has two pending changesets unrelated to this work (`migrate-covera
 
 - No engines change (`>=20 <21 || >=22 <23` stays — Azure SWA only supports Node 20 and 22).
 - No demo workspace edits — `tests/demo/` uses `svelte-check`, not root `tsc`, and its own tsconfig is fine.
-- No new public API. The `App.Platform.user` shape correction is a TYPE fix, not a runtime change — the field has been written all along; only the declared type was wrong.
+- No new public API. The TS6-surfaced narrowing issue at `emulator/index.js:47` is fixed by restructuring the local code, not by changing the `App.Platform.user` type — the type was correct all along.
+- No simplification of `ClientPrincipal` / `ClientPrincipalWithClaims`. The split is more accurate than a single type with `claims?` (the API-function path per [Azure SWA docs](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information#api-functions) **never** contains `claims`; only the direct-access endpoint does), so collapsing them would lose the discrimination. A future PR may collapse them via Option C (single base type with optional `claims?` + a deprecated `ClientPrincipalWithClaims` alias for soft migration), but that is a deliberate semver-major and is out of scope here.
+- No tightening of `App.Platform.clientPrincipal` to `ClientPrincipal | null`. The current `ClientPrincipal | ClientPrincipalWithClaims | null` is technically a type lie in the managed-function context (where `claims` never arrives), but fixing it is a separate type-only follow-up and not on the TS6 critical path.
 - No spec change for the six runtime fixes — they restore parity between code and intent. Only `build-tooling-tsconfig` (TS major bump, script invocation) and a new `published-package-contents` capability (tarball includes CHANGELOG) carry spec deltas.
 - No dependabot rebase. PR #237 is closed in favour of this PR (which also bumps to `^6.0.3`).
 
@@ -46,13 +48,39 @@ The repo also has two pending changesets unrelated to this work (`migrate-covera
 - Add `// @ts-expect-error` lines to keep the bump diff small. **Rejected** — encodes "we know this is wrong" into the source, defeats `checkJs`.
 - Loosen `tsconfig.json` (`strict: false` or `checkJs: false`). **Rejected** — same reason, but worse: it would also hide future bugs.
 
-### Decision: Fix `App.Platform.user` type in `src/index.d.ts`, not narrow at the call site
+### Decision: Restructure `emulator/index.js` to build `user` in a single assignment
 
-The declared type `HttpRequestUser | null` does not match the runtime shape that the emulator and the server entry both construct (which carries `claimsPrincipalData`). Fixing it once in `src/index.d.ts` propagates correctly to both call sites and to consumers reading `event.platform.user.claimsPrincipalData` from their own SvelteKit hooks.
+The declared `App.Platform.user: HttpRequestUser | null` is **correct** — Azure SWA documents that `request.user` is `null` for anonymous requests, and `claimsPrincipalData` is already a field of `HttpRequestUser` upstream (see [Azure Functions Node library `http.d.ts`](https://raw.githubusercontent.com/Azure/azure-functions-nodejs-library/v4.x/types/http.d.ts)). The TS6 diagnostic is a **control-flow narrowing regression**: after the nested `if ('claims' in clientPrincipal)` block, TS6 widens `user` back to `HttpRequestUser | null` and rejects the assignment to `.claimsPrincipalData`.
 
-**Concrete approach:** declare a small intersection type (or extend `HttpRequestUser`) so that `claimsPrincipalData: Record<string, string>` is part of the published type surface. The runtime initialization (`claimsPrincipalData: {}`) at `src/emulator/index.js:46` already matches that shape.
+**Concrete approach:** lift the `claimsPrincipalData` computation out of the inner `if` and into a `const` initialized before the `user = {...}` literal. Then `user` is built once with `claimsPrincipalData` already populated. No subsequent mutation, no narrowing dependence.
 
-**Trade-off:** because `App.Platform` is in the global `App` namespace, this is technically a public-type-surface widening. Consumers who were destructuring `user` and inferring its type were already getting back something with `claimsPrincipalData` at runtime; their code now type-checks. Nobody is broken.
+```javascript
+if (clientPrincipal) {
+    /** @type {Record<string, unknown>} */
+    const claimsPrincipalData =
+        'claims' in clientPrincipal
+            ? clientPrincipal.claims.reduce((acc, claim) => {
+                  acc[claim.typ] = claim.val;
+                  return acc;
+              }, /** @type {Record<string, unknown>} */ ({}))
+            : {};
+    user = {
+        type: 'StaticWebApps',
+        id: clientPrincipal.userId,
+        username: clientPrincipal.userDetails,
+        identityProvider: clientPrincipal.identityProvider,
+        claimsPrincipalData
+    };
+}
+```
+
+**Alternatives considered:**
+
+- Add an `if (user)` guard inside the nested `if`. **Rejected** — control flow proves `user` is non-null at that point; the guard would be a runtime no-op for the sake of pleasing the compiler.
+- Type-cast `user` at the assignment site. **Rejected** — same problem, just hides the structural issue.
+- Widen `App.Platform.user` to drop `null`. **Rejected** — the Azure SWA documentation explicitly states the user is `null` for anonymous requests; this would be a type lie.
+
+**No type surface change.** `App.Platform.user` and `HttpRequestUser` are untouched.
 
 ### Decision: Use a JSDoc cast for `process.env` rather than filter
 
@@ -89,7 +117,7 @@ A single PR carrying 6 source fixes + the TS bump + the `files`/`check` polish. 
 
 ## Risks / Trade-offs
 
-- **Risk:** `App.Platform.user` type widening could surprise consumers who were depending on the narrower `HttpRequestUser | null` shape. → **Mitigation:** the field was already populated at runtime, so consumers reading it were already getting `claimsPrincipalData`; the widening only makes the TS type honest. Worst-case impact is forward — consumers can now type-check `user.claimsPrincipalData`.
+- **Risk:** Restructuring `emulator/index.js` could subtly change ordering of side effects. → **Mitigation:** the only "side effect" of the inner block was a `Array.prototype.reduce` over `clientPrincipal.claims`; lifting it out preserves identical iteration order and identical resulting object. Verified by reading the diff carefully.
 - **Risk:** `throw` on missing `x-ms-original-url` changes failure mode from cryptic (`TypeError: ...`) to typed (`Error: x-ms-original-url header missing — Azure SWA misconfiguration`). → **Mitigation:** this is an improvement in observability, not a regression. The condition was already a bug.
 - **Risk:** Bumping TS major in devDeps could shift downstream `tsc` / `tsserver` behavior for IDE users running this repo's check. → **Mitigation:** we run the full local `tsc --skipLibCheck --noEmit` and `svelte-check` against TS6 before merge; the change is opt-in for any editor pinning a workspace TS.
 - **Risk:** `CHANGELOG.md` adoption changes the published tarball size by ~12 kB. → **Trade-off accepted:** the changelog is core release metadata; missing it from the tarball is the bug we're fixing.

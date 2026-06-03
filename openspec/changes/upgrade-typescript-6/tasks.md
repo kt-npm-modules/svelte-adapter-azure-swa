@@ -1,6 +1,15 @@
 ## 1. Source type fixes (preconditions for the TS6 bump)
 
-- [ ] 1.1 Fix `src/index.d.ts`: extend `App.Platform.user` to declare `claimsPrincipalData: Record<string, string>` so the runtime shape matches the type. Verify via inspection that `src/emulator/index.js` and `src/server/entry/copy-headers.js` already populate this field.
+> **Hard rule for this change:** **DO NOT introduce any new `// @ts-expect-error`, `// @ts-ignore`, or `// @ts-nocheck` comments** to resolve a TS6 diagnostic. Each new diagnostic MUST be resolved by fixing the underlying type, control flow, or guard. If a fix is non-obvious, surface it for discussion rather than suppressing.
+>
+> Two pre-existing suppressions are out of scope for this change and MUST NOT be modified or removed:
+>
+> - [src/types/swa.d.ts:3](../../../src/types/swa.d.ts#L3) — schema-level cast for `node:22` runtime not yet in upstream schema
+> - [src/server/entry/headers.js:25](../../../src/server/entry/headers.js#L25) — cookie `sameSite` type mismatch
+>
+> They are documented and intentional. A future PR may revisit them once upstream schemas catch up.
+
+- [ ] 1.1 Fix `src/emulator/index.js:47`: restructure the `if (clientPrincipal)` block so `user` is built in a single object literal, with `claimsPrincipalData` lifted into a `const` initialized via a ternary on `'claims' in clientPrincipal`. This avoids the TS6 control-flow narrowing regression. Do NOT modify `src/index.d.ts` — `App.Platform.user: HttpRequestUser | null` is correct (per [Azure SWA docs](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information): anonymous requests have `user === null`), and `claimsPrincipalData` is already declared upstream on `HttpRequestUser` in `@azure/functions`.
 - [ ] 1.2 Fix `src/server/entry/entry.js:16` (`server.init({ env: process.env })`) by adding a JSDoc cast `/** @type {Record<string, string>} */ (process.env)`. Confirm no behavioral change vs. SvelteKit's documented `server.init` contract.
 - [ ] 1.3 Fix `src/server/entry/entry.js:111` (`new Request(originalUrl, …)`): add an early `if (!originalUrl) throw new Error('x-ms-original-url header missing — Azure SWA misconfiguration')` before the `new Request(...)` call. Place the guard right after the existing header reads so the stack trace is informative.
 - [ ] 1.4 Fix `src/swa-config/index.js:88` (`swaConfig.routes.push(...)`): add `swaConfig.routes ??= [];` immediately before the push. Match `staticwebapp.config.json` schema (routes is optional).
@@ -28,6 +37,7 @@
 - [ ] 4.3 `npm run lint` and `npm run lint:all` exit 0.
 - [ ] 4.4 `npm run test` exits 0.
 - [ ] 4.5 `npm pack --dry-run --ignore-scripts` lists `CHANGELOG.md`, `LICENSE`, `README.md`, `package.json`, and `src/**` only.
+- [ ] 4.6 Confirm zero NEW diagnostic-suppression comments were added by this change: `git diff main -- src/ | grep -E '^\+.*@ts-(expect-error|ignore|nocheck)'` MUST return nothing. (The two pre-existing suppressions in `swa.d.ts` and `headers.js` are out of scope and remain untouched — `^\+` ensures we only flag added lines.)
 
 ## 5. Changeset + PR plumbing
 

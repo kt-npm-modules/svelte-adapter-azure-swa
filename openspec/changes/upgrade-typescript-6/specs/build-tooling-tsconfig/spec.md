@@ -32,6 +32,29 @@ The package's `devDependencies.typescript` SHALL be `^6.0.3` (or any newer compa
 - **THEN** the command exits with code 0
 - **AND** no `error TS` diagnostic is emitted from any file under `src/`
 
+### Requirement: Source files contain no NEW diagnostic-suppression comments
+
+This change SHALL NOT introduce any new TypeScript diagnostic-suppression directives in `src/`:
+
+- `// @ts-expect-error`
+- `// @ts-ignore`
+- `// @ts-nocheck`
+
+When TypeScript reports an error, the underlying type, control flow, or guard MUST be fixed. Suppression is not an acceptable resolution for a new diagnostic.
+
+Pre-existing suppressions (e.g. `src/types/swa.d.ts:3` for the `node:22` runtime schema gap, and `src/server/entry/headers.js:25` for the cookie `sameSite` type mismatch) are documented and intentional. They are out of scope for this requirement and MUST NOT be removed or modified by this change.
+
+#### Scenario: No new suppression directives are added in src/
+
+- **WHEN** the diff between this change's branch and `main` is inspected with `git diff main -- src/ | grep -E '^\+.*@ts-(expect-error|ignore|nocheck)'`
+- **THEN** zero matches are reported (no added lines containing a TS suppression directive)
+
+#### Scenario: New diagnostics are fixed at the source
+
+- **WHEN** a TypeScript diagnostic that did not exist on `main` is reported by `npm run check`
+- **THEN** the resolution is a code change that eliminates the diagnostic
+- **AND NOT** a suppression comment
+
 ### Requirement: Type-check scripts use explicit project files and inherit `--skipLibCheck` from config
 
 The `scripts.check` entry SHALL invoke `tsc --project tsconfig.json --noEmit`. The `scripts.check:test` entry SHALL invoke `tsc --project tsconfig-test.json` (or the canonical test-project file if introduced later). Neither script SHALL pass `--skipLibCheck` on the command line; the option MUST be sourced from the relevant `tsconfig*.json`.
