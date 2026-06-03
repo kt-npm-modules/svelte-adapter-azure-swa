@@ -60,15 +60,20 @@
 
 ## 6. Land
 
-- [ ] 6.1 Wait for **all** CI checks to pass on the PR — no `--admin` shortcut.
-- [ ] 6.2 Once green, `gh pr merge <n> --squash`. (No `--delete-branch` — `contribution` is the working branch.)
-- [ ] 6.3 Close dependabot #237 with a comment pointing to the merged PR (`gh pr close 237 --comment "Superseded by #<n>; that PR carries the bump plus the prerequisite type fixes."`).
-- [ ] 6.4 Wait for the changesets bot to update the existing `Version Packages` PR #235 with our changeset alongside the two pending ones.
-- [ ] 6.5 Wait for that PR's CI green; merge with `gh pr merge 235 --squash` (no `--admin`). Wait for `Release` workflow to finish.
-- [ ] 6.6 Verify publish: `npm view @ktarmyshov/svelte-adapter-azure-swa@latest version` returns the expected `1.1.1` (or the next patch). Sanity-install in `/tmp` and confirm `CHANGELOG.md` is on disk.
+- [x] 6.1 Wait for **all** CI checks to pass on the PR — no `--admin` shortcut.
+  - All checks (CI, Sonar, CodeQL, Snyk, Socket, full SWA emulator on Node 20 + 22, both runtimes) green.
+- [x] 6.2 Once green, `gh pr merge <n> --squash`. (No `--delete-branch` — `contribution` is the working branch.)
+  - PR #238 merged via GitHub UI by maintainer (branch protection blocked the bot merge — merge done by user).
+- [x] 6.3 Close dependabot #237 with a comment pointing to the merged PR (`gh pr close 237 --comment "Superseded by #<n>; that PR carries the bump plus the prerequisite type fixes."`).
+  - Closed; dependabot branch deleted.
+- [ ] 6.4 Wait for the changesets bot to update the existing `Version Packages` PR #235 with our changeset alongside the two pending ones. — **Deferred:** release intentionally postponed by maintainer; Version Packages PR will accumulate further changesets before merging.
+- [ ] 6.5 Wait for that PR's CI green; merge with `gh pr merge 235 --squash` (no `--admin`). Wait for `Release` workflow to finish. — **Deferred** with 6.4.
+- [ ] 6.6 Verify publish: `npm view @ktarmyshov/svelte-adapter-azure-swa@latest version` returns the expected `1.1.1` (or the next patch). Sanity-install in `/tmp` and confirm `CHANGELOG.md` is on disk. — **Deferred** with 6.4.
 
 ## 7. Cleanup
 
-- [ ] 7.1 `cd /Users/d050316/SAPDevelop/git/personal/kt-npm-modules/svelte-adapter-azure-swa && ./scripts/contribution-reset.sh`.
-- [ ] 7.2 `npm uninstall typescript --no-save` if any stray `node_modules` state remains from the local TS6 spike (the lockfile bump from 2.2 is the source of truth now). Re-run `npm ci` to reset.
-- [ ] 7.3 Archive this OpenSpec change via `/opsx:archive upgrade-typescript-6`.
+- [x] 7.1 `cd /Users/d050316/SAPDevelop/git/personal/kt-npm-modules/svelte-adapter-azure-swa && ./scripts/contribution-reset.sh`.
+  - Local `contribution` reset to `e134e51` (= squashed feature commit). Working tree clean.
+- [x] 7.2 `npm uninstall typescript --no-save` if any stray `node_modules` state remains from the local TS6 spike (the lockfile bump from 2.2 is the source of truth now). Re-run `npm ci` to reset.
+  - Not needed: lockfile bump is now canonical (TS6 in `package.json` + `package-lock.json`), and `npm ci` would re-resolve from the same lockfile anyway.
+- [x] 7.3 Archive this OpenSpec change via `/opsx:archive upgrade-typescript-6`. — Done; specs synced to `openspec/specs/build-tooling-tsconfig/spec.md` (MODIFIED + ADDED) and `openspec/specs/published-package-contents/spec.md` (new capability).
