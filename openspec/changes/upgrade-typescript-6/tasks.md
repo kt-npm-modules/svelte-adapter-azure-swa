@@ -1,0 +1,74 @@
+## 1. Source type fixes (preconditions for the TS6 bump)
+
+> **Hard rule for this change:** **DO NOT introduce any new `// @ts-expect-error`, `// @ts-ignore`, or `// @ts-nocheck` comments** to resolve a TS6 diagnostic. Each new diagnostic MUST be resolved by fixing the underlying type, control flow, or guard. If a fix is non-obvious, surface it for discussion rather than suppressing.
+>
+> Two pre-existing suppressions are out of scope for this change and MUST NOT be modified or removed:
+>
+> - [src/types/swa.d.ts:3](../../../src/types/swa.d.ts#L3) — schema-level cast for `node:22` runtime not yet in upstream schema
+> - [src/server/entry/headers.js:25](../../../src/server/entry/headers.js#L25) — cookie `sameSite` type mismatch
+>
+> They are documented and intentional. A future PR may revisit them once upstream schemas catch up.
+
+- [x] 1.1 Fix `src/emulator/index.js:47`: restructure the `if (clientPrincipal)` block so `user` is built in a single object literal, with `claimsPrincipalData` lifted into a `const` initialized via a ternary on `'claims' in clientPrincipal`. This avoids the TS6 control-flow narrowing regression. Do NOT modify `src/index.d.ts` — `App.Platform.user: HttpRequestUser | null` is correct (per [Azure SWA docs](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information): anonymous requests have `user === null`), and `claimsPrincipalData` is already declared upstream on `HttpRequestUser` in `@azure/functions`.
+- [x] 1.2 Fix `src/server/entry/entry.js:16` (`server.init({ env: process.env })`) by adding a JSDoc cast `/** @type {Record<string, string>} */ (process.env)`. Confirm no behavioral change vs. SvelteKit's documented `server.init` contract.
+- [x] 1.3 Fix `src/server/entry/entry.js:111` (`new Request(originalUrl, …)`): add an `assert(originalUrl, 'x-ms-original-url header is required')` (from `node:assert`) right after the `headers.get(...)` call. `assert` is preferred over a hand-written `if (!x) throw` because Sonar treats it as an invariant rather than an untested branch.
+- [x] 1.4 Fix `src/swa-config/index.js:88` (`swaConfig.routes.push(...)`): add `swaConfig.routes ??= [];` immediately before the push. Match `staticwebapp.config.json` schema (routes is optional).
+- [x] 1.5 Fix `src/utils.js:72` JSDoc on the lazy-init `mapSource2JSDir` from `/** @type {Map<string, string>} */` to `/** @type {Map<string, string> | undefined} */`. No runtime change.
+- [x] 1.6 Fix `src/utils.js` `loadMapSource2JSDir(dirs, log)` JSDoc to mark `log` optional: `@param {Console['log']} [log] logger function (optional — internal calls already use \`log?.(...)\`)`. Verify body already uses `log?.(...)` on every call.
+- [x] 1.7 Run `node_modules/.bin/tsc --skipLibCheck --noEmit` (or `npm run check` once 2.x is done) — must exit 0 with no `error TS` lines.
+
+## 2. Toolchain bump
+
+- [x] 2.1 Update `devDependencies.typescript` in `package.json` from `^5.9.3` to `^6.0.3`.
+- [x] 2.2 Run `npm install` and commit the resulting `package-lock.json` (workspaces lockfile is shared at root).
+- [x] 2.3 Update `scripts.check` from `"tsc --skipLibCheck --noEmit"` to `"tsc --project tsconfig.json --noEmit"`.
+- [x] 2.4 Verify `scripts.check:test` does not exist for this repo (root has only `check`); if it does, drop the `--skipLibCheck` flag from it. (Spec mentions both for forward-compat.)
+  - Verified: root has only `check` and workspace-scoped `check:all`. No `check:test`.
+- [x] 2.5 Confirm `tsconfig.json` already carries `skipLibCheck: true` so the CLI flag is genuinely redundant. (It does — verified.)
+  - **Correction during apply:** `tsconfig.json` did NOT carry `skipLibCheck: true`. Added it explicitly so the CLI flag is now genuinely redundant. Without it, dropping the CLI flag and pinning to `--project tsconfig.json` surfaced ~30 vite/picomatch upstream type errors.
+
+## 3. Published-tarball polish
+
+- [x] 3.1 Update `package.json` `files` from `["src"]` to `["src", "CHANGELOG.md"]`.
+- [x] 3.2 Run `npm pack --dry-run --ignore-scripts`; verify `CHANGELOG.md` appears in the listed contents and no `tests/`, `openspec/`, `.github/`, `.changeset/`, or `scripts/` paths leak through.
+  - Verified: `CHANGELOG.md` (50.5kB) listed, no leakage.
+
+## 4. Verification (full battery, local)
+
+- [x] 4.1 `npm run check` exits 0 (root, against TS6).
+- [x] 4.2 `npm run check:all` exits 0 (root + workspaces; demo is svelte-check, not TS6-affected — but make sure nothing else regressed).
+  - Demo svelte-check: 0 errors (2 pre-existing warnings unrelated to this change).
+- [x] 4.3 `npm run lint` and `npm run lint:all` exit 0.
+  - One pre-existing `Unused eslint-disable directive` warning in generated `swa-config-gen.d.ts` is not from this change.
+- [x] 4.4 `npm run test` exits 0.
+  - 4 spec files, 58 tests passing.
+- [x] 4.4b (added per user) `npm run test:swa` in `tests/demo/` — runs the full SWA emulator e2e suite against the rebuilt adapter.
+  - 29 passed (19.4s); originalUrl null-guard and env cast exercised end-to-end without regression.
+- [x] 4.5 `npm pack --dry-run --ignore-scripts` lists `CHANGELOG.md`, `LICENSE`, `README.md`, `package.json`, and `src/**` only.
+  - 24 files / 33.6 kB / `CHANGELOG.md` 50.5kB present. No `tests/`, `openspec/`, `.github/`, `.changeset/`, `scripts/` leakage.
+- [x] 4.6 Confirm zero NEW diagnostic-suppression comments were added by this change: `git diff main -- src/ | grep -E '^\+.*@ts-(expect-error|ignore|nocheck)'` MUST return nothing. (The two pre-existing suppressions in `swa.d.ts` and `headers.js` are out of scope and remain untouched — `^\+` ensures we only flag added lines.)
+  - Zero new suppressions ✓.
+
+## 5. Changeset + PR plumbing
+
+- [x] 5.1 Author one new patch changeset at `.changeset/<descriptive-slug>.md` capturing the user-visible change: TS6 support, `CHANGELOG.md` shipped in tarball, `check` script tightened. Do NOT mention the source fixes individually — they are bug fixes that became visible only because of the TS6 bump.
+  - `.changeset/upgrade-typescript-6.md` — patch bump.
+- [x] 5.2 Run `./scripts/push-update.sh "fix: typescript 6 support; ship CHANGELOG.md in tarball"`. Verify the working dir is `svelte-adapter-azure-swa` (not the primary repo `npm-typescript-template`) **before** running.
+  - Verified pwd before push. Pushed to `origin/contribution`.
+- [x] 5.3 Open PR `contribution → main` titled `fix: typescript 6 support; ship CHANGELOG.md in tarball`. Reference dependabot #237 in the body.
+  - Opened as [#238](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/pull/238).
+
+## 6. Land
+
+- [ ] 6.1 Wait for **all** CI checks to pass on the PR — no `--admin` shortcut.
+- [ ] 6.2 Once green, `gh pr merge <n> --squash`. (No `--delete-branch` — `contribution` is the working branch.)
+- [ ] 6.3 Close dependabot #237 with a comment pointing to the merged PR (`gh pr close 237 --comment "Superseded by #<n>; that PR carries the bump plus the prerequisite type fixes."`).
+- [ ] 6.4 Wait for the changesets bot to update the existing `Version Packages` PR #235 with our changeset alongside the two pending ones.
+- [ ] 6.5 Wait for that PR's CI green; merge with `gh pr merge 235 --squash` (no `--admin`). Wait for `Release` workflow to finish.
+- [ ] 6.6 Verify publish: `npm view @ktarmyshov/svelte-adapter-azure-swa@latest version` returns the expected `1.1.1` (or the next patch). Sanity-install in `/tmp` and confirm `CHANGELOG.md` is on disk.
+
+## 7. Cleanup
+
+- [ ] 7.1 `cd /Users/d050316/SAPDevelop/git/personal/kt-npm-modules/svelte-adapter-azure-swa && ./scripts/contribution-reset.sh`.
+- [ ] 7.2 `npm uninstall typescript --no-save` if any stray `node_modules` state remains from the local TS6 spike (the lockfile bump from 2.2 is the source of truth now). Re-run `npm ci` to reset.
+- [ ] 7.3 Archive this OpenSpec change via `/opsx:archive upgrade-typescript-6`.

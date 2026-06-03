@@ -4,6 +4,7 @@
 		"checkJs": true,
 		"noEmit": true,
 		"noImplicitAny": true,
+		"skipLibCheck": true,
 		"target": "es2022",
 		"module": "nodenext",
 		"moduleResolution": "nodenext",
