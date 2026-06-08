@@ -47,6 +47,7 @@ function defaultRolldownOptions() {
 			format: 'es',
 			sourcemap: true
 		},
+		platform: 'node',
 		plugins: [
 			sourcemaps({ include: /./ }),
 			// Adapted from @sveltejs/adapter-node
