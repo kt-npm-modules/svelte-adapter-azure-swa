@@ -1,5 +1,95 @@
 # Changelog
 
+## 1.1.1
+
+### Patch Changes
+
+- f5b9da5: Migrate tsconfig.json to nodenext usage
+- f5b9da5: Switch Vitest coverage provider from Istanbul to V8. Replaces the `@vitest/coverage-istanbul` devDependency with `@vitest/coverage-v8`. The `./coverage-test` output directory and the `text` / `html` / `clover` / `json` / `lcov` reporter set are unchanged, so any downstream tooling continues to find the same artifacts.
+- e134e51: Support TypeScript 6, ship `CHANGELOG.md` in the published tarball, tighten type-check scripts.
+
+  - **TypeScript 6.0.3.** `devDependencies.typescript` bumped from `^5.9.3` to `^6.0.3`. Type-check now passes cleanly under the new compiler. Six TS6-surfaced JSDoc/control-flow issues in `src/emulator/index.js`, `src/server/entry/entry.js`, `src/swa-config/index.js`, and `src/utils.js` are fixed at the source — no diagnostic-suppression comments were added.
+  - **Ship `CHANGELOG.md` in the tarball.** `package.json` `files` is now `["src", "CHANGELOG.md"]` (npm does not auto-include `CHANGELOG.md` the way it does `README` and `LICENSE`).
+  - **`check` script tightened.** `scripts.check` now runs `tsc --project tsconfig.json --noEmit`. The redundant CLI `--skipLibCheck` flag was dropped; `skipLibCheck: true` is now sourced from `tsconfig.json` directly.
+
+  No public API changes. No engines change.
+
+- 179467a: dependabot: directory '/', update @inlang/paraglide-js
+- 179467a: dependabot: directory '/', update @sentry/sveltekit
+- 179467a: dependabot: directory '/', update @sveltejs/kit
+- 179467a: dependabot: directory '/', update @vitest/browser-playwright
+- 179467a: dependabot: directory '/', update @vitest/browser
+- 179467a: dependabot: directory '/', update @vitest/coverage-v8
+- 179467a: dependabot: directory '/', update eslint-plugin-svelte
+- 179467a: dependabot: directory '/', update eslint
+- 179467a: dependabot: directory '/', update monocart-coverage-reports
+- 179467a: dependabot: directory '/', update prettier-plugin-svelte
+- 179467a: dependabot: directory '/', update svelte-check
+- 179467a: dependabot: directory '/', update svelte
+- 179467a: dependabot: directory '/', update tinyglobby
+- 179467a: dependabot: directory '/', update typescript-eslint
+- 179467a: dependabot: directory '/', update vite
+- 179467a: dependabot: directory '/', update vitest
+- 96e6f8f: dependabot: directory '/', update rolldown
+- 4c4516b: dependabot: directory '/', update typescript from 5.9.3 to 6.0.3
+- 63668ba: dependabot: directory '/', update @sveltejs/kit
+- 63668ba: dependabot: directory '/', update @types/node
+- 63668ba: dependabot: directory '/', update svelte-check
+- 63668ba: dependabot: directory '/', update svelte
+- 5a87bd3: dependabot: directory '/', update @sentry/sveltekit
+- 5a87bd3: dependabot: directory '/', update @sveltejs/kit
+- 5a87bd3: dependabot: directory '/', update @tailwindcss/typography
+- 5a87bd3: dependabot: directory '/', update prettier
+- 5a87bd3: dependabot: directory '/', update typescript-eslint
+- f977f2f: dependabot: directory '/', update @inlang/paraglide-js
+- f977f2f: dependabot: directory '/', update @playwright/test
+- f977f2f: dependabot: directory '/', update @sentry/sveltekit
+- f977f2f: dependabot: directory '/', update @sveltejs/kit
+- f977f2f: dependabot: directory '/', update @tailwindcss/vite
+- f977f2f: dependabot: directory '/', update @types/node
+- f977f2f: dependabot: directory '/', update @vitest/browser-playwright
+- f977f2f: dependabot: directory '/', update @vitest/browser
+- f977f2f: dependabot: directory '/', update @vitest/coverage-v8
+- f977f2f: dependabot: directory '/', update es-toolkit
+- f977f2f: dependabot: directory '/', update eslint
+- f977f2f: dependabot: directory '/', update playwright
+- f977f2f: dependabot: directory '/', update prettier-plugin-svelte
+- f977f2f: dependabot: directory '/', update rolldown
+- f977f2f: dependabot: directory '/', update tailwindcss
+- f977f2f: dependabot: directory '/', update typescript-eslint
+- f977f2f: dependabot: directory '/', update vitest
+- bfcd93d: dependabot: directory '/', update @azure/functions
+- bfcd93d: dependabot: directory '/', update @inlang/paraglide-js
+- bfcd93d: dependabot: directory '/', update @playwright/test
+- bfcd93d: dependabot: directory '/', update @sentry/sveltekit
+- bfcd93d: dependabot: directory '/', update @sveltejs/kit
+- bfcd93d: dependabot: directory '/', update es-toolkit
+- bfcd93d: dependabot: directory '/', update globals
+- bfcd93d: dependabot: directory '/', update playwright
+- bfcd93d: dependabot: directory '/', update rolldown
+- bfcd93d: dependabot: directory '/', update svelte-check
+- bfcd93d: dependabot: directory '/', update svelte
+- bfcd93d: dependabot: directory '/', update typescript-eslint
+- bfcd93d: dependabot: directory '/', update vite
+- 800b3af: dependabot: directory '/', update @types/node from 25.9.3 to 26.0.0
+- 48bce26: dependabot: directory '/', update @inlang/paraglide-js
+- 48bce26: dependabot: directory '/', update @sentry/sveltekit
+- 48bce26: dependabot: directory '/', update @sveltejs/kit
+- 48bce26: dependabot: directory '/', update @tailwindcss/vite
+- 48bce26: dependabot: directory '/', update @types/node
+- 48bce26: dependabot: directory '/', update azure-functions-core-tools
+- 48bce26: dependabot: directory '/', update es-toolkit
+- 48bce26: dependabot: directory '/', update eslint-plugin-svelte
+- 48bce26: dependabot: directory '/', update eslint
+- 48bce26: dependabot: directory '/', update prettier
+- 48bce26: dependabot: directory '/', update rolldown
+- 48bce26: dependabot: directory '/', update set-cookie-parser
+- 48bce26: dependabot: directory '/', update svelte-check
+- 48bce26: dependabot: directory '/', update tailwindcss
+- 48bce26: dependabot: directory '/', update typescript-eslint
+- 48bce26: dependabot: directory '/', update vite
+- 48bce26: dependabot: directory '/', update vitest-browser-svelte
+
 ## 1.1.0
 
 ### Minor Changes
