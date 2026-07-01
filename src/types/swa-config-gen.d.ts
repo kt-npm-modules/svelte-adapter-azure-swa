@@ -132,15 +132,7 @@ export interface Route {
 	 * Request method(s) to match
 	 */
 	methods?: (
-		| 'GET'
-		| 'HEAD'
-		| 'POST'
-		| 'PUT'
-		| 'DELETE'
-		| 'PATCH'
-		| 'CONNECT'
-		| 'OPTIONS'
-		| 'TRACE'
+		'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'CONNECT' | 'OPTIONS' | 'TRACE'
 	)[];
 	/**
 	 * Roles that are allowed to access this route. If not empty, only role(s) listed are authorized to access the route. Roles are only used for authorization; they are not used to evaluate whether the route matches the request.
