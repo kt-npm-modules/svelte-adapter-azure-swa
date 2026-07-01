@@ -94,7 +94,7 @@ The downstream consumer is a `Headers` instance (which lowercases keys for `get`
 ## Risks / Trade-offs
 
 - [Userland that read the previous internal `host` and depended on it] → low likelihood (the value was an internal Azure Functions host, not anything app-level), but documented in README so consumers can discover it. No adapter option to opt out — adding one was rejected by the proposal scope.
-- [Userland that *honoured* incoming `x-forwarded-host` from clients] → in practice this is a security bug, not a feature, and the new behaviour fixes it. Documented in README.
+- [Userland that _honoured_ incoming `x-forwarded-host` from clients] → in practice this is a security bug, not a feature, and the new behaviour fixes it. Documented in README.
 - [Future drift between `Request.url`'s implicit `URL` parse and the helper's explicit one] → both go through the WHATWG `URL` parser; a value that is valid for one is valid for the other. The try/catch around the helper's parse means a future divergence would degrade to "no normalization" rather than a crash.
 - [Confusion with the archived `strip-swa-authorization` change] → mitigated by limiting this proposal's spec to the new `adapter-forwarded-origin` capability and explicitly noting in proposal/design that Authorization is untouched.
 - [Demo/e2e diagnostic assertions need updating] → existing routes are kept; only assertions that reference the previous internal `host` are tightened. No new diagnostic route, per scope.

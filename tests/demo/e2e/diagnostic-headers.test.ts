@@ -118,10 +118,7 @@ async function attachFacts(
 }
 
 type AuthorizationOutcome =
-	| 'preserved'
-	| 'overwritten'
-	| 'stripped'
-	| 'custom-headers-not-reaching-app';
+	'preserved' | 'overwritten' | 'stripped' | 'custom-headers-not-reaching-app';
 
 function classifyAuthorization(facts: Record<string, unknown>): AuthorizationOutcome {
 	const auth = facts.authorizationPresent === true;

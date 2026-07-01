@@ -59,9 +59,9 @@
 if: always()
 uses: actions/upload-artifact@v7
 with:
-  name: ${{ env.PLAYWRIGHT_REPORT_NAME }}
-  path: tests/demo/playwright-report
-  if-no-files-found: error`
+name: ${{ env.PLAYWRIGHT_REPORT_NAME }}
+path: tests/demo/playwright-report
+if-no-files-found: error`
 - [x] 5.3 Confirm action version pinning matches the rest of the repo: `actions/upload-artifact@v7` (the existing two upload steps), no SHA pinning, 2-space YAML indent, step-key order `name → if → uses → with`, single-quoted strings where appropriate
 - [x] 5.4 Run `git diff .github/` and confirm: only the new env var line and the new step were added; no changes to build/deploy/test/coverage-upload/concurrency/environment/trigger configuration; no other workflow file touched
 - [x] 5.5 Walk the workflow once mentally: does the new step run after the Playwright step regardless of pass/fail (`if: always()`)? Does the `cli` job's existing `coverage-swa-node<v>` upload remain untouched? Are matrix node-versions disambiguated in the artifact name?
