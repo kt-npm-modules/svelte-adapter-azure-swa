@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.1.2
+
+### Patch Changes
+
+- 0590860: dependabot: directory '/', update @sentry/sveltekit
+- 0590860: dependabot: directory '/', update @sveltejs/kit
+- 0590860: dependabot: directory '/', update @sveltejs/vite-plugin-svelte
+- 0590860: dependabot: directory '/', update @types/node
+- 0590860: dependabot: directory '/', update @vitest/browser-playwright
+- 0590860: dependabot: directory '/', update @vitest/browser
+- 0590860: dependabot: directory '/', update @vitest/coverage-v8
+- 0590860: dependabot: directory '/', update rolldown
+- 0590860: dependabot: directory '/', update svelte-check
+- 0590860: dependabot: directory '/', update typescript-eslint
+- 0590860: dependabot: directory '/', update vite
+- 0590860: dependabot: directory '/', update vitest-browser-svelte
+- 0590860: dependabot: directory '/', update vitest
+- 6f5e5a7: dependabot: directory '/', update @azure/functions
+- 6f5e5a7: dependabot: directory '/', update @inlang/paraglide-js
+- 6f5e5a7: dependabot: directory '/', update @sentry/sveltekit
+- 6f5e5a7: dependabot: directory '/', update @sveltejs/kit
+- 6f5e5a7: dependabot: directory '/', update @types/node
+- 6f5e5a7: dependabot: directory '/', update eslint
+- 6f5e5a7: dependabot: directory '/', update prettier
+- 6f5e5a7: dependabot: directory '/', update rolldown
+- 6f5e5a7: dependabot: directory '/', update set-cookie-parser
+- 6f5e5a7: dependabot: directory '/', update svelte
+- 6f5e5a7: dependabot: directory '/', update typescript-eslint
+- 6f5e5a7: dependabot: directory '/', update vite
+- 3c23eaf: dependabot: directory '/', update vitest-browser-svelte from 2.2.1 to 3.0.0
+- 159e319: dependabot: directory '/', update @azure/static-web-apps-cli
+- 159e319: dependabot: directory '/', update @changesets/cli
+- 159e319: dependabot: directory '/', update @fontsource/fira-mono
+- 159e319: dependabot: directory '/', update @sentry/sveltekit
+- 159e319: dependabot: directory '/', update @sveltejs/kit
+- 159e319: dependabot: directory '/', update @tailwindcss/vite
+- 159e319: dependabot: directory '/', update eslint-plugin-svelte
+- 159e319: dependabot: directory '/', update prettier-plugin-tailwindcss
+- 159e319: dependabot: directory '/', update prettier
+- 159e319: dependabot: directory '/', update rolldown
+- 159e319: dependabot: directory '/', update svelte-check
+- 159e319: dependabot: directory '/', update svelte
+- 159e319: dependabot: directory '/', update tailwindcss
+- 159e319: dependabot: directory '/', update typescript-eslint
+- 159e319: dependabot: directory '/', update vite
+
 ## 1.1.1
 
 ### Patch Changes
