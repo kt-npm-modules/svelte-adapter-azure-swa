@@ -27,7 +27,7 @@
 		"@fontsource/fira-mono": "^5.3.0",
 		"@inlang/paraglide-js": "^2.23.0",
 		"@neoconfetti/svelte": "^2.2.2",
-		"@playwright/test": "^1.62.0",
+		"@playwright/test": "^1.62.1",
 		"@sveltejs/kit": "^2.55.0",
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",
 		"@tailwindcss/forms": "^0.5.11",
@@ -51,7 +51,7 @@
 		"tailwindcss": "^4.2.2",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.57.2",
-		"vite": "^8.1.5",
+		"vite": "^8.2.0",
 		"vitest": "^4.1.2",
 		"vitest-browser-svelte": "^3.0.0"
 	},
@@ -59,6 +59,6 @@
 		"node": ">=20 <21 || >=22 <23"
 	},
 	"dependencies": {
-		"@sentry/sveltekit": "^10.68.0"
+		"@sentry/sveltekit": "^10.69.0"
 	}
 }
