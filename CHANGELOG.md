@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.3
+
+### Patch Changes
+
+- 95b759e: dependabot: directory '/', update @playwright/test
+- 95b759e: dependabot: directory '/', update @sentry/sveltekit
+- 95b759e: dependabot: directory '/', update @sveltejs/kit
+- 95b759e: dependabot: directory '/', update playwright
+- 95b759e: dependabot: directory '/', update rolldown
+- 95b759e: dependabot: directory '/', update vite
+- 8d3b279: dependabot: directory '/', update @inlang/paraglide-js
+
 ## 1.1.2
 
 ### Patch Changes
