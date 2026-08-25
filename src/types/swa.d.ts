@@ -6,7 +6,7 @@ export interface StaticWebAppConfig extends AzureStaticWebAppsConfigurationFile 
 		apiRuntime?:
 			| Extract<
 					NonNullable<AzureStaticWebAppsConfigurationFile['platform']>['apiRuntime'],
-					'node:20' | 'node:22'
+					'node:22'
 			  >
 			| 'node:22';
 	};

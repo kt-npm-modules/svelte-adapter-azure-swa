@@ -512,14 +512,14 @@ This adapter targets:
 
 - SvelteKit projects using `@sveltejs/kit`
 - Azure Functions Node programming model v4
-- Node 20 and Node 22
+- Node 22
 
 The package currently declares:
 
 ```json
 {
 	"engines": {
-		"node": ">=20 <21 || >=22 <23"
+		"node": ">=22"
 	}
 }
 ```
