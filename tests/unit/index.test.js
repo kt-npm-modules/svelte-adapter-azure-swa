@@ -64,12 +64,12 @@ describe('generateConfig', () => {
 	test('accepts custom config', () => {
 		const result = generateConfig({
 			platform: {
-				apiRuntime: 'node:20'
+				apiRuntime: 'node:24'
 			},
 			globalHeaders: { 'X-Foo': 'bar' }
 		});
 		expect(result.globalHeaders).toStrictEqual({ 'X-Foo': 'bar' });
-		expect(result.platform.apiRuntime).toBe('node:20');
+		expect(result.platform.apiRuntime).toBe('node:24');
 	});
 });
 
