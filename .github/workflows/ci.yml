@@ -18,7 +18,7 @@ permissions:
   pull-requests: write # to create comments (actions/github-script)
 
 env:
-  DEFAULT_MATRIX_NODE_VERSION: '["20", "22"]'
+  DEFAULT_MATRIX_NODE_VERSION: '["22"]'
   DEFAULT_CACHE_RESET: false
   PUBLIC_SWA: false
   CI: true
@@ -218,7 +218,7 @@ jobs:
     with:
       # SWA uses a separate Node matrix because Azure Static Web Apps
       # does not necessarily support the full main CI Node matrix yet.
-      matrix-node-version: '[20, 22]'
+      matrix-node-version: '[22]'
       cache-reset: ${{ needs.config.outputs.cache-reset == 'true' }}
     secrets: inherit
 
