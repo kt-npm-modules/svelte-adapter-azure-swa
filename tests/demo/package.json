@@ -58,6 +58,6 @@
 		"node": ">=22"
 	},
 	"dependencies": {
-		"@sentry/sveltekit": "^10.69.0"
+		"@sentry/sveltekit": "^10.71.0"
 	}
 }
