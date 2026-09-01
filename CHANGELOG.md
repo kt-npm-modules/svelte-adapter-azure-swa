@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.1
+
+### Patch Changes
+
+- 8751ac5: Fix server bundling for CommonJS dependencies by configuring Rolldown for the Node.js platform.
+  
+  Thanks @sukeshpabolu for identifying and reporting the issue.
+
 ## 2.0.0
 
 ### Major Changes
