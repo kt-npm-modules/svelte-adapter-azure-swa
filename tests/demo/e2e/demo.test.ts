@@ -87,6 +87,12 @@ test('POST empty-body edge case currently does not expose workaround marker via 
 	expect(workaroundHeader.emptyFormContentTypeStrip?.emptyPostWorkaround).toBe(false);
 });
 
+test('pg smoke: Client is a function (Node.js CommonJS compat)', async ({ request }) => {
+	const response = await request.get('/pg-smoke');
+	expect(response.ok()).toBeTruthy();
+	expect(await response.text()).toBe('function');
+});
+
 test('empty form submit via page action', async ({ page }) => {
 	await page.goto('/empty-post-form');
 	await page.click('#empty-post-submit');

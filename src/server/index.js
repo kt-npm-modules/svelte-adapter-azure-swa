@@ -41,6 +41,7 @@ function prefixBuiltinModules() {
 /** @returns {RolldownOptions} */
 function defaultRolldownOptions() {
 	return {
+		platform: 'node',
 		external: REQUIRED_EXTERNAL,
 		output: {
 			// inlineDynamicImports: true,
