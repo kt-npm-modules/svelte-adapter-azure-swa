@@ -3,3 +3,5 @@
 ---
 
 Fix server bundling for CommonJS dependencies by configuring Rolldown for the Node.js platform.
+
+Thanks @sukeshpabolu for identifying and reporting the issue.
