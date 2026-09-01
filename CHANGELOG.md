@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.0
+
+### Major Changes
+
+- dde2dc9: Drop Node 20 support. Node 20 reached end-of-life on 2026-04-30 and is no longer supported by `azure-functions-core-tools` v4.13+. Node 22 is now the minimum required version.
+
+### Patch Changes
+
+- 95b759e: dependabot: directory '/', update @playwright/test
+- 95b759e: dependabot: directory '/', update @sentry/sveltekit
+- 95b759e: dependabot: directory '/', update @sveltejs/kit
+- 95b759e: dependabot: directory '/', update playwright
+- 95b759e: dependabot: directory '/', update rolldown
+- 95b759e: dependabot: directory '/', update vite
+- 95b759e: dependabot: directory '/', update @inlang/paraglide-js
+- 95b759e: dependabot: dependency updates for PR #265
+
 ## 1.1.2
 
 ### Patch Changes
