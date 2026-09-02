@@ -25,7 +25,7 @@
 		"@eslint/compat": "^2.0.3",
 		"@eslint/js": "^10.0.1",
 		"@fontsource/fira-mono": "^5.3.0",
-		"@inlang/paraglide-js": "^2.23.1",
+		"@inlang/paraglide-js": "^2.25.0",
 		"@neoconfetti/svelte": "^2.2.2",
 		"@playwright/test": "^1.62.1",
 		"@sveltejs/kit": "^2.55.0",
