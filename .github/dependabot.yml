@@ -6,9 +6,7 @@
 version: 2
 updates:
   - package-ecosystem: 'npm'
-    directories:
-      - '/'
-      - '/tests/demo'
+    directory: '/'
 
     schedule:
       interval: 'weekly'
