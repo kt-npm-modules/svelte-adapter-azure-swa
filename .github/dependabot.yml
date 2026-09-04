@@ -22,11 +22,13 @@ updates:
 
     groups:
       minor-and-patch:
+        applies-to: version-updates
         update-types:
           - 'minor'
           - 'patch'
 
       major:
+        applies-to: version-updates
         update-types:
           - 'major'
         group-by: dependency-name
