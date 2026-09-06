@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.2
+
+### Patch Changes
+
+- f5353b7: FIX: Bug in adapter server roldown options.output protection
+- f5353b7: chore: update vitest deps to 5.x
+- ca04dbc: dependabot: dependency updates for PR #299
+
 ## 2.0.1
 
 ### Patch Changes
