@@ -147,7 +147,7 @@ jobs:
         uses: kt-workflows/actions/create-github-app-token@main
         with:
           app-id: ${{ secrets.WORKFLOW_APP_ID }}
-          private-key: ${{ secrets.WORKFLOW_PRIVATE_KEY }}
+          private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
           configure-git: false
           # Default to github token if secrets are not provided
           default-to-github-token: true
@@ -244,7 +244,7 @@ jobs:
         uses: kt-workflows/actions/create-github-app-token@main
         with:
           app-id: ${{ secrets.WORKFLOW_APP_ID }}
-          private-key: ${{ secrets.WORKFLOW_PRIVATE_KEY }}
+          private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
           configure-git: false
           # Default to github token if secrets are not provided
           default-to-github-token: true
