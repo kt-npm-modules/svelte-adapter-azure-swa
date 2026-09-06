@@ -12,7 +12,7 @@ on:
 
 env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
-  DEFAULT_INSTALL_SCRIPT: npm ci && npm exec playwright install && npm install azure-functions-core-tools@4.12.1 --no-save --verbose
+  DEFAULT_INSTALL_SCRIPT: npm ci && npm exec playwright install && npm install azure-functions-core-tools --no-save --verbose
   PUBLIC_SWA: false
   CI: true
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -147,7 +147,7 @@ jobs:
         uses: kt-workflows/actions/create-github-app-token@main
         with:
           app-id: ${{ secrets.WORKFLOW_APP_ID }}
-          private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
+          private-key: ${{ secrets.WORKFLOW_PRIVATE_KEY }}
           configure-git: false
           # Default to github token if secrets are not provided
           default-to-github-token: true
@@ -244,7 +244,7 @@ jobs:
         uses: kt-workflows/actions/create-github-app-token@main
         with:
           app-id: ${{ secrets.WORKFLOW_APP_ID }}
-          private-key: ${{ secrets.WORKFLOW_APP_PRIVATE_KEY }}
+          private-key: ${{ secrets.WORKFLOW_PRIVATE_KEY }}
           configure-git: false
           # Default to github token if secrets are not provided
           default-to-github-token: true
