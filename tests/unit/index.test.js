@@ -47,12 +47,10 @@ describe('generateConfig', () => {
 	});
 
 	test('throws errors for invalid custom config', () => {
-		expect(() => generateConfig({ navigationFallback: {} })).toThrowError(
+		expect(() => generateConfig({ navigationFallback: {} })).toThrow(
 			'cannot override navigationFallback'
 		);
-		expect(() => generateConfig({ routes: [{ route: '*' }] })).toThrowError(
-			"cannot override '*' route"
-		);
+		expect(() => generateConfig({ routes: [{ route: '*' }] })).toThrow("cannot override '*' route");
 	});
 
 	test('default config', () => {
@@ -78,14 +76,14 @@ describe('adapt', () => {
 		const adapter = azureAdapter();
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(builder.writePrerendered).toBeCalled();
-		expect(builder.writeClient).toBeCalled();
-		expect(builder.copy).toBeCalledWith(
+		expect(builder.writePrerendered).toHaveBeenCalled();
+		expect(builder.writeClient).toHaveBeenCalled();
+		expect(builder.copy).toHaveBeenCalledWith(
 			expect.stringContaining('server/template'),
 			'build/server',
 			expect.anything()
 		);
-		expect(builder.copy).toBeCalledWith(
+		expect(builder.copy).toHaveBeenCalledWith(
 			expect.stringContaining('server/template/package.json'),
 			'build/server/package.json'
 		);
@@ -95,21 +93,21 @@ describe('adapt', () => {
 		const adapter = azureAdapter({ external: ['@azure/functions'] });
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(builder.writePrerendered).toBeCalled();
-		expect(builder.writeClient).toBeCalled();
-		expect(builder.copy).toBeCalledWith(
+		expect(builder.writePrerendered).toHaveBeenCalled();
+		expect(builder.writeClient).toHaveBeenCalled();
+		expect(builder.copy).toHaveBeenCalledWith(
 			expect.stringContaining('server/template'),
 			'build/server',
 			expect.anything()
 		);
-		expect(builder.copy).toBeCalledTimes(1);
+		expect(builder.copy).toHaveBeenCalledTimes(1);
 	});
 
 	test('writes to custom api directory', async () => {
 		const adapter = azureAdapter({ apiDir: 'custom/api' });
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(rolldown).toBeCalledWith(
+		expect(rolldown).toHaveBeenCalledWith(
 			expect.objectContaining({
 				output: {
 					dir: 'custom/api/sk_render',
@@ -122,7 +120,7 @@ describe('adapt', () => {
 		);
 
 		// we don't copy the required function files to a custom API directory
-		expect(builder.copy).not.toBeCalledWith(expect.stringContaining('api'), 'custom/api');
+		expect(builder.copy).not.toHaveBeenCalledWith(expect.stringContaining('api'), 'custom/api');
 	});
 
 	test('writes to custom static directory', async () => {
@@ -130,8 +128,8 @@ describe('adapt', () => {
 		const adapter = azureAdapter({ staticDir: 'custom/static' });
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(builder.writeClient).toBeCalledWith('custom/static');
-		expect(builder.writePrerendered).toBeCalledWith('custom/static');
+		expect(builder.writeClient).toHaveBeenCalledWith('custom/static');
+		expect(builder.writePrerendered).toHaveBeenCalledWith('custom/static');
 	});
 
 	test('logs warning when custom api directory set and required file does not exist', async () => {
@@ -139,7 +137,7 @@ describe('adapt', () => {
 		const adapter = azureAdapter({ apiDir: 'custom/api' });
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(builder.log.warn).toBeCalled();
+		expect(builder.log.warn).toHaveBeenCalled();
 	});
 
 	test('adds index.html when root not prerendered', async () => {
@@ -148,8 +146,8 @@ describe('adapt', () => {
 		builder.prerendered.paths = [];
 		await adapter.adapt(builder);
 
-		expect(writeFileSync).toBeCalledWith(expect.stringContaining('index.html'), '');
-		expect(writeFileSync).toBeCalledWith(
+		expect(writeFileSync).toHaveBeenCalledWith(expect.stringContaining('index.html'), '');
+		expect(writeFileSync).toHaveBeenCalledWith(
 			expect.stringContaining('staticwebapp.config.json'),
 			expect.jsonMatching(
 				expect.objectContaining({
@@ -174,7 +172,7 @@ describe('adapt', () => {
 		builder.routes.push({
 			id: routeId
 		});
-		await expect(adapter.adapt(builder)).rejects.toThrowError(
+		await expect(adapter.adapt(builder)).rejects.toThrow(
 			'Conflicting routes detected. Please rename the routes listed above.'
 		);
 	});
@@ -224,14 +222,14 @@ describe('adapt', () => {
 		});
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
-		expect(rolldown).toBeCalledWith(
+		expect(rolldown).toHaveBeenCalledWith(
 			expect.objectContaining({
-				output: {
+				output: expect.objectContaining({
 					format: 'es',
 					sourcemap: true,
 					dir: 'build/server/sk_render',
 					entryFileNames: '[name].js'
-				}
+				})
 			})
 		);
 	});
