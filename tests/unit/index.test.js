@@ -233,6 +233,29 @@ describe('adapt', () => {
 			})
 		);
 	});
+
+	test('serverRolldown - should not mutate options.output', async () => {
+		const adapter = azureAdapter({
+			serverRolldown: (options) => {
+				options.output.sourcemap = false;
+				return options;
+			}
+		});
+
+		const builder = getMockBuilder();
+		await adapter.adapt(builder);
+
+		expect(rolldown).toHaveBeenCalledWith(
+			expect.objectContaining({
+				output: expect.objectContaining({
+					format: 'es',
+					sourcemap: true,
+					dir: 'build/server/sk_render',
+					entryFileNames: '[name].js'
+				})
+			})
+		);
+	});
 });
 
 /** @returns {import('@sveltejs/kit').Builder} */

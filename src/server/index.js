@@ -1,4 +1,4 @@
-import { mergeWith } from 'es-toolkit/object';
+import { cloneDeep, mergeWith } from 'es-toolkit/object';
 import assert from 'node:assert';
 import { writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
@@ -131,7 +131,7 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options) {
 	let external = _options.external;
 	external = [...(external || []), ...(options.external || [])];
 	_options.external = external;
-	const _savedOutput = _options.output;
+	const _savedOutput = cloneDeep(_options.output);
 	_options = options.serverRolldown?.(_options) || _options;
 	_options.output = _savedOutput;
 	return _options;
