@@ -4,8 +4,7 @@
 	"version": "2.0.2",
 	"workspaces": [
 		".",
-		"tests/demo",
-		"tests/new-demo"
+		"tests/demo"
 	],
 	"scripts": {
 		"prepare": "npm run prepare --workspace tests/demo",
@@ -57,29 +56,29 @@
 		"@sveltejs/kit": "^2.54.0"
 	},
 	"devDependencies": {
-		"@changesets/cli": "^3.0.0",
-		"@eslint/compat": "^2.0.3",
+		"@changesets/cli": "^3.0.2",
+		"@eslint/compat": "^2.1.1",
 		"@eslint/js": "^10.0.1",
-		"@sveltejs/kit": "^2.55.0",
-		"@types/node": "^26.4.1",
+		"@sveltejs/kit": "^2.70.3",
+		"@types/node": "^26.5.1",
 		"@vitest/browser": "^5.0.0",
 		"@vitest/coverage-v8": "^5.0.0",
-		"eslint": "^10.1.0",
+		"eslint": "^10.10.0",
 		"eslint-config-prettier": "^10.1.8",
 		"globals": "^17.12.0",
 		"json-schema-to-typescript": "^16.0.0",
-		"prettier": "^3.8.1",
+		"prettier": "^3.9.6",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.57.2",
+		"typescript-eslint": "^8.70.0",
 		"vitest": "^5.0.0",
-		"vitest-browser-svelte": "^3.0.0"
+		"vitest-browser-svelte": "^3.1.0"
 	},
 	"dependencies": {
-		"es-toolkit": "^1.45.1",
-		"rolldown": "^1.2.7",
+		"es-toolkit": "^1.52.0",
+		"rolldown": "^1.2.8",
 		"rolldown-plugin-sourcemaps": "^0.1.2",
-		"set-cookie-parser": "^3.1.0",
-		"tinyglobby": "^0.2.16"
+		"set-cookie-parser": "^3.1.2",
+		"tinyglobby": "^0.2.17"
 	},
 	"files": [
 		"src",
