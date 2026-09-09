@@ -4,8 +4,7 @@
 	"version": "2.0.2",
 	"workspaces": [
 		".",
-		"tests/demo",
-		"tests/new-demo"
+		"tests/demo"
 	],
 	"scripts": {
 		"prepare": "npm run prepare --workspace tests/demo",
