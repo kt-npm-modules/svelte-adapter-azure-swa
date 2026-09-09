@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.3
+
+### Patch Changes
+
+- e32c87d: chore: update deps
+
 ## 2.0.2
 
 ### Patch Changes
