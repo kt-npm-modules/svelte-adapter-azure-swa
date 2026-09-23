@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.3
+
+### Patch Changes
+
+- e32c87d: chore: update deps
+- 58412b7: dependabot: dependency updates for PR #321
+- c59a867: dependabot: dependency updates for PR #322
+- e2d0f04: dependabot: dependency updates for PR #324
+- 105c391: dependabot: dependency updates for PR #326
+
 ## 2.0.2
 
 ### Patch Changes
