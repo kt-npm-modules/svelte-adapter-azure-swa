@@ -1,5 +1,17 @@
 # demo
 
+## 0.0.4
+
+### Patch Changes
+
+- e32c87d: chore: update deps
+- 4886c5c: dependabot: dependency updates for PR #313
+- 7587cfd: dependabot: dependency updates for PR #314
+- 16d1a1e: dependabot: dependency updates for PR #318
+- c59a867: dependabot: dependency updates for PR #322
+- e2d0f04: dependabot: dependency updates for PR #324
+- 105c391: dependabot: dependency updates for PR #326
+
 ## 0.0.3
 
 ### Patch Changes
