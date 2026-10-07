@@ -1,5 +1,11 @@
 # demo
 
+## 0.0.5
+
+### Patch Changes
+
+- 30d85c2: dependabot: dependency updates for PR #330
+
 ## 0.0.4
 
 ### Patch Changes
