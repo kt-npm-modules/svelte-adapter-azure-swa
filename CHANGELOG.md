@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.4
+
+### Patch Changes
+
+- 30d85c2: dependabot: dependency updates for PR #330
+- 3f56bda: dependabot: dependency updates for PR #333
+
 ## 2.0.3
 
 ### Patch Changes
