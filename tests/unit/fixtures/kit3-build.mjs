@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
+import { SourceMap } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { sveltekit } from '@sveltejs/kit/vite';
 import { createBuilder } from 'vite';
-import adapter from '../../../src/index.js';
 
 const instrumented = process.argv.includes('--instrumented');
 const custom = process.argv.includes('--custom');
@@ -14,6 +13,21 @@ await mkdir('.tmp', { recursive: true });
 const fixtureRoot = await mkdtemp(path.resolve('.tmp/kit3-build-'));
 try {
 	await mkdir(path.join(fixtureRoot, 'src/routes/probe'), { recursive: true });
+	await mkdir(path.join(fixtureRoot, 'src/routes/static-page'), { recursive: true });
+	await mkdir(path.join(fixtureRoot, 'static'), { recursive: true });
+	await writeFile(path.join(fixtureRoot, 'static/asset.txt'), 'copied-static-asset');
+	await writeFile(
+		path.join(fixtureRoot, 'src/routes/static-page/+page.js'),
+		'export const prerender = true;'
+	);
+	await writeFile(
+		path.join(fixtureRoot, 'src/routes/static-page/greet.ts'),
+		`export function greet(name: string) {\n return 'typescript-source-map-probe ' + name;\n}\n`
+	);
+	await writeFile(
+		path.join(fixtureRoot, 'src/routes/static-page/+page.svelte'),
+		`<script lang="ts">\n import { greet } from './greet';\n let name = $state('world');\n const marker = 'svelte-source-map-probe';\n</script>\n<button onclick={() => name = 'kit3'}>{greet(name)}</button>\n<p>{marker}</p>\n`
+	);
 	await writeFile(path.join(fixtureRoot, 'package.json'), JSON.stringify({ type: 'module' }));
 	await writeFile(
 		path.join(fixtureRoot, 'src/app.html'),
@@ -39,22 +53,69 @@ try {
 		await mkdir(path.join(fixtureRoot, staticDir), { recursive: true });
 		await writeFile(path.join(fixtureRoot, staticDir, 'stale.txt'), 'stale output');
 	}
+	// Kit's prerender worker reloads Vite configuration in a separate process.
+	await writeFile(
+		path.join(fixtureRoot, 'vite.config.js'),
+		`import { sveltekit } from '@sveltejs/kit/vite';
+import adapter from ${JSON.stringify(new URL('../../../src/index.js', import.meta.url).href)};
+export default {
+  logLevel: 'warn',
+  build: { sourcemap: true },
+  // Isolate Kit's cookie v2 from an unrelated older root transitive dependency.
+  ssr: { noExternal: ['cookie'] },
+  plugins: [sveltekit({ appDir: 'assets', paths: { base: '/base' }, adapter: adapter(${JSON.stringify(custom ? { apiDir, staticDir } : {})}) })]
+};`
+	);
 	process.chdir(fixtureRoot);
 	const appBuilder = await createBuilder({
 		root: fixtureRoot,
-		configFile: false,
-		logLevel: 'warn',
-		// Avoid resolving Kit's cookie v2 imports to an unrelated older root transitive dependency.
-		ssr: { noExternal: ['cookie'] },
-		plugins: [
-			sveltekit({
-				appDir: 'assets',
-				paths: { base: '/base' },
-				adapter: adapter(custom ? { apiDir, staticDir } : {})
-			})
-		]
+		configFile: path.join(fixtureRoot, 'vite.config.js')
 	});
 	await appBuilder.buildApp();
+	assert.equal(await readFile(path.join(staticDir, 'asset.txt'), 'utf8'), 'copied-static-asset');
+	assert.match(
+		await readFile(path.join(staticDir, 'static-page.html'), 'utf8'),
+		/typescript-source-map-probe world/
+	);
+	const clientDir = path.join(fixtureRoot, '.svelte-kit/output/client');
+	const files = await readdir(clientDir, { recursive: true });
+	const mappedSources = new Set();
+	for (const file of files.filter((file) => file.endsWith('.js.map'))) {
+		const originalPath = path.join(clientDir, file);
+		const copiedPath = path.join(fixtureRoot, staticDir, file);
+		const original = JSON.parse(await readFile(originalPath, 'utf8'));
+		const copied = JSON.parse(await readFile(copiedPath, 'utf8'));
+		assert.equal(copied.mappings, original.mappings);
+		assert.deepEqual(copied.sourcesContent, original.sourcesContent);
+		assert.deepEqual(copied.names, original.names);
+		const code = await readFile(copiedPath.slice(0, -4), 'utf8');
+		assert.equal(code, await readFile(originalPath.slice(0, -4), 'utf8'));
+		for (const [index, source] of copied.sources.entries()) {
+			assert.equal(
+				path.resolve(path.dirname(copiedPath), copied.sourceRoot ?? '', source),
+				path.resolve(path.dirname(originalPath), original.sourceRoot ?? '', original.sources[index])
+			);
+		}
+		for (const [marker, sourceFile, expectedLine] of [
+			['typescript-source-map-probe', 'greet.ts', "return 'typescript-source-map-probe ' + name;"],
+			['svelte-source-map-probe', '+page.svelte', '<p>{marker}</p>']
+		]) {
+			const offset = code.indexOf(marker);
+			if (offset < 0) continue;
+			const before = code.slice(0, offset).split('\n');
+			const entry = new SourceMap(copied).findEntry(before.length - 1, before.at(-1).length);
+			assert.ok(entry.originalSource?.endsWith(sourceFile), JSON.stringify(entry));
+			const resolved = path.resolve(
+				path.dirname(copiedPath),
+				copied.sourceRoot ?? '',
+				entry.originalSource
+			);
+			const sourceText = await readFile(resolved, 'utf8');
+			assert.equal(sourceText.split('\n')[entry.originalLine].trim(), expectedLine);
+			mappedSources.add(sourceFile);
+		}
+	}
+	assert.deepEqual([...mappedSources].sort(), ['+page.svelte', 'greet.ts']);
 	const config = JSON.parse(
 		await readFile(path.join(staticDir, 'staticwebapp.config.json'), 'utf8')
 	);

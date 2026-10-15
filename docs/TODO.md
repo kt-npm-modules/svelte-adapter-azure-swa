@@ -84,13 +84,16 @@ Step 3a verification (2026-10-15): the exported `EmulateState` describes static 
 
 ### 4. Remove client rebundling; retain the server sourcemap workaround
 
-Files: `src/client/index.js`, `tests/unit/index.test.js`, `tests/unit/utils.test.js`, `package.json`.
+Files: `src/client/index.js`, `tests/unit/index.test.js`, `tests/unit/fixtures/kit3-build.mjs`, `package.json`, `package-lock.json`, README.
 
-- [ ] Simplify the client path to `builder.writePrerendered(outDir)` and `builder.writeClient(outDir)`. Remove the second client Rolldown pass and its input globbing/options/imports.
-- [ ] Verify relocated maps for default output and custom `staticDir`, including representative `.svelte` and `.ts` mappings back to original sources. Add a regression check against actual build output.
-- [ ] Check copied assets, prerendered routes and Sentry client map resolution after removing rebundling.
-- [ ] Remove dependencies only if no remaining code uses them: `tinyglobby` appears client-only; Rolldown remains necessary for the server.
-- [ ] Keep `rolldown-plugin-sourcemaps` on the server. [#325](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/325) is a separate follow-up; [rolldown/rolldown#5561](https://github.com/rolldown/rolldown/issues/5561) was still open when checked. Remove the plugin only after a usable release provides input-map chaining and regression checks pass.
+- [x] Simplify the client path to `builder.writePrerendered(outDir)` and `builder.writeClient(outDir)`. Remove the second client Rolldown pass and its input globbing/options/imports.
+- [x] Verify relocated maps for default output and custom `staticDir`, including representative `.svelte` and `.ts` mappings back to original sources. Add a regression check against actual build output.
+- [x] Check copied static assets and prerendered routes after removing rebundling.
+- [ ] Verify Sentry accepts/resolves the copied client maps end to end after Sentry is installed/configured in step 5. The new demo does not yet have Sentry; this check remains part of the integration gates, not evidence from the source-map unit/build tests.
+- [x] Remove dependencies only if no remaining code uses them: `tinyglobby` was client-only and is removed from direct dependencies (it remains a transitive dev dependency of the toolchain). Rolldown remains necessary for the server.
+- [x] Keep `rolldown-plugin-sourcemaps` on the server. [#325](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/325) is a separate follow-up; [rolldown/rolldown#5561](https://github.com/rolldown/rolldown/issues/5561) was still open when checked. Remove the plugin only after a usable release provides input-map chaining and regression checks pass.
+
+Step 4 verification (2026-10-15): all 80 tests pass. Real Kit 3 builds now include a prerendered Svelte page importing TypeScript, production client sourcemaps and a static asset. For both default and custom output directories, regression checks assert copied JavaScript is byte-for-byte unchanged, sourcemap mappings/names/sourcesContent are preserved, relocated source paths resolve to the same files, and representative generated positions map back to the expected original `.svelte`/`.ts` source lines. The fixture now writes an actual Vite config because Kit's prerender worker reloads it. A unit assertion ensures only the server invokes Rolldown. Server bundling and `rolldown-plugin-sourcemaps` remain unchanged; demo files are unchanged.
 
 ### 5. Prepare the fresh demo and install Sentry before copying scenarios
 

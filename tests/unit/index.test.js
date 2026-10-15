@@ -80,6 +80,7 @@ describe('adapt', () => {
 		const adapter = azureAdapter();
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
+		expect(rolldown).toHaveBeenCalledTimes(1);
 		expect(builder.generateServerInstance).toHaveBeenCalledWith(
 			'adapter-azure-swa/server-instance.js'
 		);

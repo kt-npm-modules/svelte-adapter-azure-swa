@@ -27,7 +27,7 @@ Key distinctions:
 - generates Azure Functions output and static content output in the layout Azure SWA expects
 - writes `staticwebapp.config.json` with SWA-safe defaults and routing safeguards
 - supports the SvelteKit instrumentation contract
-- uses a Rolldown-based output pipeline with sourcemap-friendly rebundling
+- uses Rolldown for server bundling and SvelteKit 3's native client sourcemap rebasing
 - supports local SWA platform emulation for `App.Platform`-dependent code
 - includes Azure-specific compatibility handling, diagnostics, and regression tests for real platform quirks
 
@@ -467,7 +467,7 @@ The adapter uses a sourcemap-friendly output pipeline.
 Specifically:
 
 - the generated Azure Functions server output is rebundled with sourcemaps enabled
-- the generated client output is also rebundled for correct sourcemap behavior
+- client output is copied with SvelteKit 3's native sourcemap path rebasing, without a second bundling pass
 - standard repository layouts work out of the box
 
 ### Sentry in monorepos
