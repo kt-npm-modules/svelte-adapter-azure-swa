@@ -2,14 +2,10 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { confetti } from '@neoconfetti/svelte';
-	import { MediaQuery } from 'svelte/reactivity';
-
+	import { prefersReducedMotion } from 'svelte/motion';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-
-	/** Whether the user prefers reduced motion */
-	const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
 
 	let shake = $state(false);
 
@@ -107,17 +103,19 @@
 
 	<div class="grid" class:playing={!won} class:shake onanimationend={() => (shake = false)}>
 		{#each Array.from(Array(6).keys()) as row (row)}
-			{@const current = row === i}
+			{const current = $derived(row === i)}
+
 			<h2 class="visually-hidden">Row {row + 1}</h2>
 			<div class="row" class:current>
 				{#each Array.from(Array(5).keys()) as column (column)}
-					{@const guess = current ? currentGuess : data.guesses[row]}
-					{@const answer = data.answers[row]?.[column]}
-					{@const value = guess?.[column] ?? ''}
-					{@const selected = current && column === guess.length}
-					{@const exact = answer === 'x'}
-					{@const close = answer === 'c'}
-					{@const missing = answer === '_'}
+					{const guess = $derived(current ? currentGuess : data.guesses[row])}
+					{const answer = $derived(data.answers[row]?.[column])}
+					{const value = $derived(guess?.[column] ?? '')}
+					{const selected = $derived(current && column === guess.length)}
+					{const exact = $derived(answer === 'x')}
+					{const close = $derived(answer === 'c')}
+					{const missing = $derived(answer === '_')}
+
 					<div class="letter" class:exact class:close class:missing class:selected>
 						{value}
 						<span class="visually-hidden">
@@ -187,7 +185,7 @@
 	<div
 		style="position: absolute; left: 50%; top: 30%"
 		use:confetti={{
-			particleCount: reducedMotion.current ? 0 : undefined,
+			particleCount: prefersReducedMotion.current ? 0 : undefined,
 			force: 0.7,
 			stageWidth: window.innerWidth,
 			stageHeight: window.innerHeight,

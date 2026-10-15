@@ -1,16 +1,15 @@
-import { includeIgnoreFile } from '@eslint/compat';
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+// import storybook from 'eslint-plugin-storybook';
+
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import svelte from 'eslint-plugin-svelte';
-import { defineConfig } from 'eslint/config';
+import { defineConfig, includeIgnoreFile } from 'eslint/config';
 import globals from 'globals';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
 
 const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
@@ -33,29 +32,13 @@ export default defineConfig(
 			parserOptions: {
 				projectService: true,
 				extraFileExtensions: ['.svelte'],
-				parser: ts.parser,
-				svelteConfig,
-				tsconfigRootDir: __dirname
+				parser: ts.parser
 			}
 		}
 	},
 	{
-		files: ['src/**/*.ts', 'src/**/*.js'],
-		languageOptions: {
-			parserOptions: {
-				projectService: true,
-				tsconfigRootDir: __dirname
-			}
-		}
-	},
-
-	// Non-project files: lint, but without project service
-	{
-		files: ['e2e/**/*.ts', 'e2e/**/*.mjs', 'func/**/*.js', '*.config.js', '*.config.ts'],
-		languageOptions: {
-			parserOptions: {
-				tsconfigRootDir: __dirname
-			}
-		}
+		// Override or add rule settings here, such as:
+		// 'svelte/button-has-type': 'error'
+		rules: {}
 	}
 );

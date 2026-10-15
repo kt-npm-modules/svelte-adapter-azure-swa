@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # First parameter is optional commit message, defaults to "update"
 COMMIT_MESSAGE=${1:-"update"}

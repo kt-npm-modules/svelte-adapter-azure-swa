@@ -15,7 +15,21 @@ To recreate this project with the same configuration:
 
 ```sh
 # recreate this project
-npx sv@0.13.0 create --template demo --types ts --add prettier eslint vitest="usages:unit,component" playwright tailwindcss="plugins:typography,forms" devtools-json paraglide="languageTags:en, de+demo:yes" mcp="ide:vscode+setup:remote" --install npm demo-new
+npx sv@1.1.1 create --template demo --types ts --add prettier eslint vitest="usages:unit,component" playwright="demo:yes" tailwindcss="plugins:typography,forms" enhanced-img paraglide="languageTags:en, de+demo:yes" storybook ai-tools="ide:claude-code,vscode,other+delivery:plugin+tools:mcp,svelte-code-writer,svelte-core-bestpractices,svelte-file-editor+mcpSetup:remote" --install npm demo-sk3
+```
+
+## Adding features
+
+Add features to your project with `sv add`:
+
+```sh
+npx sv add
+```
+
+For example, to add Tailwind CSS:
+
+```sh
+npx sv add tailwindcss
 ```
 
 ## Developing

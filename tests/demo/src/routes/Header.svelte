@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import github from '$lib/images/github.svg';
-	import logo from '$lib/images/svelte-logo.svg';
+	import github from '#lib/images/github.svg';
+	import logo from '#lib/images/svelte-logo.svg';
 </script>
 
 <header>
@@ -25,15 +25,6 @@
 			</li>
 			<li aria-current={page.url.pathname.startsWith('/sverdle') ? 'page' : undefined}>
 				<a href={resolve('/sverdle')}>Sverdle</a>
-			</li>
-			<li aria-current={page.url.pathname.startsWith('/demo/paraglide') ? 'page' : undefined}>
-				<a href={resolve('/demo/paraglide')}>Paraglide</a>
-			</li>
-			<li aria-current={page.url.pathname.startsWith('/sentry-example-page') ? 'page' : undefined}>
-				<a href={resolve('/sentry-example-page')}>Sentry Example</a>
-			</li>
-			<li aria-current={page.url.pathname.startsWith('/empty-post-form') ? 'page' : undefined}>
-				<a href={resolve('/empty-post-form')}>Empty Post Form</a>
 			</li>
 		</ul>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
