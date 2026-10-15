@@ -285,7 +285,7 @@ describe('adapt', () => {
 			emulate: { role: 'authenticated' }
 		});
 		const emulator = await adapter.emulate();
-		const platform = emulator.platform({}, 'auto');
+		const platform = emulator.platform({ config: {}, prerender: 'auto' });
 		expect(platform.clientPrincipal).toBeDefined();
 		expect(platform.user).toBeDefined();
 	});
@@ -296,7 +296,7 @@ describe('adapt', () => {
 			emulate: { role: 'anonymous' }
 		});
 		const emulator = await adapter.emulate();
-		const platform = emulator.platform({}, 'auto');
+		const platform = emulator.platform({ config: {}, prerender: 'auto' });
 		expect(platform.clientPrincipal).toBeNull();
 		expect(platform.user).toBeNull();
 	});

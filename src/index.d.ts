@@ -12,10 +12,15 @@ export * from './types/swa.js';
 type ExternalOption = string[];
 
 type EmulateRole = 'anonymous' | 'authenticated';
-export type EmulateOptions = {
+export type EmulateState = {
+	/** Creates the default test user when authenticated and clientPrincipal is omitted. */
 	role?: EmulateRole;
-	clientPrincipal?: ClientPrincipal | ClientPrincipalWithClaims;
+	/** Overrides role; null explicitly emulates a logged-out user. */
+	clientPrincipal?: ClientPrincipal | ClientPrincipalWithClaims | null;
 };
+
+/** A static state or a synchronous provider evaluated on each platform-emulation call. */
+export type EmulateOptions = EmulateState | (() => EmulateState);
 
 type AdjustRolldownInputOptionsFunction = (options: RolldownOptions) => RolldownOptions;
 

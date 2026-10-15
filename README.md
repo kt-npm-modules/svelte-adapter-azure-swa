@@ -354,21 +354,54 @@ Enables local Azure Static Web Apps platform emulation.
 
 ```js
 import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
 
-export default {
-	kit: {
-		adapter: adapter({
-			emulate: {
-				role: 'authenticated'
-			}
+export default defineConfig({
+	plugins: [
+		sveltekit({
+			adapter: adapter({
+				emulate: { role: 'authenticated' }
+			})
 		})
-	}
-};
+	]
+});
 ```
 
 This is useful when your application uses `App.Platform` and you want local development or tests to behave more like Azure SWA.
 
 The emulation supports authenticated and anonymous flows and can provide a mock `clientPrincipal`, `user`, and Azure invocation context.
+
+`emulate` accepts a static `EmulateState` object or a synchronous function returning one. The function runs on each platform-emulation call, so a test harness can change the state between requests without restarting the dev server:
+
+```js
+/** @type {import('@ktarmyshov/svelte-adapter-azure-swa').EmulateState} */
+let state = { role: 'anonymous' };
+
+const azureAdapter = adapter({ emulate: () => state });
+// Use azureAdapter as the adapter in sveltekit({...}).
+
+// The test harness can replace state when simulating login:
+state = {
+	clientPrincipal: {
+		identityProvider: 'github',
+		userId: 'alice',
+		userDetails: 'alice@example.test',
+		userRoles: ['authenticated', 'admin']
+	}
+};
+
+// When simulating logout:
+state = { clientPrincipal: null };
+```
+
+The resolution rules are:
+
+- A supplied `clientPrincipal` determines the identity and its `userRoles`, taking precedence over `role`. Optional `claims` are mapped into `platform.user.claimsPrincipalData`.
+- `clientPrincipal: null` explicitly logs out, even with `role: 'authenticated'`.
+- When `clientPrincipal` is omitted, `role: 'authenticated'` creates the default `devUser`; otherwise both `platform.user` and `platform.clientPrincipal` are `null`.
+
+Each call creates a fresh Azure invocation context. Supplied objects are not mutated, and callback results are not cached. The provider receives no Request argument: shared emulation state applies to all local requests and does not implement separate browser sessions or cookie-based authentication. It affects local development/prerender emulation; deployed Azure authentication still comes from Azure.
 
 ### `serverRolldown`
 

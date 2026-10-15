@@ -69,16 +69,18 @@ Step 3 verification (2026-10-15): root `npm run check` passes. Regression tests 
 
 ### 3a. Fix and extend platform-user emulation
 
-Do this immediately after step 3, as a separate change before porting demo auth scenarios.
+Implemented after step 3 as a separate change, before porting demo auth scenarios.
 
 Files: `src/emulator/index.js`, `src/emulator/index.d.ts`, `src/index.d.ts`, root emulator tests and README.
 
-- [ ] Fix the existing static `emulate.clientPrincipal` option: it is declared in the public types but ignored by the implementation, including on GitHub `main`. This predates the Kit 3 migration.
-- [ ] Retain static options and allow a callback returning the complete emulation state (`role` and `clientPrincipal`) together. Resolve it on each platform-emulation call rather than once during adapter setup, allowing anonymous -> authenticated -> anonymous transitions without restarting the dev server.
-- [ ] Define precedence and logout semantics: a supplied principal determines the user and its `userRoles`; `role: 'authenticated'` without a supplied principal creates the default test user. Define how an explicit `clientPrincipal: null` overrides any authenticated fallback.
-- [ ] Keep `platform.user` and `platform.clientPrincipal` consistent, map optional claims correctly and create a fresh invocation context per call. Do not mutate caller-owned principal objects or cache callback results.
-- [ ] Add tests for static custom principals with/without claims, the existing default authenticated/anonymous behavior, explicit logout and callback-driven anonymous -> authenticated -> anonymous transitions.
-- [ ] Update public declarations and document examples and limitations. Kit's emulator callback receives route configuration/prerender state, not the Request; callback-driven shared test state does not provide cookie-based per-browser sessions.
+- [x] Fix the existing static `emulate.clientPrincipal` option: it is declared in the public types but ignored by the implementation, including on GitHub `main`. This predates the Kit 3 migration.
+- [x] Retain static options and allow a callback returning the complete emulation state (`role` and `clientPrincipal`) together. Resolve it on each platform-emulation call rather than once during adapter setup, allowing anonymous -> authenticated -> anonymous transitions without restarting the dev server.
+- [x] Define precedence and logout semantics: a supplied principal determines the user and its `userRoles`; `role: 'authenticated'` without a supplied principal creates the default test user. An explicit `clientPrincipal: null` logs out even when the fallback role is authenticated.
+- [x] Keep `platform.user` and `platform.clientPrincipal` consistent, map optional claims correctly and create a fresh invocation context per call. Do not mutate caller-owned principal objects or cache callback results.
+- [x] Add tests for static custom principals with/without claims, the existing default authenticated/anonymous behavior, explicit logout and callback-driven anonymous -> authenticated -> anonymous transitions.
+- [x] Update public declarations and document examples and limitations. Kit's emulator callback receives route configuration/prerender state, not the Request; callback-driven shared test state does not provide cookie-based per-browser sessions.
+
+Step 3a verification (2026-10-15): the exported `EmulateState` describes static state; `EmulateOptions` also accepts a synchronous state provider. The provider runs inside each platform-emulation call and is not invoked/cached during adapter setup. Tests cover static principals with/without claims, precedence over both fallback roles, explicit null logout, default users, callback-driven login/logout, immutable caller objects and distinct invocation IDs. All 80 tests pass, including the full Kit 3 build regressions. README examples and state-resolution/session limitations are documented; demo files are unchanged.
 
 ### 4. Remove client rebundling; retain the server sourcemap workaround
 
