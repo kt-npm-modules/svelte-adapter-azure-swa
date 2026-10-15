@@ -23,7 +23,7 @@ export default defineConfig([
 		}
 	},
 
-	globalIgnores(['tests/demo/**', 'tests/old-demo/**', 'tests/new-demo/**']),
+	globalIgnores(['tests/demo/**', 'tests/old-demo/**', 'tests/new-demo/**', 'tests/demo-sk3']),
 
 	{
 		files: ['src/**/*.ts', 'src/**/*.js'],
