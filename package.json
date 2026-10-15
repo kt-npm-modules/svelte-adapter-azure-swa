@@ -3,7 +3,6 @@
 	"description": "SvelteKit adapter for Azure Static Web Apps.",
 	"version": "2.0.3",
 	"scripts": {
-		"prepare": "npm run prepare --prefix tests/demo",
 		"build": "npm run gen:swa-config-ts",
 		"build:release": "npm run build",
 		"format": "prettier --write .",

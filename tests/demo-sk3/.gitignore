@@ -29,3 +29,11 @@ project.inlang/cache/
 
 *storybook.log
 storybook-static
+
+# SWA Adapter
+sk_render/
+customStatic/
+func/package-lock.json
+
+# Coverage
+coverage*/
