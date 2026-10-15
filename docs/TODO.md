@@ -20,7 +20,7 @@ Plan checked against the repository on 2026-10-15 and the installed SvelteKit 3.
 - [x] Clean up unused root browser-test dependencies and make the push script stop on failure.
 - [x] Create fresh `tests/demo` with Kit 3.1.0, Svelte 5, TypeScript 6, Vite 8 and the Vite-plugin configuration model.
 - [ ] Finish the actual adapter migration: root dependencies, server-instance integration, Builder filesystem/configuration and instrumentation now target Kit 3; sourcemap cleanup and final integration verification remain.
-- [ ] Connect the new demo to the local adapter. It currently uses `@sveltejs/adapter-auto` and has no Azure/Sentry integration or old adapter E2E suite.
+- [x] Connect the new demo to the local scoped adapter, Azure/SWA and Sentry 11. Old adapter E2E scenarios remain to be ported in step 7; live Sentry verification is still pending below.
 
 ### 1. Root dependencies and compatibility boundary
 
@@ -29,7 +29,8 @@ Plan checked against the repository on 2026-10-15 and the installed SvelteKit 3.
 - [x] Raise the root Node engine to `>=22.17.0`, the Kit 3 minimum. ESLint's devDependency requirements do not define the published runtime minimum.
 - [x] Refresh the root lockfile and verify ordinary `npm install` and clean `npm ci` without workspace hoisting or legacy peer-dependency flags (Node 24.21.0, npm 11.19.0).
 - [x] Preserve the root NodeNext/checkJs setup and the existing `@types/node` policy.
-- [ ] Apply the Node minimum to the new demo and check CI build/runtime versions when integrating the demo. Refresh its lockfile independently after integration dependencies are added.
+- [x] Apply Node >=22.17 to the new demo, refresh its independent lockfile and verify clean installation. Add `.nvmrc` for Node 22 because the current SWA CLI/Core Tools rejects Node 24.
+- [ ] Finish CI/build/deployed-runtime verification in step 8; local SWA was tested on Node 22.23.3, not the exact supported minimum.
 - [ ] Verify the supported minimum Kit/Node combination with the migrated implementation. Dependency installation alone does not establish adapter compatibility.
 
 Step 1 verification (2026-10-15): clean install, dependency-tree validation and root lint pass. Root type checking fails on the removed polyfills export, the old `Server` constructor/manifest API, missing instrumentation initializer and `builder.config.kit`; two secondary callback-type errors follow from the invalid server type. Unit tests: 19 pass in two suites; two header suites cannot load the removed polyfills export. These are the API migration tasks in steps 2–3, not a completed compatibility check. No adapter implementation or demo files were changed in step 1.
@@ -99,21 +100,25 @@ Step 4 verification (2026-10-15): all 80 tests pass. Real Kit 3 builds now inclu
 
 Files: `tests/demo/package.json`, `vite.config.ts`, `tsconfig.json`, `src/app.d.ts`, hooks and instrumentation files.
 
-- [ ] When starting Sentry setup in the new `tests/demo`, execute the official setup prompt from the [Sentry SvelteKit guide](https://docs.sentry.io/platforms/javascript/guides/sveltekit/):
+- [x] When starting Sentry setup in the new `tests/demo`, execute the official setup prompt from the [Sentry SvelteKit guide](https://docs.sentry.io/platforms/javascript/guides/sveltekit/):
 
   > Use curl to download, read and follow https://skills.sentry.dev/instrument to set up the Sentry SvelteKit SDK.
 
   Apply it to the fresh demo with the local Azure SWA adapter and the migration requirements below.
 
-- [ ] Add the local scoped adapter dependency (`@ktarmyshov/svelte-adapter-azure-swa`, `file:../..`) and Azure Functions/SWA CLI dependencies. Replace `adapter-auto` in `sveltekit({ adapter: ... })` and remove it if unused.
-- [ ] Confirm adapter option typing from Vite and `App.Platform` types using the scoped package name. Do not copy the old unscoped `svelte-adapter-azure-swa` imports/type references unchanged.
-- [ ] Install a Kit 3-compatible Sentry release, at least `@sentry/sveltekit` 11.4.0 as specified in #329. Verify the selected release's peers and refresh the demo lockfile.
-- [ ] Configure `sentrySvelteKit` from `@sentry/sveltekit/vite` with current top-level options. Recreate build/upload configuration rather than copying `sourceMapsUploadOptions` or `unstable_sentryVitePluginOptions`.
-- [ ] Set up server instrumentation, client initialization and error hooks using the new Sentry API; compose them with the fresh app's Paraglide hooks.
-- [ ] Configure current Kit tracing options in `sveltekit({...})`. Do not restore `svelte.config.js` or the obsolete experimental instrumentation switch.
-- [ ] Enable and verify production sourcemaps and upload paths for the chosen static/API output directories. Test plugin ordering and upload timing after adapter output exists.
-- [ ] Verify the fresh demo's check/lint/unit/browser-test setup independently. Keep its Kit 3 `$app/tsconfig`, `$app/types` and `#lib` conventions; review Storybook/enhanced-img integration without making those features migration requirements.
-- [ ] Add SWA build/start scripts, runtime selection and test-mode environment configuration. Define one consistent output layout (`build/static` and `func` if preserving the existing CI contract).
+- [x] Add the local scoped adapter dependency (`@ktarmyshov/svelte-adapter-azure-swa`, `file:../..`) and Azure Functions/SWA CLI dependencies. Replace `adapter-auto` in `sveltekit({ adapter: ... })` and remove it if unused.
+- [x] Confirm adapter option typing from Vite and `App.Platform` types using the scoped package name. Do not copy the old unscoped `svelte-adapter-azure-swa` imports/type references unchanged.
+- [x] Install a Kit 3-compatible Sentry release, at least `@sentry/sveltekit` 11.4.0 as specified in #329. Verify the selected release's peers and refresh the demo lockfile.
+- [x] Configure `sentrySvelteKit` from `@sentry/sveltekit/vite` with current top-level options. Recreate build/upload configuration rather than copying `sourceMapsUploadOptions` or `unstable_sentryVitePluginOptions`.
+- [x] Set up server instrumentation, client initialization and error hooks using the new Sentry API; compose them with the fresh app's Paraglide hooks.
+- [x] Configure current Kit tracing options in `sveltekit({...})`. Do not restore `svelte.config.js` or the obsolete experimental instrumentation switch.
+- [x] Enable production sourcemaps and configure upload paths for `build/static` and `func/sk_render`. Put Sentry before Kit; inspect Sentry 11.8's post-`buildApp` upload hook to confirm it runs after adapter output.
+- [x] Perform actual upload with the build token. The user ran the demo build and reported `[sentry-vite-plugin] Info: Successfully uploaded source maps to Sentry`; the token works for uploads.
+- [ ] Verify client/server error ingestion and original source locations. Upload success alone does not establish readable stack traces. The available token returns HTTP 403 on project-read APIs; Sentry MCP is unavailable. Verify in the Sentry UI or with suitable read access after adding error scenarios.
+- [x] Verify the fresh demo's check/lint/unit/browser-test setup independently. Keep its Kit 3 `$app/tsconfig`, `$app/types` and `#lib` conventions; review Storybook/enhanced-img integration without making those features migration requirements.
+- [x] Add SWA build/start scripts, runtime selection and test-mode environment configuration. Define one consistent output layout (`build/static` and `func` if preserving the existing CI contract).
+
+Step 5 local verification (2026-10-15): Sentry 11.8.0 supports Kit 3 and is installed as an external server dependency. The official `https://skills.sentry.dev/instrument` skill and its SvelteKit/manual/source-map references were downloaded with curl and read. Existing project/DSN settings are reused; no new project was provisioned. Vite loads the build token from ignored `tests/demo/.env.local`, and tests explicitly disable SDK reporting and uploads. A scan of generated JS/maps/HTML confirms the token is absent. Clean independent `npm ci`, demo Svelte-check and lint pass; 10 unit/browser/Storybook tests and production-preview E2E pass. Local SWA/Functions E2E also passes on Node 22.23.3, checking exact SSR HTML and hydrated heading. Root implementation is unchanged. `tests/demo-old` scenarios, Sentry example routes and diagnostic routes have not been copied; they belong to step 7. Actual Azure deployment remains in step 8. The user subsequently confirmed a successful sourcemap upload from their demo build. The skill's live-ingestion/readable-stack completion gate remains open; the matching verification is also tracked in steps 6–7.
 
 ### 6. Simplify or remove the public Sentry helper
 
