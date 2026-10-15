@@ -1,6 +1,6 @@
 import { cloneDeep, mergeWith } from 'es-toolkit/object';
 import assert from 'node:assert';
-import { writeFileSync } from 'node:fs';
+import { rmSync, writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { join } from 'path';
@@ -78,9 +78,10 @@ function getPaths(tmpDir) {
  * @param {string} outDir
  * @param {string} tmpDir
  * @param {Options} options
+ * @param {string | undefined} initializer
  * @returns {RolldownOptions}
  */
-function prepareRolldownOptions(builder, outDir, tmpDir, options) {
+function prepareRolldownOptions(builder, outDir, tmpDir, options, initializer) {
 	const { serverInstanceFilePath, envFilePath } = getPaths(tmpDir);
 
 	/** @type {Record<string, string>} */
@@ -88,7 +89,8 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options) {
 		entry: ENTRY_FILE_PATH,
 		index: WRAPPER_INDEX_FILE_PATH
 	};
-	if (builder.hasServerInstrumentationFile?.()) {
+	if (initializer) {
+		input['instrumentation-init'] = initializer;
 		input['instrumentation.server'] = join(
 			builder.getServerDirectory(),
 			'instrumentation.server.js'
@@ -134,10 +136,10 @@ function cleanOutDir(builder, outDir, options) {
 		const apiFuncDirPath = join(outDir, SERVER_FUNC_DIR_NAME);
 		// Clean the custom output directory
 		builder.log(`Cleaning up custom Azure Functions output directory: ${apiFuncDirPath}`);
-		builder.rimraf(apiFuncDirPath);
+		rmSync(apiFuncDirPath, { recursive: true, force: true });
 	} else if (options.apiDir === undefined) {
 		// Clean the default output directory
-		builder.rimraf(outDir);
+		rmSync(outDir, { recursive: true, force: true });
 	}
 }
 
@@ -175,6 +177,9 @@ export async function bundleServer(builder, outDir, tmpDir, options) {
 	builder.generateServerInstance(getPaths(tmpDir).serverInstanceFilePath);
 	// Environment
 	writeEnvironment(tmpDir, options);
+	const initializer = builder.hasServerInstrumentationFile()
+		? builder.createInstrumentationInitializer({ outputDirectory: tmpDir })
+		: undefined;
 
 	// Generate package.json file
 	if (options.apiDir === undefined) {
@@ -218,14 +223,16 @@ export async function bundleServer(builder, outDir, tmpDir, options) {
 	// Rolldown the server function
 	const functionDirPath = join(outDir, SERVER_FUNC_DIR_NAME);
 	builder.log(`[ROLLDOWN]: Building server function to ${functionDirPath}`);
-	const rolldownOptions = prepareRolldownOptions(builder, outDir, tmpDir, options);
+	const rolldownOptions = prepareRolldownOptions(builder, outDir, tmpDir, options, initializer);
 	const bundle = await rolldown(rolldownOptions);
 	assert(!Array.isArray(rolldownOptions.output), 'output should not be an array');
 	await bundle.write(rolldownOptions.output);
-	if (builder.hasServerInstrumentationFile?.()) {
-		builder.instrument?.({
+	if (initializer) {
+		builder.instrument({
 			entrypoint: join(functionDirPath, 'index.js'),
-			instrumentation: join(functionDirPath, 'instrumentation.server.js')
+			instrumentation: join(functionDirPath, 'instrumentation.server.js'),
+			initializer: join(functionDirPath, 'instrumentation-init.js'),
+			module: { exports: [] }
 		});
 	}
 }

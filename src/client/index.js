@@ -1,5 +1,6 @@
 import { merge } from 'es-toolkit/object';
 import assert from 'node:assert';
+import { rmSync } from 'node:fs';
 import path from 'node:path';
 import { rolldown } from 'rolldown';
 import sourcemaps from 'rolldown-plugin-sourcemaps';
@@ -59,10 +60,10 @@ function cleanOutDir(builder, outDir, options) {
 	if (options.staticDir !== undefined) {
 		// Clean the custom output directory
 		builder.log(`Cleaning up custom static output directory: ${outDir}`);
-		builder.rimraf(outDir);
+		rmSync(outDir, { recursive: true, force: true });
 	} else if (options.apiDir === undefined) {
 		// Clean the default output directory
-		builder.rimraf(outDir);
+		rmSync(outDir, { recursive: true, force: true });
 	}
 }
 

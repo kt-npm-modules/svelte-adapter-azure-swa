@@ -1,6 +1,6 @@
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { rolldown } from 'rolldown';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import azureAdapter from '../../src/index';
 import { generateConfig } from '../../src/swa-config';
 import { jsonMatching } from './json';
@@ -9,8 +9,12 @@ expect.extend({ jsonMatching });
 
 vi.mock('fs', () => ({
 	writeFileSync: vi.fn(),
+	mkdirSync: vi.fn(),
+	rmSync: vi.fn(),
 	existsSync: vi.fn(() => true)
 }));
+
+beforeEach(() => vi.clearAllMocks());
 
 vi.mock('rolldown', () => ({
 	rolldown: vi.fn(() =>
@@ -116,6 +120,75 @@ describe('adapt', () => {
 		expect(builder.copy).toHaveBeenCalledTimes(1);
 	});
 
+	test('does not generate an instrumentation facade without instrumentation', async () => {
+		const builder = getMockBuilder();
+		await azureAdapter().adapt(builder);
+		expect(builder.createInstrumentationInitializer).not.toHaveBeenCalled();
+		expect(builder.instrument).not.toHaveBeenCalled();
+	});
+
+	test('bundles the environment initializer before instrumenting the Azure wrapper', async () => {
+		const builder = getMockBuilder();
+		builder.hasServerInstrumentationFile.mockReturnValue(true);
+		await azureAdapter({ apiDir: 'custom/api' }).adapt(builder);
+		expect(builder.createInstrumentationInitializer).toHaveBeenCalledWith({
+			outputDirectory: 'adapter-azure-swa'
+		});
+		expect(rolldown).toHaveBeenCalledWith(
+			expect.objectContaining({
+				input: expect.objectContaining({
+					'instrumentation-init': 'adapter-azure-swa/init.js',
+					'instrumentation.server': 'server/instrumentation.server.js'
+				})
+			})
+		);
+		expect(builder.instrument).toHaveBeenCalledWith({
+			entrypoint: 'custom/api/sk_render/index.js',
+			instrumentation: 'custom/api/sk_render/instrumentation.server.js',
+			initializer: 'custom/api/sk_render/instrumentation-init.js',
+			module: { exports: [] }
+		});
+		const bundle = await vi.mocked(rolldown).mock.results[0].value;
+		expect(bundle.write.mock.invocationCallOrder[0]).toBeLessThan(
+			builder.instrument.mock.invocationCallOrder[0]
+		);
+	});
+
+	test.each(['_app', 'custom-app', 'base/custom-app'])(
+		'uses the full application path %s for immutable asset rules',
+		async (appPath) => {
+			const builder = getMockBuilder();
+			builder.getAppPath.mockReturnValue(appPath);
+			await azureAdapter().adapt(builder);
+			expect(writeFileSync).toHaveBeenCalledWith(
+				expect.stringContaining('staticwebapp.config.json'),
+				expect.jsonMatching(
+					expect.objectContaining({
+						routes: expect.arrayContaining([
+							expect.objectContaining({ route: `/${appPath}/immutable/*` })
+						])
+					})
+				)
+			);
+		}
+	);
+
+	test('cleans only the render function inside a custom API directory', async () => {
+		await azureAdapter({ apiDir: 'custom/api', staticDir: 'custom/static' }).adapt(
+			getMockBuilder()
+		);
+		expect(rmSync).toHaveBeenCalledWith('custom/api/sk_render', { recursive: true, force: true });
+		expect(rmSync).not.toHaveBeenCalledWith('custom/api', expect.anything());
+		expect(rmSync).toHaveBeenCalledWith('custom/static', { recursive: true, force: true });
+		expect(mkdirSync).toHaveBeenCalledWith('adapter-azure-swa', { recursive: true });
+	});
+
+	test('preserves the shared build directory when custom output is inside it', async () => {
+		await azureAdapter({ apiDir: 'build/api' }).adapt(getMockBuilder());
+		expect(rmSync).not.toHaveBeenCalledWith(expect.stringMatching(/\/build$/), expect.anything());
+		expect(rmSync).toHaveBeenCalledWith('build/api/sk_render', { recursive: true, force: true });
+	});
+
 	test('writes to custom api directory', async () => {
 		const adapter = azureAdapter({ apiDir: 'custom/api' });
 		const builder = getMockBuilder();
@@ -199,11 +272,10 @@ describe('adapt', () => {
 		await expect(adapter.adapt(builder)).resolves.not.toThrow();
 	});
 
-	test('handles null routes', async () => {
-		// builder.routes was added in 1.5 with route-level config
+	test('handles empty routes', async () => {
 		const adapter = azureAdapter();
 		const builder = getMockBuilder();
-		builder.routes = null;
+		builder.routes = [];
 		await expect(adapter.adapt(builder)).resolves.not.toThrow();
 	});
 
@@ -275,9 +347,7 @@ describe('adapt', () => {
 function getMockBuilder() {
 	return {
 		config: {
-			kit: {
-				appDir: '/app'
-			}
+			appDir: 'app'
 		},
 		log: Object.assign(vi.fn(), {
 			success: vi.fn(),
@@ -291,13 +361,15 @@ function getMockBuilder() {
 		},
 		copy: vi.fn(),
 		generateServerInstance: vi.fn(),
+		hasServerInstrumentationFile: vi.fn(() => false),
+		createInstrumentationInitializer: vi.fn(({ outputDirectory }) => `${outputDirectory}/init.js`),
+		instrument: vi.fn(),
+		getAppPath: vi.fn(() => 'app'),
 		getBuildDirectory: vi.fn((x) => x),
 		getServerDirectory: vi.fn(() => 'server'),
 		getClientDirectory: vi.fn(() => 'client'),
-		rimraf: vi.fn(),
 		writeClient: vi.fn(),
 		writePrerendered: vi.fn(),
-		mkdirp: vi.fn(),
 		routes: [
 			{
 				id: '/'

@@ -19,7 +19,7 @@ Plan checked against the repository on 2026-10-15 and the installed SvelteKit 3.
 - [x] Simplify root ESLint/Prettier configuration and exclude demo projects from root checks.
 - [x] Clean up unused root browser-test dependencies and make the push script stop on failure.
 - [x] Create fresh `tests/demo` with Kit 3.1.0, Svelte 5, TypeScript 6, Vite 8 and the Vite-plugin configuration model.
-- [ ] Finish the actual adapter migration: root dependencies and server-instance integration now target Kit 3; Builder configuration/filesystem and instrumentation migration remain in step 3.
+- [ ] Finish the actual adapter migration: root dependencies, server-instance integration, Builder filesystem/configuration and instrumentation now target Kit 3; sourcemap cleanup and final integration verification remain.
 - [ ] Connect the new demo to the local adapter. It currently uses `@sveltejs/adapter-auto` and has no Azure/Sentry integration or old adapter E2E suite.
 
 ### 1. Root dependencies and compatibility boundary
@@ -56,14 +56,16 @@ Step 2 verification (2026-10-15): all 59 unit tests pass using native Node Web A
 
 Files: `src/index.js`, `src/server/index.js`, `src/client/index.js`, `src/swa-config/index.js`, `src/index.d.ts`, `tests/unit/index.test.js`.
 
-- [ ] Replace `builder.rimraf()` and `builder.mkdirp()` with `node:fs` operations while preserving custom-directory cleanup behavior.
-- [ ] Replace `builder.config.kit.appDir` with the Kit 3 configuration shape. Review `builder.getAppPath()` where the base path matters; verify generated immutable-asset routes for default/custom `appDir` and `paths.base`.
-- [ ] Audit the remaining Builder calls and obsolete compatibility guards against the installed Kit 3 API. Update the unit-test mock rather than retaining legacy API fallbacks.
-- [ ] Generate the instrumentation environment initializer with `builder.createInstrumentationInitializer({ outputDirectory, ... })` when server instrumentation exists.
-- [ ] Bundle the initializer and its dependencies together with the server/instrumentation inputs. Pass the resulting output path as `initializer` to `builder.instrument()`.
-- [ ] Verify initializer -> instrumentation -> application execution order, environment availability and shared runtime module state. Avoid bundling separate copies of SvelteKit environment state across entrypoints.
-- [ ] Review the instrumentation facade's exports: the current Azure wrapper only performs `await import('./entry.js')` and has no default export; configure `module.exports` appropriately instead of assuming Kit's default facade export.
-- [ ] Verify cold start and request handling both with and without `instrumentation.server.ts`. Keep `supports.instrumentation` only when that execution order is proven.
+- [x] Replace `builder.rimraf()` and `builder.mkdirp()` with `node:fs` operations while preserving custom-directory cleanup behavior.
+- [x] Replace `builder.config.kit.appDir` with the Kit 3 configuration shape. Review `builder.getAppPath()` where the base path matters; verify generated immutable-asset routes for default/custom `appDir` and `paths.base`.
+- [x] Audit the remaining Builder calls and obsolete compatibility guards against the installed Kit 3 API. Update the unit-test mock rather than retaining legacy API fallbacks.
+- [x] Generate the instrumentation environment initializer with `builder.createInstrumentationInitializer({ outputDirectory, ... })` when server instrumentation exists.
+- [x] Bundle the initializer and its dependencies together with the server/instrumentation inputs. Pass the resulting output path as `initializer` to `builder.instrument()`.
+- [x] Verify initializer -> instrumentation -> application execution order, environment availability and shared runtime module state. Avoid bundling separate copies of SvelteKit environment state across entrypoints.
+- [x] Review the instrumentation facade's exports: the current Azure wrapper only performs `await import('./entry.js')` and has no default export; configure `module.exports` appropriately instead of assuming Kit's default facade export.
+- [x] Verify cold start and request handling both with and without `instrumentation.server.ts`. Keep `supports.instrumentation` only when that execution order is proven.
+
+Step 3 verification (2026-10-15): root `npm run check` passes. Regression tests build actual Kit 3.1.0 apps through the full adapter and use Node's native loader to import the generated Function wrapper with/without instrumentation and with custom API/static output directories. They assert runtime private environment availability in instrumentation, instrumentation-before-application execution, matching environment values in the request handler, three concurrent requests, preserved sibling custom Functions, cleaned stale static output and an immutable-asset route including `/base/assets`. Azure Function registration is stubbed; Kit, Rolldown, the generated initializer/facade and Request/Response handling are real. Root tests now contain 69 passing cases. No demo files or emulation options were changed. Actual Sentry/Azure deployment verification remains in later integration steps.
 
 ### 3a. Fix and extend platform-user emulation
 
