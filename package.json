@@ -86,5 +86,10 @@
 	],
 	"engines": {
 		"node": ">=22"
+	},
+	"allowScripts": {
+		"@sentry/cli": true,
+		"fsevents": true,
+		"keytar": true
 	}
 }
