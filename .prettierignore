@@ -9,6 +9,7 @@ CHANGELOG.md
 
 # Demo projects are formatted independently
 tests/old-demo
+tests/demo-old
 tests/demo
 tests/new-demo
 

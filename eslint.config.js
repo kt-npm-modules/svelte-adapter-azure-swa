@@ -11,6 +11,7 @@ export default defineConfig(
 	includeIgnoreFile(gitignorePath),
 	globalIgnores([
 		'tests/demo/**',
+		'tests/demo-old/**',
 		'tests/old-demo/**',
 		'tests/new-demo/**',
 		'tests/unit/fixtures/**',

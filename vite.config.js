@@ -5,6 +5,7 @@ export default defineConfig({
 		exclude: [
 			...configDefaults.exclude,
 			'./tests/demo/**',
+			'./tests/demo-old/**',
 			'./tests/new-demo/**',
 			'./tests/unit/json.js'
 		],
@@ -14,6 +15,7 @@ export default defineConfig({
 			exclude: [
 				...configDefaults.exclude,
 				'./tests/demo/**',
+				'./tests/demo-old/**',
 				'./tests/new-demo/**',
 				'./tests/**',
 				'./src/server/entry/index.js',
