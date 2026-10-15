@@ -76,6 +76,19 @@ describe('adapt', () => {
 		const adapter = azureAdapter();
 		const builder = getMockBuilder();
 		await adapter.adapt(builder);
+		expect(builder.generateServerInstance).toHaveBeenCalledWith(
+			'adapter-azure-swa/server-instance.js'
+		);
+		expect(rolldown).toHaveBeenCalledWith(
+			expect.objectContaining({
+				resolve: {
+					alias: {
+						SERVER_INSTANCE: 'adapter-azure-swa/server-instance.js',
+						ENV: 'adapter-azure-swa/env.js'
+					}
+				}
+			})
+		);
 		expect(builder.writePrerendered).toHaveBeenCalled();
 		expect(builder.writeClient).toHaveBeenCalled();
 		expect(builder.copy).toHaveBeenCalledWith(
@@ -277,7 +290,7 @@ function getMockBuilder() {
 			paths: ['/']
 		},
 		copy: vi.fn(),
-		generateManifest: vi.fn(),
+		generateServerInstance: vi.fn(),
 		getBuildDirectory: vi.fn((x) => x),
 		getServerDirectory: vi.fn(() => 'server'),
 		getClientDirectory: vi.fn(() => 'client'),

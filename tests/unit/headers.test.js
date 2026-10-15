@@ -1,12 +1,9 @@
-import { installPolyfills } from '@sveltejs/kit/node/polyfills';
 import { describe, expect, test } from 'vitest';
 import {
 	getClientIPFromHeaders,
 	getClientPrincipalFromHeaders,
 	splitCookiesFromHeaders
 } from '../../src/server/entry/headers.js';
-
-installPolyfills();
 
 describe('header processing', () => {
 	test('no cookies', () => {

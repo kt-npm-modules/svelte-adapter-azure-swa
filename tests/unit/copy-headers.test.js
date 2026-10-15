@@ -1,8 +1,5 @@
-import { installPolyfills } from '@sveltejs/kit/node/polyfills';
 import { describe, expect, test } from 'vitest';
 import { buildDownstreamHeaders } from '../../src/server/entry/copy-headers.js';
-
-installPolyfills();
 
 /**
  * Build a minimal `HttpRequest`-shaped object the helper accepts. The `headers`

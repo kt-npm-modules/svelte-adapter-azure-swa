@@ -19,7 +19,7 @@ Plan checked against the repository on 2026-10-15 and the installed SvelteKit 3.
 - [x] Simplify root ESLint/Prettier configuration and exclude demo projects from root checks.
 - [x] Clean up unused root browser-test dependencies and make the push script stop on failure.
 - [x] Create fresh `tests/demo` with Kit 3.1.0, Svelte 5, TypeScript 6, Vite 8 and the Vite-plugin configuration model.
-- [ ] Finish the actual adapter migration: root Kit peer/dev dependencies now target 3.1.x and newer 3.x; the server build still uses the old manifest/Server APIs.
+- [ ] Finish the actual adapter migration: root dependencies and server-instance integration now target Kit 3; Builder configuration/filesystem and instrumentation migration remain in step 3.
 - [ ] Connect the new demo to the local adapter. It currently uses `@sveltejs/adapter-auto` and has no Azure/Sentry integration or old adapter E2E suite.
 
 ### 1. Root dependencies and compatibility boundary
@@ -38,15 +38,19 @@ Step 1 verification (2026-10-15): clean install, dependency-tree validation and 
 
 Files: `src/server/index.js`, `src/server/entry/entry.js`, `src/server/entry/index.d.ts`, `src/server/entry/index.js`, `tests/unit/index.test.js`.
 
-- [ ] Replace `writeManifest()` / `builder.generateManifest()` with `builder.generateServerInstance(dest)`. Generate the instance module in the adapter's temporary directory and resolve it in the server Rolldown build.
-- [ ] Remove the custom `manifest.js`, `MANIFEST` alias/declaration and old alias to the generated server class. Import the generated `server` object instead of constructing `new Server(manifest)`.
-- [ ] Update the virtual module declaration to describe the Kit 3 `server` instance; Kit 3's `Server` is an interface, not a constructor.
-- [ ] Keep initialization once per cold start and await it before responding. Kit 3 accepts `Record<string, string | undefined>` for `env`, so revisit the old `process.env` cast/comment.
-- [ ] Remove `@sveltejs/kit/node/polyfills` / `installPolyfills()` from the runtime entrypoint and root header tests. Use native Node Web APIs; do not reintroduce replacement Undici classes.
-- [ ] Preserve the Azure integration: `app.setup({ enableHttpStream: true })`, registration of all supported methods, original URL reconstruction, streaming request body with `duplex: 'half'`, status/headers/body conversion and multiple cookies.
-- [ ] Preserve `platform.user`, `platform.clientPrincipal`, `platform.context` and `getClientAddress()` behavior. Audit `emulate()` / `emulatePlatform()` and their declarations against Kit 3.
-- [ ] Keep server Rolldown bundling, Node builtin handling, external dependencies, custom `apiDir`, generated Function package files and `serverRolldown` customization working. Verify server chunks/assets required at runtime are actually deployed.
-- [ ] Update Builder mocks to the Kit 3 shape and add focused server-build coverage, plus a real demo build. Mocked Rolldown tests alone cannot validate imports in the generated Function.
+- [x] Replace `writeManifest()` / `builder.generateManifest()` with `builder.generateServerInstance(dest)`. Generate the instance module in the adapter's temporary directory and resolve it in the server Rolldown build.
+- [x] Remove the custom `manifest.js`, `MANIFEST` alias/declaration and old alias to the generated server class. Import the generated `server` object instead of constructing `new Server(manifest)`.
+- [x] Update the virtual module declaration to describe the Kit 3 `server` instance; Kit 3's `Server` is an interface, not a constructor.
+- [x] Keep initialization once per cold start and await it before responding. Kit 3 accepts `Record<string, string | undefined>` for `env`, so revisit the old `process.env` cast/comment.
+- [x] Remove `@sveltejs/kit/node/polyfills` / `installPolyfills()` from the runtime entrypoint and root header tests. Use native Node Web APIs; do not reintroduce replacement Undici classes.
+- [x] Preserve the Azure integration: `app.setup({ enableHttpStream: true })`, registration of all supported methods, original URL reconstruction, streaming request body with `duplex: 'half'`, status/headers/body conversion and multiple cookies.
+- [x] Preserve `platform.user`, `platform.clientPrincipal`, `platform.context` and `getClientAddress()` behavior. Audit `emulate()` / `emulatePlatform()` and their declarations against Kit 3.
+- [x] Keep server Rolldown bundling, Node builtin handling, external dependencies, custom `apiDir`, generated Function package files and `serverRolldown` customization working. Existing externals/custom-directory/output-customization unit tests pass; a real uninstrumented Kit 3 server fixture also builds and responds.
+- [x] Update the server-instance Builder mock and assertions. Verify actual Kit 3 generation, real Rolldown output and loading the generated Azure Function wrapper in a temporary app; complete the configuration/instrumentation mock changes in step 3.
+
+Step 2 verification (2026-10-15): all 59 unit tests pass using native Node Web APIs. A temporary Kit 3.1.0 endpoint app was built with the real `bundleServer()` and Rolldown; the generated `sk_render/index.js` loaded, registered all seven methods and served three concurrent GET requests with the expected original URL, client address and platform context. Only Azure registration was stubbed. The fixture used Kit's own cookie dependency to avoid the older root transitive cookie package, and the check bypassed the full adapter configuration/instrumentation paths deliberately reserved for step 3. No demo files were changed. Root type checking now reports only the missing instrumentation initializer and `builder.config.kit` errors.
+
+- [ ] After steps 3 and 5–7, verify the real demo build/deployment, server chunks/assets and the full Azure request/response scenarios. The temporary fixture is a server-build smoke check, not Azure deployment evidence.
 
 ### 3. Builder filesystem, configuration and instrumentation APIs
 
@@ -60,6 +64,19 @@ Files: `src/index.js`, `src/server/index.js`, `src/client/index.js`, `src/swa-co
 - [ ] Verify initializer -> instrumentation -> application execution order, environment availability and shared runtime module state. Avoid bundling separate copies of SvelteKit environment state across entrypoints.
 - [ ] Review the instrumentation facade's exports: the current Azure wrapper only performs `await import('./entry.js')` and has no default export; configure `module.exports` appropriately instead of assuming Kit's default facade export.
 - [ ] Verify cold start and request handling both with and without `instrumentation.server.ts`. Keep `supports.instrumentation` only when that execution order is proven.
+
+### 3a. Fix and extend platform-user emulation
+
+Do this immediately after step 3, as a separate change before porting demo auth scenarios.
+
+Files: `src/emulator/index.js`, `src/emulator/index.d.ts`, `src/index.d.ts`, root emulator tests and README.
+
+- [ ] Fix the existing static `emulate.clientPrincipal` option: it is declared in the public types but ignored by the implementation, including on GitHub `main`. This predates the Kit 3 migration.
+- [ ] Retain static options and allow a callback returning the complete emulation state (`role` and `clientPrincipal`) together. Resolve it on each platform-emulation call rather than once during adapter setup, allowing anonymous -> authenticated -> anonymous transitions without restarting the dev server.
+- [ ] Define precedence and logout semantics: a supplied principal determines the user and its `userRoles`; `role: 'authenticated'` without a supplied principal creates the default test user. Define how an explicit `clientPrincipal: null` overrides any authenticated fallback.
+- [ ] Keep `platform.user` and `platform.clientPrincipal` consistent, map optional claims correctly and create a fresh invocation context per call. Do not mutate caller-owned principal objects or cache callback results.
+- [ ] Add tests for static custom principals with/without claims, the existing default authenticated/anonymous behavior, explicit logout and callback-driven anonymous -> authenticated -> anonymous transitions.
+- [ ] Update public declarations and document examples and limitations. Kit's emulator callback receives route configuration/prerender state, not the Request; callback-driven shared test state does not provide cookie-based per-browser sessions.
 
 ### 4. Remove client rebundling; retain the server sourcemap workaround
 
