@@ -3,7 +3,7 @@
 ## Migrate to SvelteKit 3
 
 Main tracker: [#329](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/329).
-Plan checked against the repository on 2026-10-15 and the installed SvelteKit 3.1.0 Builder definitions/source in the new demo.
+Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.1.0 Builder definitions/source in the new demo.
 
 ### Approach and scope
 
@@ -65,6 +65,7 @@ Files: `src/index.js`, `src/server/index.js`, `src/client/index.js`, `src/swa-co
 - [x] Verify initializer -> instrumentation -> application execution order, environment availability and shared runtime module state. Avoid bundling separate copies of SvelteKit environment state across entrypoints.
 - [x] Review the instrumentation facade's exports: the current Azure wrapper only performs `await import('./entry.js')` and has no default export; configure `module.exports` appropriately instead of assuming Kit's default facade export.
 - [x] Verify cold start and request handling both with and without `instrumentation.server.ts`. Keep `supports.instrumentation` only when that execution order is proven.
+- [ ] Define and verify the `serverRolldown` contract around adapter-owned inputs. Required server-instance and instrumentation inputs must not be removable accidentally by a custom callback without a clear build-time failure; either validate the returned configuration or document and enforce the required invariants. Add a regression test covering instrumentation with a customized `serverRolldown` result.
 
 Step 3 verification (2026-10-15): root `npm run check` passes. Regression tests build actual Kit 3.1.0 apps through the full adapter and use Node's native loader to import the generated Function wrapper with/without instrumentation and with custom API/static output directories. They assert runtime private environment availability in instrumentation, instrumentation-before-application execution, matching environment values in the request handler, three concurrent requests, preserved sibling custom Functions, cleaned stale static output and an immutable-asset route including `/base/assets`. Azure Function registration is stubbed; Kit, Rolldown, the generated initializer/facade and Request/Response handling are real. Root tests now contain 69 passing cases. No demo files or emulation options were changed. Actual Sentry/Azure deployment verification remains in later integration steps.
 
@@ -162,7 +163,9 @@ Files: root/demo `package.json`, `.github/workflows/ci.yml`, `.github/workflows/
 - [ ] Reconcile V8 output paths, CDP teardown and `NODE_V8_COVERAGE` propagation; verify both build-phase and Function request coverage are collected and mapped to the right sources.
 - [ ] Preserve local SWA and real Azure jobs, correct deployment static/API locations, Function production dependency installation, `PLAYWRIGHT_TEST_BASE_URL` handling and existing report/coverage artifacts.
 - [ ] Keep Azure runtime selection separate from the build machine's Node version. Verify the deployed runtime meets Kit 3's minimum rather than assuming local Node 24 implies Azure Node 24 support.
-- [ ] Add the independent demo to Dependabot configuration; currently only `/` is configured. Decide deliberately how the retired demo is treated.
+- [ ] Configure Dependabot for all three independent npm manifests: `/`, `/tests/demo` and `/src/server/template`. Use cross-directory grouping by dependency name where appropriate so shared dependencies such as `@azure/functions` are updated together across the root peer dependency, demo dependency and generated Function runtime dependency. Decide deliberately how the retired demo is treated.
+- [ ] Align `src/server/template/package.json` `@azure/functions` with the current root-supported version (`^4.16.5` at migration time); afterwards let Dependabot maintain the shared dependency across root/demo/template instead of synchronizing it with a custom script.
+- [ ] Verify Dependabot/change-set behavior after removing the demo workspace: a root dependency update generates one patch changeset for the published adapter; a demo-only update generates no adapter changeset; and a grouped `@azure/functions` update changes root/demo/template together and generates the adapter changeset through the changed root manifest. Major dependency PRs remain manual-review cases rather than changing the generated changeset severity automatically.
 - [ ] Exercise `npm pack` and install the resulting package in the demo or a temporary consumer, in addition to the local file dependency. Verify packaged imports/types/Function templates and absence of repository-only files.
 
 ### 9. Documentation and major release
