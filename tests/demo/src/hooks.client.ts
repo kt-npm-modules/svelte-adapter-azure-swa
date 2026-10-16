@@ -1,29 +1,22 @@
-import { handleErrorWithSentry, replayIntegration } from '@sentry/sveltekit';
 import * as Sentry from '@sentry/sveltekit';
+import { sentryOptions } from '#lib/sentry-options.js';
+
+import { sentryProbeId } from '#lib/adapter/sentry-probe.ts';
 
 Sentry.init({
-	dsn: 'https://322c21a1542a9b5f9b3c6467b3528435@o4508446119624704.ingest.de.sentry.io/4509255200669776',
-
-	tracesSampleRate: 1.0,
-
-	// Enable logs to be sent to Sentry
-	enableLogs: true,
-
-	// This sets the sample rate to be 10%. You may want this to be 100% while
-	// in development and sample at a lower rate in production
-	replaysSessionSampleRate: 0.1,
-
-	// If the entire session is not sampled, use the below sample rate to sample
-	// sessions when an error occurs.
-	replaysOnErrorSampleRate: 1.0,
-
-	// If you don't want to use Session Replay, just remove the line below:
-	integrations: [replayIntegration()],
-
-	// Enable sending user PII (Personally Identifiable Information)
-	// https://docs.sentry.io/platforms/javascript/guides/sveltekit/configuration/options/#sendDefaultPii
-	sendDefaultPii: true
+	...sentryOptions,
+	beforeSend(event) {
+		const run = sentryProbeId(new URL(window.location.href).searchParams.get('sentry_test_run'));
+		if (run && event.exception?.values?.some((e) => e.value === 'Adapter demo: client error')) {
+			event.tags = {
+				...event.tags,
+				adapter_test_run: run,
+				adapter_error_side: 'client'
+			};
+			document.documentElement.dataset.sentryEventId = event.event_id;
+		}
+		return event;
+	}
 });
 
-// If you have a custom error handler, pass it to `handleErrorWithSentry`
-export const handleError = handleErrorWithSentry();
+export const handleError = Sentry.handleErrorWithSentry();

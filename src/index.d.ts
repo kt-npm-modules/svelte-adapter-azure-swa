@@ -12,10 +12,15 @@ export * from './types/swa.js';
 type ExternalOption = string[];
 
 type EmulateRole = 'anonymous' | 'authenticated';
-export type EmulateOptions = {
+export type EmulateState = {
+	/** Creates the default test user when authenticated and clientPrincipal is omitted. */
 	role?: EmulateRole;
-	clientPrincipal?: ClientPrincipal | ClientPrincipalWithClaims;
+	/** Overrides role; null explicitly emulates a logged-out user. */
+	clientPrincipal?: ClientPrincipal | ClientPrincipalWithClaims | null;
 };
+
+/** A static state or a synchronous provider evaluated on each platform-emulation call. */
+export type EmulateOptions = EmulateState | (() => EmulateState);
 
 type AdjustRolldownInputOptionsFunction = (options: RolldownOptions) => RolldownOptions;
 
@@ -35,16 +40,12 @@ export type Options = {
 
 export default function plugin(options?: Options): Adapter;
 
-// Sentry
-type SentryOptions = {
-	prefixDir?: string;
-	log?: Console['log'];
-};
+/** Create a Sentry source-path hook relative to a repository root (absolute or cwd-relative).
+ * Requires Sentry's native mapDir context; no output scanning or caching is performed.
+ */
 export declare function sentryRewriteSourcesFactory(
-	dirs: string[],
-	options?: SentryOptions
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-): (source: string, map: any) => string;
+	repositoryRoot: string
+): (source: string, map: unknown, context?: { mapDir: string }) => string;
 
 declare global {
 	namespace App {

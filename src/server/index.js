@@ -1,8 +1,7 @@
 import { cloneDeep, mergeWith } from 'es-toolkit/object';
 import assert from 'node:assert';
-import { writeFileSync } from 'node:fs';
+import { rmSync, writeFileSync } from 'node:fs';
 import { builtinModules } from 'node:module';
-import { posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { join } from 'path';
 import { rolldown } from 'rolldown';
@@ -58,28 +57,17 @@ function defaultRolldownOptions() {
 }
 /**
  *
- * @param {Builder} builder
  * @param {string} tmpDir
  * @returns {{
- *   serverDirPath: string;
- *   serverFilePath: string;
- *   serverRelativeDirPath: string;
- *   manifestFilePath: string;
+ *   serverInstanceFilePath: string;
  *   envFilePath: string;
  * }}
  */
-function getPaths(builder, tmpDir) {
-	// use posix because of https://github.com/sveltejs/kit/pull/3200
-	const serverDirPath = builder.getServerDirectory();
-	const serverFilePath = join(serverDirPath, 'index.js');
-	const serverRelativeDirPath = posix.relative(tmpDir, serverDirPath);
-	const manifestFilePath = join(tmpDir, 'manifest.js');
+function getPaths(tmpDir) {
+	const serverInstanceFilePath = join(tmpDir, 'server-instance.js');
 	const envFilePath = join(tmpDir, 'env.js');
 	return {
-		serverDirPath,
-		serverFilePath,
-		serverRelativeDirPath,
-		manifestFilePath,
+		serverInstanceFilePath,
 		envFilePath
 	};
 }
@@ -90,17 +78,19 @@ function getPaths(builder, tmpDir) {
  * @param {string} outDir
  * @param {string} tmpDir
  * @param {Options} options
+ * @param {string | undefined} initializer
  * @returns {RolldownOptions}
  */
-function prepareRolldownOptions(builder, outDir, tmpDir, options) {
-	const { serverFilePath, manifestFilePath, envFilePath } = getPaths(builder, tmpDir);
+function prepareRolldownOptions(builder, outDir, tmpDir, options, initializer) {
+	const { serverInstanceFilePath, envFilePath } = getPaths(tmpDir);
 
 	/** @type {Record<string, string>} */
 	const input = {
 		entry: ENTRY_FILE_PATH,
 		index: WRAPPER_INDEX_FILE_PATH
 	};
-	if (builder.hasServerInstrumentationFile?.()) {
+	if (initializer) {
+		input['instrumentation-init'] = initializer;
 		input['instrumentation.server'] = join(
 			builder.getServerDirectory(),
 			'instrumentation.server.js'
@@ -115,8 +105,7 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options) {
 		},
 		resolve: {
 			alias: {
-				MANIFEST: manifestFilePath,
-				SERVER: serverFilePath,
+				SERVER_INSTANCE: serverInstanceFilePath,
 				ENV: envFilePath
 			}
 		}
@@ -147,36 +136,19 @@ function cleanOutDir(builder, outDir, options) {
 		const apiFuncDirPath = join(outDir, SERVER_FUNC_DIR_NAME);
 		// Clean the custom output directory
 		builder.log(`Cleaning up custom Azure Functions output directory: ${apiFuncDirPath}`);
-		builder.rimraf(apiFuncDirPath);
+		rmSync(apiFuncDirPath, { recursive: true, force: true });
 	} else if (options.apiDir === undefined) {
 		// Clean the default output directory
-		builder.rimraf(outDir);
+		rmSync(outDir, { recursive: true, force: true });
 	}
 }
 
 /**
- * @param {Builder} builder
- * @param {string} tmpDir
- */
-function writeManifest(builder, tmpDir) {
-	const { serverRelativeDirPath, manifestFilePath } = getPaths(builder, tmpDir);
-
-	// Write manifest file
-	writeFileSync(
-		manifestFilePath,
-		`export const manifest = ${builder.generateManifest({
-			relativePath: serverRelativeDirPath
-		})};\n`
-	);
-}
-
-/**
- * @param {Builder} builder
  * @param {string} tmpDir
  * @param {Options} options
  */
-function writeEnvironment(builder, tmpDir, options) {
-	const { envFilePath } = getPaths(builder, tmpDir);
+function writeEnvironment(tmpDir, options) {
+	const { envFilePath } = getPaths(tmpDir);
 	const debug = options.debug ?? false;
 	const testWorkarounds = options.testWorkarounds ?? false;
 	const preserveAuthorization = options.preserveAuthorization ?? false;
@@ -201,10 +173,13 @@ function writeEnvironment(builder, tmpDir, options) {
 export async function bundleServer(builder, outDir, tmpDir, options) {
 	// Clean
 	cleanOutDir(builder, outDir, options);
-	// Manifest
-	writeManifest(builder, tmpDir);
+	// SvelteKit 3 generates the server instance and its manifest together.
+	builder.generateServerInstance(getPaths(tmpDir).serverInstanceFilePath);
 	// Environment
-	writeEnvironment(builder, tmpDir, options);
+	writeEnvironment(tmpDir, options);
+	const initializer = builder.hasServerInstrumentationFile()
+		? builder.createInstrumentationInitializer({ outputDirectory: tmpDir })
+		: undefined;
 
 	// Generate package.json file
 	if (options.apiDir === undefined) {
@@ -248,14 +223,16 @@ export async function bundleServer(builder, outDir, tmpDir, options) {
 	// Rolldown the server function
 	const functionDirPath = join(outDir, SERVER_FUNC_DIR_NAME);
 	builder.log(`[ROLLDOWN]: Building server function to ${functionDirPath}`);
-	const rolldownOptions = prepareRolldownOptions(builder, outDir, tmpDir, options);
+	const rolldownOptions = prepareRolldownOptions(builder, outDir, tmpDir, options, initializer);
 	const bundle = await rolldown(rolldownOptions);
 	assert(!Array.isArray(rolldownOptions.output), 'output should not be an array');
 	await bundle.write(rolldownOptions.output);
-	if (builder.hasServerInstrumentationFile?.()) {
-		builder.instrument?.({
+	if (initializer) {
+		builder.instrument({
 			entrypoint: join(functionDirPath, 'index.js'),
-			instrumentation: join(functionDirPath, 'instrumentation.server.js')
+			instrumentation: join(functionDirPath, 'instrumentation.server.js'),
+			initializer: join(functionDirPath, 'instrumentation-init.js'),
+			module: { exports: [] }
 		});
 	}
 }

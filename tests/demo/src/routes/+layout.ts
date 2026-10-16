@@ -1,12 +1,4 @@
-import { isSwaCli } from '$lib/swa-env';
+import { PUBLIC_SWA_CLI } from '$app/env/public';
 
-// Prerendered pages have issues in the SWA CLI environment, cause it always uses trailing slashes for the prerendered pages.
-// There are two ways to address this when debugging/testing locally with the SWA CLI:
-
-// 1. Use 'trailingSlash'
-// If this 'trailingSlash' is not used in the lower-level routes, then use it here.
-// If you DO use it in the lower-level routes, you will also need to adjust the logic basing on the 'isSwaCli' variable in those routes.
-export const trailingSlash = isSwaCli ? 'always' : 'never';
-
-// 2. Use prerender = !isSwaCli in places where you have prerender = true, instead.
-// The previous option is less invasive.
+// The local SWA static server serves prerendered directories with trailing slashes.
+export const trailingSlash = PUBLIC_SWA_CLI ? 'always' : 'never';

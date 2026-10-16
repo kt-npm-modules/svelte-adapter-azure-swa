@@ -1,20 +1,21 @@
-import { sequence } from '@sveltejs/kit/hooks';
-import * as Sentry from '@sentry/sveltekit';
-import type { Handle } from '@sveltejs/kit';
-import { getTextDirection } from '$lib/paraglide/runtime';
-import { paraglideMiddleware } from '$lib/paraglide/server';
+import { sequence, type Handle } from '@sveltejs/kit/hooks';
+import { sentryHandle, handleErrorWithSentry } from '@sentry/sveltekit';
+import { handleSentryProbe } from '#lib/adapter/server/sentry-e2e.ts';
+import { getTextDirection } from '#lib/paraglide/runtime.js';
+import { paraglideMiddleware } from '#lib/paraglide/server.js';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
-		event.request = request;
-
-		return resolve(event, {
-			transformPageChunk: ({ html }) =>
-				html
-					.replace('%paraglide.lang%', locale)
-					.replace('%paraglide.dir%', getTextDirection(locale))
-		});
+		return resolve(
+			{ ...event, request },
+			{
+				transformPageChunk: ({ html }) =>
+					html
+						.replace('%paraglide.lang%', locale)
+						.replace('%paraglide.dir%', getTextDirection(locale))
+			}
+		);
 	});
 
-export const handle: Handle = sequence(Sentry.sentryHandle(), handleParaglide);
-export const handleError = Sentry.handleErrorWithSentry();
+export const handle: Handle = sequence(handleSentryProbe, sentryHandle(), handleParaglide);
+export const handleError = handleErrorWithSentry();

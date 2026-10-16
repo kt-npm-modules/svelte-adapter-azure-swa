@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-
-	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -29,6 +27,4 @@
 		The <a href={resolve('/sverdle')}>Sverdle</a> page illustrates SvelteKit's data loading and form handling.
 		Try using it with JavaScript disabled!
 	</p>
-	<p>Info from context (user & clientPrincipal):</p>
-	<pre>{JSON.stringify(data, null, 2)}</pre>
 </div>

@@ -1,9 +1,7 @@
 import { app } from '@azure/functions';
-import { installPolyfills } from '@sveltejs/kit/node/polyfills';
 import { debug, preserveAuthorization, testWorkarounds } from 'ENV';
-import { manifest } from 'MANIFEST';
 import assert from 'node:assert';
-import { Server } from 'SERVER';
+import { server } from 'SERVER_INSTANCE';
 import { buildDownstreamHeaders } from './copy-headers.js';
 import {
 	getClientIPFromHeaders,
@@ -11,14 +9,7 @@ import {
 	splitCookiesFromHeaders
 } from './headers.js';
 
-installPolyfills();
-
-const server = new Server(manifest);
-// SvelteKit's Server.init expects Record<string, string>; Node's process.env is
-// Record<string, string | undefined>. SvelteKit treats undefined values as empty
-// strings internally — keep the cast minimal and avoid an extra allocation per
-// cold start.
-const initialized = server.init({ env: /** @type {Record<string, string>} */ (process.env) });
+const initialized = server.init({ env: process.env });
 
 /**
  * @typedef {import('@azure/functions').InvocationContext} InvocationContext

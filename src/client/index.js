@@ -1,54 +1,9 @@
-import { merge } from 'es-toolkit/object';
-import assert from 'node:assert';
-import path from 'node:path';
-import { rolldown } from 'rolldown';
-import sourcemaps from 'rolldown-plugin-sourcemaps';
-import { convertPathToPattern, globSync } from 'tinyglobby';
+import { rmSync } from 'node:fs';
 
 /**
  * @typedef {import('@sveltejs/kit').Builder} Builder
- * @typedef {import('rolldown').RolldownOptions} RolldownOptions
  * @typedef {import('../index.js').Options} Options
  */
-
-/** @returns {RolldownOptions} */
-function defaultRolldownOptions() {
-	return {
-		external: ['@azure/functions'],
-		output: {
-			format: 'esm',
-			sourcemap: true
-		},
-		plugins: [sourcemaps({ include: /./ })]
-	};
-}
-
-/**
- * @param {Builder} builder
- * @param {string} outDir
- * @returns {RolldownOptions}
- */
-function prepareRolldownOptions(builder, outDir) {
-	const clientDir = builder.getClientDirectory();
-	const cwd = process.cwd();
-	const input = Object.fromEntries(
-		globSync(`${convertPathToPattern(clientDir)}/**/*.js`).map((file) => [
-			// This removes `src/` as well as the file extension from each
-			// file, so e.g. src/nested/foo.js becomes nested/foo
-			path.relative(clientDir, file.slice(0, file.length - path.extname(file).length)),
-			path.resolve(cwd, file)
-		])
-	);
-	/** @type RolldownOptions */
-	let _options = {
-		input,
-		output: {
-			dir: outDir
-		}
-	};
-	merge(_options, defaultRolldownOptions());
-	return _options;
-}
 
 /**
  * @param {Builder} builder
@@ -59,10 +14,10 @@ function cleanOutDir(builder, outDir, options) {
 	if (options.staticDir !== undefined) {
 		// Clean the custom output directory
 		builder.log(`Cleaning up custom static output directory: ${outDir}`);
-		builder.rimraf(outDir);
+		rmSync(outDir, { recursive: true, force: true });
 	} else if (options.apiDir === undefined) {
 		// Clean the default output directory
-		builder.rimraf(outDir);
+		rmSync(outDir, { recursive: true, force: true });
 	}
 }
 
@@ -80,10 +35,4 @@ export async function bundleClient(builder, outDir, options) {
 
 	builder.log(`Writing client files to ${outDir}`);
 	builder.writeClient(outDir);
-
-	builder.log(`[ROLLDOWN]: Re-Bundling client to correct sourcemaps to ${outDir}`);
-	const rolldownOptions = prepareRolldownOptions(builder, outDir);
-	const bundle = await rolldown(rolldownOptions);
-	assert(!Array.isArray(rolldownOptions.output), 'output should not be an array');
-	await bundle.write(rolldownOptions.output);
 }
