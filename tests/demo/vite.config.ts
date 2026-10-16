@@ -1,7 +1,6 @@
 /// <reference types="vitest/config" />
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
-import adapter, { sentryRewriteSourcesFactory } from '@ktarmyshov/svelte-adapter-azure-swa';
-import { sentrySvelteKit } from '@sentry/sveltekit/vite';
+import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -25,18 +24,6 @@ export default defineConfig(({ mode }) => {
 		},
 		build: { sourcemap: true },
 		plugins: [
-			sentrySvelteKit({
-				adapter: 'other',
-				org: 'konstantin-tarmyshov',
-				project: 'svelte-adapter-azure-swa',
-				authToken: env.SENTRY_AUTH_TOKEN,
-				autoUploadSourceMaps:
-					Boolean(env.SENTRY_AUTH_TOKEN) && env.SENTRY_DISABLE_UPLOAD !== 'true',
-				sourcemaps: {
-					assets: ['./build/static/**', './func/sk_render/**'],
-					rewriteSources: sentryRewriteSourcesFactory(path.resolve(import.meta.dirname, '../..'))
-				}
-			}),
 			enhancedImages(),
 			tailwindcss(),
 			sveltekit({

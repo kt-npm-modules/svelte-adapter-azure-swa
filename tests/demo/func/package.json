@@ -3,8 +3,7 @@
 	"type": "module",
 	"main": "*/index.js",
 	"dependencies": {
-		"@azure/functions": "^4.16.5",
-		"@sentry/sveltekit": "^11.8.0"
+		"@azure/functions": "^4.16.5"
 	},
 	"engines": {
 		"node": ">=22.17.0"
