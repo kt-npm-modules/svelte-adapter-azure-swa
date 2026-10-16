@@ -1,4 +1,6 @@
 import * as Sentry from '@sentry/sveltekit';
 import { sentryOptions } from '#lib/sentry-options.js';
 
-Sentry.init(sentryOptions);
+import { observeServerEvent } from '#lib/adapter/server/sentry-e2e.ts';
+
+Sentry.init({ ...sentryOptions, beforeSend: observeServerEvent });

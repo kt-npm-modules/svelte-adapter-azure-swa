@@ -11,5 +11,5 @@ export const sentryOptions = {
 	enabled: !building && PUBLIC_SENTRY_ENABLED,
 	environment: PUBLIC_SENTRY_ENVIRONMENT,
 	release: PUBLIC_SENTRY_RELEASE,
-	tracesSampleRate: dev ? 1.0 : 0.1
+	tracesSampleRate: PUBLIC_SENTRY_ENVIRONMENT === 'adapter-e2e' ? 0 : dev ? 1.0 : 0.1
 };

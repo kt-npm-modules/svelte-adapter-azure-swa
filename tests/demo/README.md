@@ -34,8 +34,9 @@ npm run test:e2e
 
 Unit tests include sanitized header diagnostics and the scaffold's server,
 browser-component and Storybook projects.
-Playwright checks both the raw SSR HTML and the hydrated page. The test scripts disable
-Sentry runtime reporting and uploads so automated tests do not create project noise.
+Playwright checks both the raw SSR HTML and the hydrated page. Unit tests disable
+SDK reporting and uploads. E2E requires a Sentry token and
+confirms receipt of both real errors after the button clicks.
 Browser installation is explicit, rather than repeated by every E2E invocation.
 
 ## Production build and local SWA
@@ -44,7 +45,7 @@ Browser installation is explicit, rather than repeated by every E2E invocation.
 npm run build
 npm run build:swa
 npm run swa
-# Or build and run the adapter suite through SWA/Functions:
+# Or let Playwright build, upload maps and run the suite through SWA/Functions:
 npm run test:swa
 ```
 
@@ -60,21 +61,54 @@ npm install --omit=dev --prefix func
 ```
 
 The deployment pipeline and coverage collection will be updated in migration step 8.
-Playwright discovers both `e2e/*.test.ts` and the scaffold's colocated `*.e2e.ts`.
-It defaults to preview mode; `PUBLIC_SWA_CLI=true` selects SWA. Set
-`PLAYWRIGHT_TEST_BASE_URL` for an already running/deployed app. An external URL defaults
-to Azure mode; override `PLAYWRIGHT_TARGET=preview` or `swa` for a local external server.
-Azure mode requires an external URL and does not start a web server:
+One Playwright config discovers `e2e/*.test.ts` and the scaffold's colocated `*.e2e.ts`.
+Sentry event-receipt checks are part of `e2e/sentry.test.ts` in every mode; they never
+skip. Missing credentials, wrong build identity or missing events fail the run.
 
 ```sh
-PLAYWRIGHT_TARGET=azure PLAYWRIGHT_TEST_BASE_URL=https://your-app.azurestaticapps.net npm run test:e2e
+npm test                # unit/browser tests, then preview E2E
+npm run test:preview     # preview E2E only
+nvm use
+npm run test:swa         # build + map upload + SWA + full E2E
 ```
 
-CI alone does not select Azure mode. Preview omits the custom Function and the 16
-Azure header probes because Vite bypasses the adapter request wrapper. SWA runs all
-40 tests. Diagnostic attachments contain sanitized facts, never raw bearer values.
-Playwright writes its HTML report under ignored `playwright-report/`; legacy Istanbul
-fixtures/teardown have not been copied into the new V8-based setup.
+Local Playwright runs build with reporting/upload enabled, then start preview or
+SWA. Build credentials are removed from the app-server/Functions environment after
+upload. The main Node test process reads `SENTRY_AUTH_TOKEN` from `.env.local` or CI
+secrets; it never sends the REST token to the browser. Local SWA requires Node 22.
+
+Preview omits the custom Function and 16 Azure header probes because Vite bypasses
+the adapter request wrapper; its two Sentry tests still require real event receipt.
+SWA runs all 40 tests. Diagnostic attachments contain sanitized facts, never raw
+bearer values. Reports are written under ignored `playwright-report/`.
+Legacy Istanbul fixtures/teardown have not been copied into the new V8 setup.
+
+### E2E after Azure deployment
+
+Build/deploy once with runtime reporting enabled and a known release/environment.
+For example, set these in the build/deployment job (the token remains a secret):
+
+```sh
+PUBLIC_SENTRY_ENABLED=true PUBLIC_SENTRY_RELEASE=<build-id> PUBLIC_SENTRY_ENVIRONMENT=azure SENTRY_RELEASE=<build-id> PUBLIC_SWA_CLI=false npm run build
+```
+
+Deploy that exact static/Function output, then run the same E2E with the deployed
+build's values:
+
+```sh
+PUBLIC_SENTRY_RELEASE=<build-id> PUBLIC_SENTRY_ENVIRONMENT=azure PLAYWRIGHT_TEST_BASE_URL=https://your-app.azurestaticapps.net npm run test:azure
+```
+
+An external URL starts no local build/server and performs no upload. Release and
+environment are required so the API checks can reject an old/wrong deployment. Each
+test generates a fresh correlation nonce, allowing repeated E2E runs on the same
+release. `CI=true` alone does not select Azure. To test an already running local
+server, supply the external URL and explicitly select `PLAYWRIGHT_TARGET=swa` or
+`preview`, with the same build release/environment.
+
+The real Azure deployment/job wiring remains in step 8. The external-URL branch can
+also be exercised against an already running local app; that is not evidence of
+Azure-specific header/runtime behavior.
 
 ## Adapter scenarios
 
@@ -130,9 +164,9 @@ The adapter's `sentryRewriteSourcesFactory(repositoryRoot)` supplies the native
 `tests/demo/src/hooks.client.ts`. URL and virtual sources are preserved; the helper
 performs no output-directory scan or shared source-path caching.
 
-Production upload has been confirmed by the plugin's success message. Client/server
-issue ingestion, readable original frames and actual Azure deployment remain to be
-verified separately; a successful upload does not establish those results.
+Production upload and both client/server event receipts have been confirmed.
+Automated original-frame/source-context checks and actual Azure deployment remain
+to be verified; event receipt alone does not establish those results.
 
 For the live error/source-map check, build with reporting enabled and the upload token,
 then start the app (Node 22 for SWA):
@@ -148,5 +182,37 @@ anything. In the linked Sentry project verify **Adapter demo: client error** and
 **Adapter demo: server error**. Their frames should resolve to
 `tests/demo/src/routes/adapter/sentry/+page.svelte` and
 `tests/demo/src/routes/adapter/sentry/error/+server.ts`, with the actual throw lines and
-source context. The automated E2E tests verify the errors locally with reporting
-disabled, so passing them alone does not complete this live check.
+source context. E2E automatically verifies receipt of both errors after the clicks. Source location
+and context assertions are still a separate open check.
+
+### Sentry assertions in the regular E2E suite
+
+After each existing button click, `e2e/sentry.test.ts` obtains the SDK's actual
+`event_id` and queries it through official `@sentry/api` on `https://de.sentry.io`.
+It checks the exact exception text, event identity, side/request tags, and the tested
+build's release/environment. It polls for up to 90 seconds per event with bounded
+backoff and `Retry-After` handling; 401/403 fail immediately. Logs include only IDs and
+safe status summaries, not tokens or raw event payloads.
+
+The client test supplies a non-secret `sentry_test_run` query nonce. SDK `beforeSend`
+observes the existing automatic capture, tags that event and exposes its ID through
+an HTML data attribute. The server button forwards the nonce in a test header;
+request-local `AsyncLocalStorage` keeps captures isolated and returns the exact event
+ID in a response header. This does not add a second capture. No build-time test flag
+or fixed per-build test nonce is needed, so the same code works after deployment.
+Requests without a valid probe nonce do not expose a test event-ID marker.
+
+`@sentry/api` is pinned to 0.359.0 because its API is still 0.x. Its
+FSL-1.1-Apache-2.0 license was reviewed for this internal test-tool use; it remains a
+demo-only devDependency, outside the published MIT adapter and browser bundle.
+
+The separate `test:sentry:live` runner/config/test were removed. E2E requires
+`SENTRY_AUTH_TOKEN` with `project:read`; local map uploads additionally need `org:ci`.
+Unit tests stay offline and do not report errors. CI E2E jobs must provide the same
+required credentials; there is no missing-token skip.
+
+Event ingestion is asserted automatically. Original-path/line/source-context and
+source-map-debug assertions remain open in TODO. A previous upload-enabled run
+confirmed correct client symbolication through the API, while the local server's raw
+stack was already mapped and lacked the desired repository-relative prefix. Azure
+and automated server symbolication checks remain necessary.

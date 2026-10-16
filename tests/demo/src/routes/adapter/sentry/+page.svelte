@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { PUBLIC_SENTRY_ENABLED } from '$app/env/public';
+	import { page } from '$app/state';
+	import { sentryProbeId } from '#lib/adapter/sentry-probe.ts';
 	import { onMount } from 'svelte';
+	const run = $derived(sentryProbeId(page.url.searchParams.get('sentry_test_run')));
 	let ready = $state(false);
 	let clientStatus = $state('');
 	let serverStatus = $state('');
@@ -20,7 +23,10 @@
 		serverStatus = '';
 		try {
 			const response = await fetch(resolve('/adapter/sentry/error'), {
-				headers: { accept: 'application/json' }
+				headers: {
+					accept: 'application/json',
+					...(run ? { 'x-adapter-sentry-run': run } : {})
+				}
 			});
 			serverStatus = `Server response: ${response.status}. Check Sentry for receipt and source locations.`;
 		} catch {
