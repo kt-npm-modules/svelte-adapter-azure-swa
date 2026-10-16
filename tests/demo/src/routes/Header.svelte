@@ -26,9 +26,7 @@
 			<li aria-current={page.url.pathname.startsWith('/sverdle') ? 'page' : undefined}>
 				<a href={resolve('/sverdle')}>Sverdle</a>
 			</li>
-			<li
-				aria-current={page.url.pathname.startsWith('/adapter') ? 'page' : undefined}
-			>
+			<li aria-current={page.url.pathname.startsWith('/adapter') ? 'page' : undefined}>
 				<a href={resolve('/adapter')}>Adapter</a>
 			</li>
 		</ul>

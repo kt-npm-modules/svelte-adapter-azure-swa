@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
 					runes: ({ filename }) =>
 						filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 				},
-					adapter: adapter({
+				adapter: adapter({
 					apiDir: './func',
 					staticDir: './build/static',
 					customStaticWebAppConfig: {
