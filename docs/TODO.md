@@ -167,6 +167,7 @@ Source: `tests/demo-old`. Destination: `tests/demo`. Custom Kit routes now live 
   - [ ] Document the opt-in command, required secrets/configuration, safety against accidentally reporting from ordinary tests, expected result and how to inspect failures. Decide explicitly whether to add a manual/conditional CI workflow after the local test works; do not silently send error events to Sentry on every PR.
 
 API references: [Retrieve a project event](https://docs.sentry.io/api/events/retrieve-an-event-for-a-project/), [source-map debug for an event](https://docs.sentry.io/api/events/get-debug-information-related-to-source-maps-for-a-given-event/), [official Sentry API client](https://github.com/getsentry/sentry-api-schema).
+
 - [ ] Run the suite against an actual Azure deployment in step 8 before treating Azure-specific expectations as verified.
 - [ ] Do not remove `tests/demo-old` until replacement coverage is complete; then remove/archive it and clean obsolete paths and ignore patterns.
 
