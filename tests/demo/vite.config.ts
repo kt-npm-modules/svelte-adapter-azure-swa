@@ -47,7 +47,11 @@ export default defineConfig(({ mode }) => {
 					apiDir: './func',
 					staticDir: './build/static',
 					external: ['@sentry/sveltekit'],
-					customStaticWebAppConfig: { platform: { apiRuntime } },
+					customStaticWebAppConfig: {
+						platform: { apiRuntime },
+						routes: [{ route: '/adapter/diagnostic-headers-rewrite', rewrite: '/api/sk_render' }]
+					},
+					testWorkarounds: true,
 					emulate: { role: 'authenticated' }
 				})
 			}),

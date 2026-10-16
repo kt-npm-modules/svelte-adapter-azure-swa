@@ -20,7 +20,7 @@ Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.
 - [x] Clean up unused root browser-test dependencies and make the push script stop on failure.
 - [x] Create fresh `tests/demo` with Kit 3.1.0, Svelte 5, TypeScript 6, Vite 8 and the Vite-plugin configuration model.
 - [ ] Finish the actual adapter migration: root dependencies, server-instance integration, Builder filesystem/configuration and instrumentation now target Kit 3; sourcemap cleanup and final integration verification remain.
-- [x] Connect the new demo to the local scoped adapter, Azure/SWA and Sentry 11. Old adapter E2E scenarios remain to be ported in step 7; live Sentry verification is still pending below.
+- [x] Connect the new demo to the local scoped adapter, Azure/SWA and Sentry 11. Adapter E2E scenarios now run from the new demo (step 7); live Sentry and deployed-Azure verification remain pending below.
 
 ### 1. Root dependencies and compatibility boundary
 
@@ -135,25 +135,32 @@ Step 6 local verification (2026-10-16): the helper is retained with a repository
 
 ### 7. Selectively port old-demo integration coverage
 
-Source: `tests/demo-old`. Destination: `tests/demo`. Start this after the new app has the local adapter, Sentry and SWA configuration above.
+Source: `tests/demo-old`. Destination: `tests/demo`. Custom Kit routes now live under `src/routes/adapter`; custom shared diagnostic code lives under `src/lib/adapter/server`. Home, About, Sverdle and add-on examples remain scaffold pages.
 
-| Old reference                                                      | What to bring into the new app                                                                                                                                                                     |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `svelte.config.js`, `swa-cli.config.json`, `func/`                 | Recreate adapter options in Vite, API runtime override, custom directories, explicit diagnostic rewrite and the custom `HelloWorld` Azure Function. Preserve required Function host/package files. |
-| `src/lib/swa-env.ts`, route prerender options                      | Adapt test-mode/environment handling and mixed SSR/prerender behavior. Verify homepage, about and Sverdle static/deep routes, including trailing slashes.                                          |
-| `src/routes/methods/`, `empty-post-form/`                          | Endpoints for all supported methods, JSON/form request bodies, empty POST and native form-action edge cases.                                                                                       |
-| `src/routes/pg-smoke/`                                             | Node/CommonJS dependency interoperability smoke test and its `pg` dependency.                                                                                                                      |
-| `src/lib/diagnose.ts`, `diagnose.spec.ts`, both diagnostic routes  | Sanitized diagnostics for auth/forwarded headers and separate navigation-fallback versus explicit-rewrite paths.                                                                                   |
-| Sentry example routes, hooks and instrumentation                   | Adapt error scenarios to the already configured Sentry 11 integration; retain browser and server error coverage.                                                                                   |
-| `e2e/demo.test.ts`, `diagnostic-headers.test.ts`, `sentry.test.ts` | Port assertions/scenarios after their routes exist; adapt expected Kit 3 behavior instead of copying obsolete workarounds.                                                                         |
-| `playwright.config.ts`, E2E fixtures/teardown                      | Rebuild preview, local SWA and deployed-Azure modes, reports and coverage around the new app. Review old Istanbul fixtures against the current V8/CDP coverage flow.                               |
+| Old reference                                     | New location / status                                                                                                                                                                                       |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `svelte.config.js`, SWA config, `func/`           | Current Vite options retained; added explicit `/adapter/diagnostic-headers-rewrite` rewrite, `testWorkarounds` and `func/HelloWorld`. Function manifest loads both `HelloWorld` and generated `sk_render`.  |
+| `swa-env.ts`, route options                       | Use the existing typed Kit 3 `PUBLIC_SWA_CLI` env directly; root layout selects SWA trailing slashes, adapter layout keeps stable paths. Scaffold prerender settings retained.                              |
+| Old About server/platform code                    | `/adapter/platform` shows selected user/principal/context facts and exercises `getClientAddress`; old raw-claims logging/display was not copied.                                                            |
+| `methods/`, `empty-post-form/`                    | `/adapter/methods` echoes method/body for all supported methods; `/adapter/empty-post-form` uses runes and typed action data with workaround facts.                                                         |
+| `pg-smoke/`                                       | `/adapter/pg-smoke`, independent demo `pg` dependency and `@types/pg`.                                                                                                                                      |
+| `diagnose.ts`, unit tests, both diagnostic routes | Shared sanitized helper/tests under `src/lib/adapter/server`; two `/adapter/diagnostic-headers-*` routes preserve the original contract.                                                                    |
+| Sentry example                                    | Fresh `/adapter/sentry` page and `/adapter/sentry/error` endpoint use the already configured SDK. Separate real client/server errors; buttons wait for hydration, and status text does not claim ingestion. |
+| Old E2E suite                                     | Ported assertions under `e2e/`, including all 16 diagnostic probes. Existing scaffold E2E/browser/Storybook tests retained.                                                                                 |
+| Istanbul fixtures/teardown                        | Reviewed, not copied: legacy `window.__coverage__` collection does not match the new V8 setup. Coverage ownership/collection remains in step 8.                                                             |
 
-- [ ] Adapt copied imports (`$lib`, `$env/*`, `$app/environment`, old hook type locations) to current Kit 3 conventions and generated route types. Use the fresh app as the configuration reference.
-- [ ] Preserve the current Authorization/forwarded-origin policies and their root unit tests. Kit migration is not a reason to change the security behavior already established by the project specs.
-- [ ] Retain the 16 sanitized auth probes across the two routing channels and all seven supported methods. Never expose raw credentials in diagnostic responses or artifacts.
-- [ ] In Playwright, add explicit `testDir`/matching for the ported `e2e/*.test.ts` files. The fresh scaffold currently discovers `*.e2e.{ts,js}` and otherwise would miss them.
-- [ ] Keep or deliberately adapt the scaffold's existing browser tests. Separate basic UI smoke checks from SWA-only custom-Function/platform assertions.
-- [ ] Do not remove `tests/demo-old` until the replacement coverage is complete; then remove/archive it and clean obsolete paths and ignore patterns.
+- [x] Add `/adapter` scenario index and navigation from the scaffold. Keep the custom Azure Function at `/api/HelloWorld` outside Kit routes.
+- [x] Adapt imports, runes, hook/type conventions and generated route types to Kit 3. Keep the fresh app as configuration reference.
+- [x] Preserve the current Authorization/forwarded-origin policies and root unit tests. No adapter runtime policy was changed.
+- [x] Retain all 16 sanitized auth/header probes across two routing channels and all seven supported methods. No raw credentials are attached to reports.
+- [x] Configure explicit Playwright discovery for `e2e/*.test.ts` and existing colocated `*.e2e.ts`. Freeze preview/SWA/Azure target selection before workers start; CI alone does not imply Azure.
+- [x] Keep scaffold browser tests and verify direct SSR/static/deep routes, navigation, Sverdle form/cookie persistence, platform facts, HTTP/body handling, native empty forms, `pg` imports and the custom Function. Separate preview assertions from SWA/Azure-only cases.
+- [x] Verify the client error and server HTTP 500 locally through preview and the generated Azure Function wrapper under SWA. Run Svelte MCP autofixer on all changed components.
+- [ ] Verify real client/server error ingestion and original source locations in Sentry with reporting enabled and freshly uploaded maps. UI instructions are in the demo README; automated tests disable reporting/upload. This is the remaining gate shared with steps 5–6.
+- [ ] Run the suite against an actual Azure deployment in step 8 before treating Azure-specific expectations as verified.
+- [ ] Do not remove `tests/demo-old` until replacement coverage is complete; then remove/archive it and clean obsolete paths and ignore patterns.
+
+Step 7 local verification (2026-10-16): root check/lint and all 86 tests pass, with root implementation unchanged. Demo check has zero errors/warnings; 48 unit/browser/Storybook tests pass. Preview E2E: 23 pass, 17 Azure-specific cases intentionally skipped. Node 22.23.3 SWA/Functions E2E: all 40 pass, including all 16 header probes, `HelloWorld`, SSR/prerender/deep routes, forms/cookies and both error triggers. Svelte MCP autofixer reports no issues/suggestions on changed components. Third-party skill documentation is excluded from demo formatting because its illustrative code contains annotations that are not executable syntax. No live Sentry upload/ingestion verification, Azure deployment or legacy-demo deletion was performed.
 
 ### 8. Independent installs, CI, coverage and release flow
 
