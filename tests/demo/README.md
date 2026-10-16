@@ -60,7 +60,7 @@ For deployment, install the Function's production dependencies before packaging 
 npm install --omit=dev --prefix func
 ```
 
-The deployment pipeline and coverage collection will be updated in migration step 8.
+CI installs root/demo independently. The local SWA job also runs demo unit tests and backend coverage; the Azure job builds, uploads maps, deploys and runs E2E against the returned URL.
 One Playwright config discovers `e2e/*.test.ts` and the scaffold's colocated `*.e2e.ts`.
 Sentry event-receipt checks are part of `e2e/sentry.test.ts` in every mode; they never
 skip. Missing credentials, wrong build identity or missing events fail the run.
@@ -81,9 +81,32 @@ Preview omits the custom Function and 16 Azure header probes because Vite bypass
 the adapter request wrapper; its two Sentry tests still require real event receipt.
 SWA runs all 40 tests. Diagnostic attachments contain sanitized facts, never raw
 bearer values. Reports are written under ignored `playwright-report/`.
-Legacy Istanbul fixtures/teardown have not been copied into the new V8 setup.
+Legacy Istanbul fixtures are not used. Backend V8 coverage retains the CDP flush/report flow from the previous demo.
+
+### Backend coverage through local SWA
+
+```sh
+nvm use
+npm run coverage
+```
+
+This runs the same full SWA E2E suite, including both mandatory Sentry receipts.
+The build writes V8 data to repository-root `coverage-v8`; the Function worker uses
+`func/coverage-v8` from `func/local.settings.json`. Playwright removes the inherited
+build coverage variable when starting SWA so the worker keeps its separate output.
+The local inspector on port 9230 lets `e2e/coverage-teardown.ts` flush coverage before
+Playwright stops the worker. Coverage runs fail if that flush or either input phase
+is missing. External/Azure E2E never connects to a local inspector.
+
+`monocart-coverage-reports` belongs to this demo's devDependencies.
+`scripts/report-swa-coverage.ts` combines both phases and writes repository-root
+`coverage-swa/lcov.info`, preserving repository-relative source paths for CI/Sonar.
+The worker settings retain the previous demo's local inspector/coverage behavior;
+they are not deployed Azure runtime settings.
 
 ### E2E after Azure deployment
+
+The Azure CI job uses `azure-e2e` and a release derived from the commit, workflow run/attempt and build Node version. Build, map upload and deployed E2E share those values. It selects managed Functions `node:22` separately from the build Node matrix. The platform E2E checks the actual server Node version is 22 and at least 22.17.
 
 Build/deploy once with runtime reporting enabled and a known release/environment.
 For example, set these in the build/deployment job (the token remains a secret):
@@ -212,7 +235,7 @@ Unit tests stay offline and do not report errors. CI E2E jobs must provide the s
 required credentials; there is no missing-token skip.
 
 Event ingestion is asserted automatically. Original-path/line/source-context and
-source-map-debug assertions remain open in TODO. A previous upload-enabled run
+source-map-debug assertions remain deferred in TODO. A previous upload-enabled run
 confirmed correct client symbolication through the API, while the local server's raw
 stack was already mapped and lacked the desired repository-relative prefix. Azure
 and automated server symbolication checks remain necessary.

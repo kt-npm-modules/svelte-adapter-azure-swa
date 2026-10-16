@@ -48,6 +48,9 @@ test('platform load exposes consistent facts and fresh invocation IDs', async ({
 	const facts = JSON.parse((await page.getByTestId('platform-facts').textContent())!);
 	expect(facts.userPresent).toBe(facts.clientPrincipalPresent);
 	expect(facts.clientAddressPresent).toBe(true);
+	const [major, minor] = facts.nodeVersion.split('.').map(Number);
+	expect(major > 22 || (major === 22 && minor >= 17)).toBe(true);
+	if (hasAzureAdapter) expect(major).toBe(22);
 	expect(facts.invocationId).toBeTruthy();
 	await page.reload();
 	const next = JSON.parse((await page.getByTestId('platform-facts').textContent())!);

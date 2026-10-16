@@ -6,6 +6,7 @@ export const load: PageServerLoad = ({ platform, getClientAddress }) => {
 	platform.context.log('Adapter platform scenario');
 	// Return selected diagnostic facts, not raw claims or user credentials.
 	return {
+		nodeVersion: process.versions.node,
 		userPresent: platform.user !== null,
 		clientPrincipalPresent: platform.clientPrincipal !== null,
 		roles: platform.clientPrincipal?.userRoles ?? [],

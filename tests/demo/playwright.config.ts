@@ -40,11 +40,15 @@ export default defineConfig({
 	fullyParallel: true,
 	workers: process.env.CI ? 2 : 4,
 	reporter: [['list'], ['html', { open: 'never' }]],
+	globalTeardown:
+		isSwaCli && !externalURL && process.env.NODE_V8_COVERAGE
+			? './e2e/coverage-teardown.ts'
+			: undefined,
 	webServer: externalURL
 		? undefined
 		: {
 				command: isSwaCli
-					? 'npm run build:swa && env -u SENTRY_AUTH_TOKEN npm run swa'
+					? 'npm run build:swa && env -u SENTRY_AUTH_TOKEN -u NODE_V8_COVERAGE npm run swa'
 					: 'npm run build && env -u SENTRY_AUTH_TOKEN npm run preview',
 				port: isSwaCli ? 4280 : 4173,
 				timeout: 180_000,
