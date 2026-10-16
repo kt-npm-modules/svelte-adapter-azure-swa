@@ -1,14 +1,14 @@
 /// <reference types="vitest/config" />
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
-import { enhancedImages } from '@sveltejs/enhanced-img';
-import tailwindcss from '@tailwindcss/vite';
-import { playwright } from '@vitest/browser-playwright';
 import adapter, { sentryRewriteSourcesFactory } from '@ktarmyshov/svelte-adapter-azure-swa';
 import { sentrySvelteKit } from '@sentry/sveltekit/vite';
-import { defineConfig, loadEnv } from 'vite';
-import { sveltekit } from '@sveltejs/kit/vite';
-import path from 'node:path';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { enhancedImages } from '@sveltejs/enhanced-img';
+import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
+import { playwright } from '@vitest/browser-playwright';
+import path from 'node:path';
+import { defineConfig, loadEnv } from 'vite';
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig(({ mode }) => {
@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => {
 		);
 	}
 	return {
+		ssr: {
+			external: ['pg']
+		},
 		build: { sourcemap: true },
 		plugins: [
 			sentrySvelteKit({
