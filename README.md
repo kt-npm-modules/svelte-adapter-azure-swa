@@ -27,7 +27,7 @@ Key distinctions:
 - generates Azure Functions output and static content output in the layout Azure SWA expects
 - writes `staticwebapp.config.json` with SWA-safe defaults and routing safeguards
 - supports the SvelteKit instrumentation contract
-- uses a Rolldown-based output pipeline with sourcemap-friendly rebundling
+- uses Rolldown for server bundling and SvelteKit 3's native client sourcemap rebasing
 - supports local SWA platform emulation for `App.Platform`-dependent code
 - includes Azure-specific compatibility handling, diagnostics, and regression tests for real platform quirks
 
@@ -354,21 +354,54 @@ Enables local Azure Static Web Apps platform emulation.
 
 ```js
 import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
 
-export default {
-	kit: {
-		adapter: adapter({
-			emulate: {
-				role: 'authenticated'
-			}
+export default defineConfig({
+	plugins: [
+		sveltekit({
+			adapter: adapter({
+				emulate: { role: 'authenticated' }
+			})
 		})
-	}
-};
+	]
+});
 ```
 
 This is useful when your application uses `App.Platform` and you want local development or tests to behave more like Azure SWA.
 
 The emulation supports authenticated and anonymous flows and can provide a mock `clientPrincipal`, `user`, and Azure invocation context.
+
+`emulate` accepts a static `EmulateState` object or a synchronous function returning one. The function runs on each platform-emulation call, so a test harness can change the state between requests without restarting the dev server:
+
+```js
+/** @type {import('@ktarmyshov/svelte-adapter-azure-swa').EmulateState} */
+let state = { role: 'anonymous' };
+
+const azureAdapter = adapter({ emulate: () => state });
+// Use azureAdapter as the adapter in sveltekit({...}).
+
+// The test harness can replace state when simulating login:
+state = {
+	clientPrincipal: {
+		identityProvider: 'github',
+		userId: 'alice',
+		userDetails: 'alice@example.test',
+		userRoles: ['authenticated', 'admin']
+	}
+};
+
+// When simulating logout:
+state = { clientPrincipal: null };
+```
+
+The resolution rules are:
+
+- A supplied `clientPrincipal` determines the identity and its `userRoles`, taking precedence over `role`. Optional `claims` are mapped into `platform.user.claimsPrincipalData`.
+- `clientPrincipal: null` explicitly logs out, even with `role: 'authenticated'`.
+- When `clientPrincipal` is omitted, `role: 'authenticated'` creates the default `devUser`; otherwise both `platform.user` and `platform.clientPrincipal` are `null`.
+
+Each call creates a fresh Azure invocation context. Supplied objects are not mutated, and callback results are not cached. The provider receives no Request argument: shared emulation state applies to all local requests and does not implement separate browser sessions or cookie-based authentication. It affects local development/prerender emulation; deployed Azure authentication still comes from Azure.
 
 ### `serverRolldown`
 
@@ -434,16 +467,35 @@ The adapter uses a sourcemap-friendly output pipeline.
 Specifically:
 
 - the generated Azure Functions server output is rebundled with sourcemaps enabled
-- the generated client output is also rebundled for correct sourcemap behavior
+- client output is copied with SvelteKit 3's native sourcemap path rebasing, without a second bundling pass
 - standard repository layouts work out of the box
 
 ### Sentry in monorepos
 
-Sentry source mapping in monorepos requires rewriting source paths relative to the repository root.
+For an app in a subdirectory, use `sentryRewriteSourcesFactory(repositoryRoot)` to
+upload repository-relative source paths. For example, in `tests/demo/vite.config.ts`:
 
-For that case, the package exports `sentryRewriteSourcesFactory`.
+```js
+import { sentryRewriteSourcesFactory } from '@ktarmyshov/svelte-adapter-azure-swa';
+import { sentrySvelteKit } from '@sentry/sveltekit/vite';
+import path from 'node:path';
 
-This rewrite is typically not needed outside monorepo layouts.
+sentrySvelteKit({
+	// Keep your org, project, authToken and upload assets configuration.
+	sourcemaps: {
+		rewriteSources: sentryRewriteSourcesFactory(path.resolve(import.meta.dirname, '../..'))
+	}
+});
+```
+
+The root can be absolute or relative to the build's working directory. The returned
+callback uses Sentry's native `context.mapDir` to resolve each source independently;
+it preserves URL and virtual identifiers and performs no directory scanning or caching.
+Use a Sentry build plugin providing that context (tested with Sentry SvelteKit 11.8.0).
+
+Adapter 3 changes the helper signature: replace the old output-directory array and
+`prefixDir`/`log` options with the repository root. Verify client and server error
+locations in Sentry after upload. See [the demo configuration](tests/demo/vite.config.ts).
 
 ## Local development and diagnostics
 
@@ -660,9 +712,8 @@ If `trailingSlash` is overridden in lower-level routes or layouts, review those 
 
 ### Monorepo Sentry path rewriting
 
-If your app lives in a monorepo, Sentry source path rewriting relative to the repository root is required.
-
-Use `sentryRewriteSourcesFactory` for that case.
+See [Sentry in monorepos](#sentry-in-monorepos) for the source-path helper and
+its updated adapter 3 signature.
 
 ### Empty form POSTs returning `415`
 

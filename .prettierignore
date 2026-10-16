@@ -7,7 +7,11 @@ bun.lockb
 
 CHANGELOG.md
 
-# Demo subfolder - quick fix
+# Demo projects are formatted independently
 tests/old-demo
+tests/demo-old
 tests/demo
 tests/new-demo
+
+# Compiled test fixtures
+tests/unit/fixtures/

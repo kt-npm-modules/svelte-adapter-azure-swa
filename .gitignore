@@ -1,13 +1,19 @@
 node_modules/
-coverage/
+
+# Output
+demo-test-results/
+.devcontainer/
+.tmp/
+playwright-report/
+
+# Coverage
 coverage*/
 !tests/coverage/
 .nyc_output
-*.tgz
-.vscode/
-demo-test-results/
-.devcontainer/
+
+# Artifacts
 artifacts/
-.tmp/
+*.tgz
+
+# Claude
 .claude/settings.local.json
-playwright-report/

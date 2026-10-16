@@ -1,48 +1,39 @@
-import { defineConfig, PlaywrightTestConfig } from '@playwright/test';
-import { fileURLToPath } from 'url';
+import { defineConfig } from '@playwright/test';
+import { isSwaCli, target } from './e2e/environment';
 
-console.warn('#'.repeat(100));
-console.warn('NODE_ENV: ', process.env.NODE_ENV);
-console.warn('SWA: ', process.env.PUBLIC_SWA_CLI);
-console.warn('CI: ', process.env.CI);
-
-let webServer: PlaywrightTestConfig['webServer'];
-let baseURL: string | undefined;
-if (process.env.PUBLIC_SWA_CLI == 'true') {
-	console.warn('Running in SWA mode');
-	webServer = {
-		timeout: 120 * 1000,
-		command:
-			'mkdir -p .tmp && TIMESTAMP="$(date +"%Y%m%d-%H%M%S")" && npm run swa 2>&1 | tee .tmp/swa-$TIMESTAMP.log',
-		port: 4280,
-		stdout: 'pipe',
-		stderr: 'pipe'
-	};
-	baseURL = 'http://localhost:4280';
-} else if (process.env.CI == 'true') {
-	console.warn('Running in CI mode');
-	webServer = undefined;
-	baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL;
-} else {
-	console.warn('Running in local mode');
-	webServer = {
-		command: 'npm run build && npm run preview',
-		port: 4173
-	};
-	baseURL = 'http://localhost:4173';
+const externalURL = process.env.PLAYWRIGHT_TEST_BASE_URL;
+if (!['preview', 'swa', 'azure'].includes(target)) {
+	throw new Error('PLAYWRIGHT_TARGET must be preview, swa or azure');
 }
-console.warn('#'.repeat(100));
+if (target === 'azure' && !externalURL) {
+	throw new Error('Azure E2E requires PLAYWRIGHT_TEST_BASE_URL; no local app will be started.');
+}
+if (isSwaCli && !externalURL && process.versions.node.split('.')[0] !== '22') {
+	throw new Error('Local SWA E2E requires Node 22 (nvm use).');
+}
+process.env.PLAYWRIGHT_TARGET = target;
 
 export default defineConfig({
-	webServer,
-	use: {
-		baseURL
-	},
-	testDir: 'e2e',
-	// Emit an HTML report so the diagnostic-headers probe attachments are
-	// retrievable both locally (open the report directly) and from the CI
-	// `playwright-report-azure-node<v>` artifact uploaded by ci-swa.yml.
-	// `open: 'never'` keeps `npm run test:swa` non-interactive.
-	reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
-	globalTeardown: fileURLToPath(new URL('./e2e/global-teardown.mjs', import.meta.url))
+	testDir: '.',
+	testMatch: ['e2e/**/*.test.ts', 'src/**/*.e2e.{ts,js}'],
+	fullyParallel: true,
+	workers: process.env.CI ? 2 : 4,
+	reporter: [['list'], ['html', { open: 'never' }]],
+	globalTeardown:
+		isSwaCli && !externalURL && process.env.NODE_V8_COVERAGE
+			? './e2e/coverage-teardown.ts'
+			: undefined,
+	webServer: externalURL
+		? undefined
+		: {
+				command: isSwaCli
+					? 'npm run build:swa && env -u NODE_V8_COVERAGE npm run swa'
+					: 'npm run build && npm run preview',
+				port: isSwaCli ? 4280 : 4173,
+				timeout: 180_000,
+				env: {
+					PUBLIC_SWA_CLI: String(isSwaCli)
+				}
+			},
+	use: { baseURL: externalURL || (isSwaCli ? 'http://localhost:4280' : 'http://localhost:4173') }
 });

@@ -20,7 +20,6 @@ permissions:
 env:
   DEFAULT_MATRIX_NODE_VERSION: '["22"]'
   DEFAULT_CACHE_RESET: false
-  PUBLIC_SWA: false
   CI: true
 
 jobs:
@@ -145,12 +144,12 @@ jobs:
         with:
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           cache-reset: ${{ needs.config.outputs.cache-reset }}
+          install-script: npm run ci:all
+          cache-dependency-path: '**/package-lock.json'
           run-script: |
             npm run build --prefix ./tests/demo
             npm run check:all
             npm run lint:all
-        env:
-          PUBLIC_SWA: true
 
   test:
     needs: config
@@ -163,6 +162,8 @@ jobs:
     steps:
       - uses: kt-workflows/actions/npm-ci-test@main
         with:
+          install-script: npm ci
+          cache-dependency-path: package-lock.json
           # run tests with coverage for SonarCloud
           run-script: |
             npm run build
@@ -200,6 +201,8 @@ jobs:
       - uses: kt-workflows/actions/npm-ci-sonar@main
         with:
           checkout: false # already checked out in previous step
+          install-script: npm run ci:all
+          cache-dependency-path: '**/package-lock.json'
           matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           fail-on-empty-token: true

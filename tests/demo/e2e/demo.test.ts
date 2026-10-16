@@ -1,111 +1,135 @@
-import assert from 'node:assert';
-import { expect, test } from './baseFixtures';
+import { expect, test } from '@playwright/test';
+import { hasAzureAdapter, isLiveAzure } from './environment';
 
-test('home page has expected h1', async ({ page }) => {
-	await page.goto('/', { waitUntil: 'networkidle', timeout: 60000 });
-	await expect(page.locator('h1')).toBeVisible();
-});
-
-test('about page has expected h1', async ({ page }) => {
-	await page.goto('/about', { waitUntil: 'networkidle', timeout: 60000 });
-	expect(await page.textContent('h1')).toBe('About this app');
-});
-
-test('submits sverdle guess', async ({ page }) => {
-	await page.goto('/sverdle', { waitUntil: 'networkidle', timeout: 60000 });
-	// wait for the sveltekit to run hydration
-	// Otherwise the test will fail
-	// await page.waitForTimeout(2000);
-	await page.waitForLoadState('domcontentloaded');
-	await page.waitForLoadState('networkidle');
-
-	const input = page.locator('input[name=guess]').first();
-	await expect(input).not.toBeDisabled({ timeout: 60000 });
-	await input.focus();
-
-	await page.keyboard.type('AZURE');
-	await page.keyboard.press('Enter');
-
-	await expect(input).toHaveValue('a');
-	await expect(input).toBeDisabled({ timeout: 60000 });
-});
-
-test('can call custom API azure function', async ({ request }) => {
-	const response = await request.post('/api/HelloWorld', {
-		data: {
-			name: 'Geoff'
-		}
-	});
-	expect(response.ok()).toBeTruthy();
-});
-
-for (const verb of ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']) {
-	test(`can call ${verb} method on server endpoint`, async ({ request }) => {
-		const response = await request.fetch(`/methods/`, {
-			method: verb
-		});
-		expect(response.ok()).toBeTruthy();
-		expect(await response.text()).toContain(verb.toLowerCase());
+for (const [path, heading] of [
+	['/', 'SvelteKit app'],
+	['/about', 'About this app'],
+	['/sverdle/how-to-play', 'How to play Sverdle'],
+	['/adapter', 'Azure SWA adapter scenarios']
+]) {
+	test(`renders ${path} on direct load`, async ({ page, request }) => {
+		const response = await request.get(path);
+		expect(response.status()).toBe(200);
+		expect(await response.text()).toContain(heading);
+		await page.goto(path);
+		await expect(page.getByRole('heading', { level: 1 })).toContainText(heading);
 	});
 }
 
-test(`POST empty-body edge case currently does not expose workaround marker`, async ({
-	request
-}) => {
-	const verb = 'POST';
-	const response = await request.fetch(`/methods/`, {
-		method: verb,
-		headers: {
-			'content-length': '0'
-		}
-	});
-	expect(response.ok()).toBeTruthy();
-	expect(await response.text()).toContain(verb.toLowerCase());
-	const workaroundHeaderStr = response.headers()['x-adapter-test-workarounds'];
-	assert(workaroundHeaderStr, 'workaround header must be present');
-	const workaroundHeader = JSON.parse(workaroundHeaderStr);
-	expect(workaroundHeader).toBeDefined();
-	expect(workaroundHeader.emptyFormContentTypeStrip?.emptyPostWorkaround).toBe(false);
+test('navigates between scaffold and adapter pages', async ({ page }) => {
+	await page.goto('/');
+	await page.getByRole('link', { name: 'Adapter', exact: true }).click();
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Azure SWA adapter scenarios');
+	await page.getByRole('link', { name: 'Platform and authentication' }).click();
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Adapter platform');
 });
 
-test('POST empty-body edge case currently does not expose workaround marker via native fetch', async () => {
-	const baseURL = test.info().project.use.baseURL;
-	assert(baseURL, 'baseURL must be defined in test configuration');
-	const response = await fetch(`${baseURL}/methods/`, {
+test('submits Sverdle guess and keeps the game cookie', async ({ page, context }) => {
+	await page.goto('/sverdle');
+	const firstInput = page.locator('input[name=guess]').first();
+	await page.getByRole('button', { name: /^a(?: |$)/ }).click();
+	for (const letter of ['z', 'u', 'r', 'e'])
+		await page.getByRole('button', { name: new RegExp(`^${letter}(?: |$)`) }).click();
+	const submitted = page.waitForResponse(
+		(r) => r.request().method() === 'POST' && r.url().includes('/sverdle')
+	);
+	await page.getByRole('button', { name: 'enter', exact: true }).click();
+	expect((await submitted).status()).toBe(200);
+	await expect(firstInput).toHaveValue('a');
+	await expect(firstInput).toBeDisabled();
+	expect((await context.cookies()).some((c) => c.name === 'sverdle')).toBe(true);
+	await page.reload();
+	await expect(page.locator('input[name=guess]').first()).toHaveValue('a');
+	await expect(page.locator('input[name=guess]').first()).toBeDisabled();
+});
+
+test('platform load exposes consistent facts and fresh invocation IDs', async ({ page }) => {
+	await page.goto('/adapter/platform');
+	const facts = JSON.parse((await page.getByTestId('platform-facts').textContent())!);
+	expect(facts.userPresent).toBe(facts.clientPrincipalPresent);
+	expect(facts.clientAddressPresent).toBe(true);
+	const [major, minor] = facts.nodeVersion.split('.').map(Number);
+	expect(major > 22 || (major === 22 && minor >= 17)).toBe(true);
+	if (hasAzureAdapter) expect(major).toBe(22);
+	expect(facts.invocationId).toBeTruthy();
+	await page.reload();
+	const next = JSON.parse((await page.getByTestId('platform-facts').textContent())!);
+	expect(next.invocationId).not.toBe(facts.invocationId);
+});
+
+for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']) {
+	test(`serves ${method} endpoint`, async ({ request, baseURL }) => {
+		const response = await request.fetch('/adapter/methods', {
+			method,
+			headers: { origin: new URL(baseURL!).origin }
+		});
+		expect(response.status()).toBe(200);
+		if (method === 'HEAD') {
+			expect(await response.text()).toBe('');
+			expect(response.headers()['x-method']).toBe('HEAD');
+		} else expect(await response.json()).toEqual({ method, body: '' });
+	});
+}
+
+for (const [contentType, body] of [
+	['application/json', '{"name":"Azure"}'],
+	['application/x-www-form-urlencoded', 'name=Azure']
+]) {
+	test(`preserves ${contentType} body`, async ({ request, baseURL }) => {
+		const response = await request.post('/adapter/methods', {
+			headers: { 'content-type': contentType, origin: new URL(baseURL!).origin },
+			data: body
+		});
+		expect(response.status()).toBe(200);
+		expect(await response.json()).toEqual({ method: 'POST', body });
+	});
+}
+
+test('empty POST via native fetch', async ({ baseURL }) => {
+	const response = await fetch(`${baseURL}/adapter/methods`, {
 		method: 'POST',
-		headers: {
-			'content-length': '0'
-		}
+		headers: { 'content-length': '0', origin: new URL(baseURL!).origin }
 	});
-
-	expect(response.ok).toBeTruthy();
-	expect(await response.text()).toContain('post');
-	const workaroundHeaderStr = response.headers.get('x-adapter-test-workarounds');
-	assert(workaroundHeaderStr, 'workaround header must be present');
-	const workaroundHeader = JSON.parse(workaroundHeaderStr);
-	expect(workaroundHeader).toBeDefined();
-	expect(workaroundHeader.emptyFormContentTypeStrip?.emptyPostWorkaround).toBe(false);
+	expect(response.status).toBe(200);
+	expect(await response.json()).toEqual({ method: 'POST', body: '' });
+	if (hasAzureAdapter) {
+		const info = JSON.parse(response.headers.get('x-adapter-test-workarounds')!);
+		expect(info.emptyFormContentTypeStrip.emptyPostWorkaround).toBe(false);
+	}
 });
 
-test('pg smoke: Client is a function (Node.js CommonJS compat)', async ({ request }) => {
-	const response = await request.get('/pg-smoke');
-	expect(response.ok()).toBeTruthy();
+test('empty POST via Playwright request', async ({ request, baseURL }) => {
+	const response = await request.post('/adapter/methods', {
+		headers: { 'content-length': '0', origin: new URL(baseURL!).origin }
+	});
+	expect(response.status()).toBe(200);
+	expect(await response.json()).toEqual({ method: 'POST', body: '' });
+	if (hasAzureAdapter) {
+		const info = JSON.parse(response.headers()['x-adapter-test-workarounds']);
+		expect(info.emptyFormContentTypeStrip.emptyPostWorkaround).toBe(false);
+	}
+});
+
+test('submits empty form through the page action', async ({ page }) => {
+	await page.goto('/adapter/empty-post-form');
+	await page.getByRole('button', { name: 'Submit empty POST' }).click();
+	await expect(page.locator('#empty-post-success')).toHaveText('success');
+	await expect(page.locator('#workarounds-info-marker')).toHaveText(String(hasAzureAdapter));
+	await expect(page.locator('#empty-post-workaround-marker')).toHaveText(String(isLiveAzure));
+});
+
+test('imports pg Client through the Node/CommonJS build', async ({ request }) => {
+	const response = await request.get('/adapter/pg-smoke');
+	expect(response.status()).toBe(200);
 	expect(await response.text()).toBe('function');
 });
 
-test('empty form submit via page action', async ({ page }) => {
-	await page.goto('/empty-post-form');
-	await page.click('#empty-post-submit');
-
-	await expect(page.locator('#empty-post-success')).toHaveText('success');
-
-	const isSwaCli = process.env.PUBLIC_SWA_CLI === 'true';
-	const isLiveAzure = process.env.CI === 'true' && !isSwaCli;
-
-	// #workarounds-info-marker must always be true
-	await expect(page.locator('#workarounds-info-marker')).toHaveText('true');
-
-	await expect(page.locator('#empty-post-workaround-marker')).toHaveText(
-		isLiveAzure ? 'true' : 'false'
-	);
+test('custom Azure Function handles query and JSON independently of Kit', async ({ request }) => {
+	test.skip(!hasAzureAdapter, 'The custom Function runs under SWA/Azure, not Vite preview');
+	const get = await request.get('/api/HelloWorld?name=Azure');
+	expect(get.status()).toBe(200);
+	expect(await get.text()).toBe('Hello, Azure.');
+	const post = await request.post('/api/HelloWorld', { data: { name: 'Kit' } });
+	expect(post.status()).toBe(200);
+	expect(await post.text()).toBe('Hello, Kit.');
 });

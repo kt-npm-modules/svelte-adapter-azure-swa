@@ -1,29 +1,35 @@
 <script lang="ts">
+	import type { Path } from '$app/types';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { locales, localizeHref } from '$lib/paraglide/runtime';
+	import { locales, localizeHref } from '#lib/paraglide/runtime.js';
+	import DemoLinks from './demo/DemoLinks.svelte';
+	import type { LayoutProps } from './$types';
 	import Header from './Header.svelte';
 	import './layout.css';
 
-	let { children } = $props();
+	let { children }: LayoutProps = $props();
 </script>
 
 <div class="app">
 	<Header />
-	<main>{@render children()}</main>
+
+	<main>
+		{@render children()}
+	</main>
 
 	<footer>
 		<p>
-			visit
-			<a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a>
-			to learn about SvelteKit
+			visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to learn about SvelteKit
 		</p>
 	</footer>
 </div>
 
+<DemoLinks />
+
 <div style="display:none">
 	{#each locales as locale (locale)}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
+		<a href={resolve(localizeHref(page.url.pathname, { locale }) as Path)}>{locale}</a>
 	{/each}
 </div>
 

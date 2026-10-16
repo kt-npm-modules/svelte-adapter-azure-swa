@@ -8,5 +8,10 @@ bun.lockb
 # Miscellaneous
 /static/
 
-project.inlang/
-playwright-report/
+# Third-party agent skills contain documentation-specific code annotations.
+.github/skills/
+.agents/skills/
+
+# Inlang regenerates its metadata/docs; only settings.json is maintained here.
+project.inlang/**
+!project.inlang/settings.json

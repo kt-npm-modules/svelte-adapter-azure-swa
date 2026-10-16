@@ -30,8 +30,8 @@ import { randomBytes, randomUUID } from 'node:crypto';
 type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
 
 const ROUTE_MODES = [
-	{ key: 'nav-fallback', path: '/diagnostic-headers-nav-fallback' },
-	{ key: 'rewrite', path: '/diagnostic-headers-rewrite' }
+	{ key: 'nav-fallback', path: '/adapter/diagnostic-headers-nav-fallback' },
+	{ key: 'rewrite', path: '/adapter/diagnostic-headers-rewrite' }
 ] as const;
 type RouteMode = (typeof ROUTE_MODES)[number];
 
@@ -168,8 +168,12 @@ function readAuthWorkaroundInfo(
 
 // Mirrors the env-branching used by tests/demo/e2e/demo.test.ts so the four
 // matrix cells of the auth workaround info can be asserted per-environment.
-const isSwaCli = process.env.PUBLIC_SWA_CLI === 'true';
-const isLiveAzure = process.env.CI === 'true' && !isSwaCli;
+import { isSwaCli, isLiveAzure } from './environment';
+
+test.skip(
+	!isSwaCli && !isLiveAzure,
+	'Requires the Azure adapter; preview bypasses its request wrapper.'
+);
 
 /**
  * Per-probe core assertion: status 200, expected method echoed, the four core
