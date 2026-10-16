@@ -19,9 +19,6 @@ export default defineConfig(({ mode }) => {
 		);
 	}
 	return {
-		ssr: {
-			external: ['pg']
-		},
 		build: { sourcemap: true },
 		plugins: [
 			enhancedImages(),
