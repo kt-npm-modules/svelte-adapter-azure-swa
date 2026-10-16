@@ -12,7 +12,6 @@ on:
 
 env:
   CI: true
-  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -97,14 +96,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Require Sentry credentials for upload and event verification
-        shell: bash
-        run: |
-          if [[ -z "$SENTRY_AUTH_TOKEN" ]]; then
-            echo "SENTRY_AUTH_TOKEN is required for E2E (org:ci and project:read)." >&2
-            exit 1
-          fi
-
       - uses: kt-workflows/actions/npm-run-script@main
         with:
           node-version: ${{ matrix.node-version }}
@@ -152,11 +143,6 @@ jobs:
       # Managed Functions runtime is independent of the build/test Node matrix.
       NODE_API_RUNTIME: node:22
       PUBLIC_SWA_CLI: false
-      PUBLIC_SENTRY_ENABLED: true
-      SENTRY_DISABLE_UPLOAD: false
-      PUBLIC_SENTRY_ENVIRONMENT: azure-e2e
-      PUBLIC_SENTRY_RELEASE: adapter-azure-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-node${{ matrix.node-version }}
-      SENTRY_RELEASE: adapter-azure-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-node${{ matrix.node-version }}
       PLAYWRIGHT_REPORT_NAME: playwright-report-azure-node${{ matrix.node-version }}
     steps:
       - id: app-token
@@ -171,14 +157,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           token: ${{ steps.app-token.outputs.token }}
-
-      - name: Require Sentry credentials for upload and event verification
-        shell: bash
-        run: |
-          if [[ -z "$SENTRY_AUTH_TOKEN" ]]; then
-            echo "SENTRY_AUTH_TOKEN is required for E2E (org:ci and project:read)." >&2
-            exit 1
-          fi
 
       - uses: kt-workflows/actions/npm-run-script@main
         with:

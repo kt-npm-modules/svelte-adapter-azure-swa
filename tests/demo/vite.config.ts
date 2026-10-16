@@ -33,7 +33,6 @@ export default defineConfig(({ mode }) => {
 				adapter: adapter({
 					apiDir: './func',
 					staticDir: './build/static',
-					external: ['@sentry/sveltekit'],
 					customStaticWebAppConfig: {
 						platform: { apiRuntime },
 						routes: [{ route: '/adapter/diagnostic-headers-rewrite', rewrite: '/api/sk_render' }]

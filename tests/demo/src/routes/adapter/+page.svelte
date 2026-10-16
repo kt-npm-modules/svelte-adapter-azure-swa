@@ -9,14 +9,13 @@
 			href: resolve('/adapter/diagnostic-headers-nav-fallback'),
 			label: 'Headers via navigation fallback'
 		},
-		{ href: resolve('/adapter/diagnostic-headers-rewrite'), label: 'Headers via explicit rewrite' },
-		{ href: resolve('/adapter/sentry'), label: 'Sentry client and server errors' }
+		{ href: resolve('/adapter/diagnostic-headers-rewrite'), label: 'Headers via explicit rewrite' }
 	];
 </script>
 
 <svelte:head><title>Azure SWA adapter scenarios</title></svelte:head>
 <h1>Azure SWA adapter scenarios</h1>
-<p>Checks for server rendering, Azure request handling and error reporting.</p>
+<p>Checks for server rendering and Azure request handling.</p>
 <ul>
 	{#each scenarios as scenario (scenario.href)}
 		<li><a href={scenario.href}>{scenario.label}</a></li>

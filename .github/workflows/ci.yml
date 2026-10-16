@@ -150,9 +150,6 @@ jobs:
             npm run build --prefix ./tests/demo
             npm run check:all
             npm run lint:all
-        env:
-          PUBLIC_SENTRY_ENABLED: false
-          SENTRY_DISABLE_UPLOAD: true
 
   test:
     needs: config
