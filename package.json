@@ -4,6 +4,7 @@
 	"version": "2.0.3",
 	"scripts": {
 		"ci:all": "npm ci && npm ci --prefix tests/demo",
+		"install:all": "npm install && npm install --prefix tests/demo",
 		"build": "npm run gen:swa-config-ts",
 		"build:release": "npm run build",
 		"format": "prettier --write .",
@@ -15,8 +16,7 @@
 		"test": "vitest --run",
 		"test:all": "npm run test && npm run test --prefix tests/demo",
 		"coverage": "vitest --coverage --run",
-		"coverage:all": "npm run coverage && npm run coverage --prefix tests/demo",
-		"changeset:version": "changeset version && npm install && npm run format:all && git add --all",
+		"changeset:version": "changeset version && npm run install:all && npm run format:all && git add --all",
 		"changeset:publish": "changeset publish",
 		"gen:swa-config-ts": "curl https://www.schemastore.org/staticwebapp.config.json | npx json-schema-to-typescript > ./src/types/swa-config-gen.d.ts && prettier --write ./src/types/swa-config-gen.d.ts",
 		"clean:nm": "find . -type d -name node_modules -not -path '*/node_modules/*/node_modules' -prune -exec rm -rf '{}' +",

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+
 # First parameter is optional commit message, defaults to "update"
 COMMIT_MESSAGE=${1:-"update"}
 
