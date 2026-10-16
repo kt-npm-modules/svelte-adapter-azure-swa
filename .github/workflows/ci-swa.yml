@@ -11,9 +11,6 @@ on:
         type: boolean
 
 env:
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: true
-  DEFAULT_INSTALL_SCRIPT: npm ci && npm exec playwright install && npm install azure-functions-core-tools --no-save --verbose
-  PUBLIC_SWA: false
   CI: true
   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
@@ -27,14 +24,9 @@ jobs:
     environment: development
     runs-on: ubuntu-latest
     outputs:
-      install-script: ${{ steps.install-script.outputs.result }}
       azure: ${{ steps.azure.outputs.result }}
       concurrency-group: ${{ steps.concurrency-group.outputs.result }}
     steps:
-      - id: install-script
-        run: |
-          echo "result=$DEFAULT_INSTALL_SCRIPT" >> "$GITHUB_OUTPUT"
-
       # Check that it's a push into the default branch
       - id: main-push
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -95,12 +87,12 @@ jobs:
 
   cli:
     needs: config
+    environment: development
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: ${{ fromJson(inputs.matrix-node-version) }}
     env:
-      PUBLIC_SWA: true
       COVERAGE_DIR: coverage-swa-node${{ matrix.node-version }}
     steps:
       - uses: actions/checkout@v6
@@ -109,11 +101,24 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache-reset: ${{ inputs.cache-reset }}
-          install-script: ${{ needs.config.outputs.install-script }}
-          run-script: |
-            NODE_V8_COVERAGE=coverage-v8 npm run test:swa --prefix ./tests/demo
-            node ./tests/coverage/mcr-report-swa.mjs
-            mv coverage-swa "${COVERAGE_DIR}"
+          install-script: npm run ci:all
+          cache-dependency-path: '**/package-lock.json'
+          # Run even on cache hits: Linux browser libraries are not cached.
+          run-script: npm exec --prefix ./tests/demo --no -- playwright install --with-deps chromium
+
+      - name: Install Azure Functions Core Tools v4
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/azure-functions-tools" --no-save --package-lock=false azure-functions-core-tools@4
+          echo "$RUNNER_TEMP/azure-functions-tools/node_modules/.bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/azure-functions-tools/node_modules/.bin/func" --version
+
+      - name: Run demo unit and SWA E2E tests
+        run: |
+          npm run test:unit --prefix ./tests/demo -- --run
+          NODE_V8_COVERAGE=coverage-v8 npm run test:swa --prefix ./tests/demo
+          node ./tests/coverage/mcr-report-swa.mjs
+          mv coverage-swa "${COVERAGE_DIR}"
 
       - name: Upload coverage artifact
         if: always()
@@ -160,7 +165,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache-reset: ${{ inputs.cache-reset }}
-          install-script: ${{ needs.config.outputs.install-script }}
+          install-script: npm run ci:all
+          cache-dependency-path: '**/package-lock.json'
           # Run the build script and install the dependencies for the built api of the demo app
           # We build the app ourselves, otherwise the azure swa action will build it for us and it will take a very long time
           # For example: with build ourselves it takes about 1:30-2:00 minutes to build and deploy
@@ -168,6 +174,7 @@ jobs:
           # Additionally, the azure swa action will occasionaly fail on determining the environment step (this step takes a long time)
           # Overall CI workflow reduced from about 5:00 minutes to about 2:30 minutes
           run-script: |
+            npm exec --prefix ./tests/demo --no -- playwright install --with-deps chromium
             npm run build --prefix ./tests/demo
             echo "############################################################################"
             cat ./tests/demo/build/static/staticwebapp.config.json
@@ -202,15 +209,8 @@ jobs:
       - uses: kt-workflows/actions/npm-run-script@main
         with:
           node-version: ${{ matrix.node-version }}
-          skip-npm-setup: true # Node/npm environment is already setup in the previous step, we just need to reuse it
-          cache-reset: ${{ inputs.cache-reset }}
-          install-script: ${{ needs.config.outputs.install-script }}
-          # Run the build script and install the dependencies for the built api of the demo app
-          # We build the app ourselves, otherwise the azure swa action will build it for us and it will take a very long time
-          # For example: with build ourselves it takes about 1:30-2:00 minutes to build and deploy
-          # With azure swa action it takes about 3:50 (or longer) minutes to build and deploy
-          # Additionally, the azure swa action will occasionaly fail on determining the environment step (this step takes a long time)
-          # Overall CI workflow reduced from about 5:00 minutes to about 2:30 minutes
+          skip-npm-setup: true # Reuse the root/demo installation from the build step
+          # Test the existing deployment without rebuilding it.
           run-script: npm test --prefix ./tests/demo
         env:
           PLAYWRIGHT_TEST_BASE_URL: ${{ steps.build-deploy.outputs.static_web_app_url }}
