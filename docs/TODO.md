@@ -168,13 +168,25 @@ Files: root/demo `package.json`, `.github/workflows/ci.yml`, `.github/workflows/
 - [ ] Verify Dependabot/change-set behavior after removing the demo workspace: a root dependency update generates one patch changeset for the published adapter; a demo-only update generates no adapter changeset; and a grouped `@azure/functions` update changes root/demo/template together and generates the adapter changeset through the changed root manifest. Major dependency PRs remain manual-review cases rather than changing the generated changeset severity automatically.
 - [ ] Exercise `npm pack` and install the resulting package in the demo or a temporary consumer, in addition to the local file dependency. Verify packaged imports/types/Function templates and absence of repository-only files.
 
-### 9. Documentation and major release
+### 9. Major release preparation
 
-- [ ] Rewrite README setup/config examples for Kit 3 and `sveltekit({...})` in Vite. State the adapter 2.x/Kit 2 versus adapter 3.x/Kit 3 boundary and Node minimum.
-- [ ] Review every adapter option, default and example against the migrated implementation, including external dependencies, custom API/static paths, SWA routes, auth/client principal and instrumentation.
-- [ ] Replace old Sentry upload/helper guidance with the tested Sentry 11 setup. Update demo instructions for separate installs and VS Code windows.
-- [ ] Verify documented commands and snippets against the finished app. Update affected project specs/development notes and old demo paths.
+- [ ] Verify affected project specs/development notes and remove or update obsolete old-demo paths after the replacement coverage is complete.
 - [ ] Add a major changeset for adapter 3.0.0 with the dependency/API breaking changes. Preserve published `src`, `README`, `LICENSE`, `CHANGELOG.md`, package exports and `main`/`types` metadata.
+- [ ] Prepare release notes that clearly state the Kit 3-only compatibility boundary and the significant runtime/API changes without duplicating the full README rewrite in step 10.
+
+### 10. README, positioning and discoverability
+
+Execution note: treat this as a separate product/documentation review after the implementation, integration tests and release shape are stable. Use **High reasoning effort at minimum; Extra High is preferred if available**. Re-read the finished repository and reconsider the README structure from first principles rather than mechanically patching the current text.
+
+- [ ] Rewrite the README for the finished 3.x adapter. Make the opening immediately establish the concrete use case and compatibility boundary: current SvelteKit 3, Azure Static Web Apps, server-side rendering/hybrid applications, Azure Functions v4 and the supported Node minimum.
+- [ ] Rebuild the Quick Start and all configuration examples against the final Kit 3 Vite-plugin configuration model (`sveltekit({...})`), the scoped package name and the final public types. Verify every command/snippet against the finished demo/package rather than carrying forward Kit 2-era examples.
+- [ ] Review every adapter option, default and documented behavior against the final implementation, including external dependencies, custom API/static paths, SWA routes, auth/client principal, emulation, instrumentation, server bundling and Sentry integration. Replace obsolete Sentry helper/upload guidance with the tested Sentry 11 flow.
+- [ ] Audit feature/differentiator claims for technical ownership and usefulness. Do not present behavior supplied natively by SvelteKit as an adapter feature. In particular, client rebundling has been removed: describe client output/sourcemaps factually (the adapter copies Kit's generated output) and reserve adapter-specific claims for behavior the adapter actually provides, such as the Azure Functions server pipeline and any verified server sourcemap handling.
+- [ ] Reconsider the overall README information architecture. Prefer a concise product/use-case introduction, compatibility, installation/configuration, generated deployment layout, options and verified Azure caveats over repeatedly explaining or defending the fork. Keep upstream history/acknowledgements factual and secondary.
+- [ ] Review npm/package discoverability metadata after the final behavior is known: improve `package.json` `description` and `keywords` so that SvelteKit 3, Azure Static Web Apps, Azure Functions/SSR and the actual supported use cases are explicit without keyword stuffing.
+- [ ] Review GitHub repository discoverability: update the repository About/description and add accurate topics (for example SvelteKit, Azure Static Web Apps, Azure Functions, SSR/serverless) based on the final positioning.
+- [ ] Evaluate the README and metadata from common discovery intents such as “SvelteKit 3 Azure Static Web Apps adapter”, “SvelteKit Azure Functions SSR” and “SvelteKit Azure adapter”. A developer or AI agent should be able to determine from the README opening and package metadata what the adapter targets, whether it supports the current SvelteKit line, and how to install/configure it.
+- [ ] Keep discoverability evidence-based: optimize for clear, specific facts and terminology rather than comparative claims against upstream or generic marketing language. Let the final review decide the exact wording and which differentiators are worth emphasizing.
 
 ### Completion gates
 
