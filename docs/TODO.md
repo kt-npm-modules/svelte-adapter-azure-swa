@@ -91,7 +91,7 @@ Files: `src/client/index.js`, `tests/unit/index.test.js`, `tests/unit/fixtures/k
 - [x] Simplify the client path to `builder.writePrerendered(outDir)` and `builder.writeClient(outDir)`. Remove the second client Rolldown pass and its input globbing/options/imports.
 - [x] Verify relocated maps for default output and custom `staticDir`, including representative `.svelte` and `.ts` mappings back to original sources. Add a regression check against actual build output.
 - [x] Check copied static assets and prerendered routes after removing rebundling.
-- [ ] Verify Sentry accepts/resolves the copied client maps end to end after Sentry is installed/configured in step 5. The new demo does not yet have Sentry; this check remains part of the integration gates, not evidence from the source-map unit/build tests.
+- [ ] Verify Sentry resolves the copied client maps end to end. Sentry is configured and upload succeeded in step 5; original error locations remain part of the integration gates, not evidence from upload success or local source-map checks.
 - [x] Remove dependencies only if no remaining code uses them: `tinyglobby` was client-only and is removed from direct dependencies (it remains a transitive dev dependency of the toolchain). Rolldown remains necessary for the server.
 - [x] Keep `rolldown-plugin-sourcemaps` on the server. [#325](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/325) is a separate follow-up; [rolldown/rolldown#5561](https://github.com/rolldown/rolldown/issues/5561) was still open when checked. Remove the plugin only after a usable release provides input-map chaining and regression checks pass.
 
@@ -125,10 +125,13 @@ Step 5 local verification (2026-10-15): Sentry 11.8.0 supports Kit 3 and is inst
 
 Files: `src/utils.js`, `src/index.js`, `src/index.d.ts`, `tests/unit/utils.test.js`, demo Vite config and README.
 
-- [ ] Use native `rewriteSources(source, map, context)` / `context.mapDir` instead of recursively scanning output directories, parsing maps and caching source-to-directory associations.
-- [ ] First try expressing the required source paths directly in the new demo's Sentry configuration. If the public helper is no longer useful, remove its implementation, export, declarations and tests as part of the major release.
-- [ ] If retained, redesign the helper signature/types around the native context and remove scanning/cache arguments and behavior. Verify paths from the independent demo still resolve to repository application sources.
-- [ ] Verify both client and server errors in Sentry against original source files/lines; accepting uploads alone is insufficient. Update documentation and changeset for any removed public helper.
+- [x] Use native `rewriteSources(source, map, context)` / `context.mapDir` instead of recursively scanning output directories, parsing maps and caching source-to-directory associations.
+- [x] Retain a small public `sentryRewriteSourcesFactory(repositoryRoot)` helper so consumers only supply their repository root. Use it in the demo configuration; remove the old directory-array/options contract, scanning/cache implementation and helper-only fixtures.
+- [x] Resolve each filesystem source against its own map directory and the repository root; preserve URL/virtual identifiers. The helper uses the native context. Verify paths from the independent demo still resolve to repository application sources.
+- [x] Update the Sentry-specific README guidance and demo documentation; add a major changeset for the new `sentryRewriteSourcesFactory` signature. The full README review remains in step 10.
+- [ ] Verify both client and server errors in Sentry against original source files/lines with the native callback; accepting uploads alone is insufficient. Complete alongside the error scenarios in step 7.
+
+Step 6 local verification (2026-10-16): the helper is retained with a repository-root argument and native `context.mapDir`, replacing the old output-directory array and `prefixDir`/`log` options. Root check/lint and all 86 tests pass; demo check and production build pass with reporting/upload disabled. Regression tests cover client/server paths, identical source strings in distinct map directories, URL/virtual identifiers, missing context and cwd-relative roots. The helper also passes offline Sentry upload preparation on 50 real maps and two synthetic maps: 39 application sources resolve correctly, with mappings/content preserved and on-disk maps unchanged. Live client/server error verification remains in step 7; no new upload is performed by the local checks.
 
 ### 7. Selectively port old-demo integration coverage
 

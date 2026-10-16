@@ -3,7 +3,7 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import tailwindcss from '@tailwindcss/vite';
 import { playwright } from '@vitest/browser-playwright';
-import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
+import adapter, { sentryRewriteSourcesFactory } from '@ktarmyshov/svelte-adapter-azure-swa';
 import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import { defineConfig, loadEnv } from 'vite';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -29,7 +29,10 @@ export default defineConfig(({ mode }) => {
 				authToken: env.SENTRY_AUTH_TOKEN,
 				autoUploadSourceMaps:
 					Boolean(env.SENTRY_AUTH_TOKEN) && env.SENTRY_DISABLE_UPLOAD !== 'true',
-				sourcemaps: { assets: ['./build/static/**', './func/sk_render/**'] }
+				sourcemaps: {
+					assets: ['./build/static/**', './func/sk_render/**'],
+					rewriteSources: sentryRewriteSourcesFactory(path.resolve(import.meta.dirname, '../..'))
+				}
 			}),
 			enhancedImages(),
 			tailwindcss(),

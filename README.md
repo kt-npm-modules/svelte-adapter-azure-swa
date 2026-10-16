@@ -472,11 +472,30 @@ Specifically:
 
 ### Sentry in monorepos
 
-Sentry source mapping in monorepos requires rewriting source paths relative to the repository root.
+For an app in a subdirectory, use `sentryRewriteSourcesFactory(repositoryRoot)` to
+upload repository-relative source paths. For example, in `tests/demo/vite.config.ts`:
 
-For that case, the package exports `sentryRewriteSourcesFactory`.
+```js
+import { sentryRewriteSourcesFactory } from '@ktarmyshov/svelte-adapter-azure-swa';
+import { sentrySvelteKit } from '@sentry/sveltekit/vite';
+import path from 'node:path';
 
-This rewrite is typically not needed outside monorepo layouts.
+sentrySvelteKit({
+	// Keep your org, project, authToken and upload assets configuration.
+	sourcemaps: {
+		rewriteSources: sentryRewriteSourcesFactory(path.resolve(import.meta.dirname, '../..'))
+	}
+});
+```
+
+The root can be absolute or relative to the build's working directory. The returned
+callback uses Sentry's native `context.mapDir` to resolve each source independently;
+it preserves URL and virtual identifiers and performs no directory scanning or caching.
+Use a Sentry build plugin providing that context (tested with Sentry SvelteKit 11.8.0).
+
+Adapter 3 changes the helper signature: replace the old output-directory array and
+`prefixDir`/`log` options with the repository root. Verify client and server error
+locations in Sentry after upload. See [the demo configuration](tests/demo/vite.config.ts).
 
 ## Local development and diagnostics
 
@@ -693,9 +712,8 @@ If `trailingSlash` is overridden in lower-level routes or layouts, review those 
 
 ### Monorepo Sentry path rewriting
 
-If your app lives in a monorepo, Sentry source path rewriting relative to the repository root is required.
-
-Use `sentryRewriteSourcesFactory` for that case.
+See [Sentry in monorepos](#sentry-in-monorepos) for the source-path helper and
+its updated adapter 3 signature.
 
 ### Empty form POSTs returning `415`
 

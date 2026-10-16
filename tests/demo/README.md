@@ -87,5 +87,12 @@ settings are configurable. The Vite plugin uses `adapter: 'other'` and scans bot
 `build/static` and `func/sk_render` after adapter output is written. Sentry remains an
 external server dependency so its runtime initialization can precede the application.
 
-Production upload, Sentry issue ingestion/readable frames and actual Azure deployment
-must be verified separately; a successful local build does not establish those results.
+The adapter's `sentryRewriteSourcesFactory(repositoryRoot)` supplies the native
+`sourcemaps.rewriteSources` callback. It resolves each source against its own
+`context.mapDir` and uploads repository-relative paths such as
+`tests/demo/src/hooks.client.ts`. URL and virtual sources are preserved; the helper
+performs no output-directory scan or shared source-path caching.
+
+Production upload has been confirmed by the plugin's success message. Client/server
+issue ingestion, readable original frames and actual Azure deployment remain to be
+verified separately; a successful upload does not establish those results.

@@ -40,16 +40,12 @@ export type Options = {
 
 export default function plugin(options?: Options): Adapter;
 
-// Sentry
-type SentryOptions = {
-	prefixDir?: string;
-	log?: Console['log'];
-};
+/** Create a Sentry source-path hook relative to a repository root (absolute or cwd-relative).
+ * Requires Sentry's native mapDir context; no output scanning or caching is performed.
+ */
 export declare function sentryRewriteSourcesFactory(
-	dirs: string[],
-	options?: SentryOptions
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-): (source: string, map: any) => string;
+	repositoryRoot: string
+): (source: string, map: unknown, context?: { mapDir: string }) => string;
 
 declare global {
 	namespace App {
