@@ -1,6 +1,6 @@
 {
 	"name": "@ktarmyshov/svelte-adapter-azure-swa",
-	"description": "SvelteKit adapter for Azure Static Web Apps.",
+	"description": "SvelteKit 3 adapter for Azure Static Web Apps with SSR, Azure Functions, and hybrid rendering.",
 	"version": "2.0.3",
 	"scripts": {
 		"ci:all": "npm ci && npm ci --prefix tests/demo",
@@ -37,8 +37,13 @@
 		"svelte",
 		"sveltekit",
 		"sveltekit-adapter",
+		"sveltekit-3",
 		"azure",
-		"staticwebapp"
+		"azure-static-web-apps",
+		"azure-functions",
+		"staticwebapp",
+		"ssr",
+		"serverless"
 	],
 	"homepage": "https://github.com/kt-npm-modules/svelte-adapter-azure-swa#readme",
 	"repository": {
