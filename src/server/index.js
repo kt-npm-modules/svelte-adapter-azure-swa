@@ -121,7 +121,27 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options, initializer) {
 	external = [...(external || []), ...(options.external || [])];
 	_options.external = external;
 	const _savedOutput = cloneDeep(_options.output);
+	// Snapshot before the callback, which may mutate these objects in place.
+	const requiredInput = { ...input };
+	const requiredAliases = { SERVER_INSTANCE: serverInstanceFilePath, ENV: envFilePath };
 	_options = options.serverRolldown?.(_options) || _options;
+	for (const [name, expected] of Object.entries(requiredInput)) {
+		const input = _options.input;
+		if (!input || typeof input !== 'object' || Array.isArray(input) || input[name] !== expected) {
+			throw new Error(
+				`serverRolldown must preserve adapter-owned input[${JSON.stringify(name)}] as ${JSON.stringify(expected)}. Keep the supplied entrypoints when customizing the configuration.`
+			);
+		}
+	}
+	for (const [name, expected] of Object.entries(requiredAliases)) {
+		const alias = _options.resolve?.alias?.[name];
+		const value = Array.isArray(alias) && alias.length === 1 ? alias[0] : alias;
+		if (value !== expected) {
+			throw new Error(
+				`serverRolldown must preserve adapter-owned resolve.alias.${name} as ${JSON.stringify(expected)}. Keep the supplied aliases when customizing the configuration.`
+			);
+		}
+	}
 	_options.output = _savedOutput;
 	return _options;
 }

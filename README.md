@@ -409,6 +409,10 @@ Advanced customization hook for the server-side Rolldown pipeline.
 
 Use this only when you need to adjust the generated server bundling behavior directly.
 
+The callback may mutate the supplied configuration or return a replacement. Preserve the supplied `input.entry` and `input.index` paths, plus `input['instrumentation-init']` and `input['instrumentation.server']` when instrumentation is enabled. Also preserve the `resolve.alias.SERVER_INSTANCE` and `resolve.alias.ENV` paths (a single-element array containing the same path is accepted). Removing or changing these adapter-owned values fails the build with an error naming the affected field.
+
+Additional plugins, external dependencies, entrypoints, aliases and other non-conflicting options are supported. Changes to `output` are ignored; the adapter retains its output configuration.
+
 ### Diagnostics and test-oriented options
 
 The adapter also exposes options such as:

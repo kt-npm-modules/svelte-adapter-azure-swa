@@ -7,6 +7,7 @@ import { createBuilder } from 'vite';
 
 const instrumented = process.argv.includes('--instrumented');
 const custom = process.argv.includes('--custom');
+const serverRolldownMode = process.argv.find((arg) => arg.startsWith('--server-rolldown='))?.split('=')[1];
 const apiDir = custom ? 'func' : 'build/server';
 const staticDir = custom ? 'public-build' : 'build/static';
 await mkdir('.tmp', { recursive: true });
@@ -58,12 +59,27 @@ try {
 		path.join(fixtureRoot, 'vite.config.js'),
 		`import { sveltekit } from '@sveltejs/kit/vite';
 import adapter from ${JSON.stringify(new URL('../../../src/index.js', import.meta.url).href)};
+const options = ${JSON.stringify(custom ? { apiDir, staticDir } : {})};
+const callbackMode = ${JSON.stringify(serverRolldownMode ?? null)};
+if (callbackMode) options.serverRolldown = (options) => {
+  if (callbackMode === 'invalid') {
+    delete options.input['instrumentation-init'];
+    return options;
+  }
+  const plugins = [...options.plugins, {
+    name: 'callback-probe',
+    generateBundle() { this.emitFile({ type: 'asset', fileName: 'callback-probe.txt', source: 'callback-plugin-ran' }); }
+  }];
+  const external = [...options.external, 'callback-external'];
+  if (callbackMode === 'replace') return { ...options, plugins, external, treeshake: false };
+  Object.assign(options, { plugins, external, treeshake: false });
+};
 export default {
   logLevel: 'warn',
   build: { sourcemap: true },
   // Isolate Kit's cookie v2 from an unrelated older root transitive dependency.
   ssr: { noExternal: ['cookie'] },
-  plugins: [sveltekit({ appDir: 'assets', paths: { base: '/base' }, adapter: adapter(${JSON.stringify(custom ? { apiDir, staticDir } : {})}) })]
+  plugins: [sveltekit({ appDir: 'assets', paths: { base: '/base' }, adapter: adapter(options) })]
 };`
 	);
 	process.chdir(fixtureRoot);
@@ -72,6 +88,12 @@ export default {
 		configFile: path.join(fixtureRoot, 'vite.config.js')
 	});
 	await appBuilder.buildApp();
+	if (serverRolldownMode) {
+		assert.equal(
+			await readFile(path.join(apiDir, 'sk_render/callback-probe.txt'), 'utf8'),
+			'callback-plugin-ran'
+		);
+	}
 	assert.equal(await readFile(path.join(staticDir, 'asset.txt'), 'utf8'), 'copied-static-asset');
 	assert.match(
 		await readFile(path.join(staticDir, 'static-page.html'), 'utf8'),

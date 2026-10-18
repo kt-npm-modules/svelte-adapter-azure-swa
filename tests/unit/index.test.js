@@ -1,3 +1,4 @@
+import { cloneDeep } from 'es-toolkit/object';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { rolldown } from 'rolldown';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -301,6 +302,93 @@ describe('adapt', () => {
 		expect(platform.clientPrincipal).toBeNull();
 		expect(platform.user).toBeNull();
 	});
+
+	describe.each(['mutate', 'replace'])('serverRolldown %s callback', (mode) => {
+		function callback(adjust) {
+			return (options) => {
+				const result = mode === 'replace' ? cloneDeep(options) : options;
+				adjust(result);
+				if (mode === 'replace') return result;
+			};
+		}
+
+		test.each(['entry', 'index', 'instrumentation-init', 'instrumentation.server'])(
+			'preserves required input %s',
+			async (name) => {
+				for (const value of [undefined, 'replacement.js']) {
+					const builder = getMockBuilder();
+					builder.hasServerInstrumentationFile.mockReturnValue(true);
+					const adapter = azureAdapter({
+						serverRolldown: callback((options) => {
+							if (value === undefined) delete options.input[name];
+							else options.input[name] = value;
+						})
+					});
+					await expect(adapter.adapt(builder)).rejects.toThrow(
+						`serverRolldown must preserve adapter-owned input[${JSON.stringify(name)}]`
+					);
+					expect(rolldown).not.toHaveBeenCalled();
+					expect(builder.instrument).not.toHaveBeenCalled();
+				}
+			}
+		);
+
+		test.each(['SERVER_INSTANCE', 'ENV'])('preserves required alias %s', async (name) => {
+			for (const value of [undefined, 'replacement.js', false, ['replacement.js']]) {
+				const adapter = azureAdapter({
+					serverRolldown: callback((options) => {
+						if (value === undefined) delete options.resolve.alias[name];
+						else options.resolve.alias[name] = value;
+					})
+				});
+				await expect(adapter.adapt(getMockBuilder())).rejects.toThrow(
+					`serverRolldown must preserve adapter-owned resolve.alias.${name}`
+				);
+				expect(rolldown).not.toHaveBeenCalled();
+			}
+		});
+
+		test('preserves valid customizations', async () => {
+			const plugin = { name: 'custom-plugin' };
+			await azureAdapter({
+				serverRolldown: callback((options) => {
+					options.plugins.push(plugin);
+					options.external.push('custom-external');
+					options.input.extra = 'extra.js';
+					options.resolve.alias.extra = 'extra.js';
+					options.resolve.alias.ENV = [options.resolve.alias.ENV];
+					options.treeshake = false;
+				})
+			}).adapt(getMockBuilder());
+			expect(rolldown).toHaveBeenCalledWith(
+				expect.objectContaining({
+					plugins: expect.arrayContaining([plugin]),
+					external: expect.arrayContaining(['@azure/functions', 'custom-external']),
+					input: expect.objectContaining({ extra: 'extra.js' }),
+					resolve: expect.objectContaining({
+						alias: expect.objectContaining({ extra: 'extra.js' })
+					}),
+					treeshake: false
+				})
+			);
+		});
+	});
+
+	test.each(['input', 'resolve', 'alias'])(
+		'serverRolldown reports a removed %s container clearly',
+		async (name) => {
+			await expect(
+				azureAdapter({
+					serverRolldown: (options) => {
+						if (name === 'alias') delete options.resolve.alias;
+						else delete options[name];
+						return options;
+					}
+				}).adapt(getMockBuilder())
+			).rejects.toThrow('serverRolldown must preserve adapter-owned');
+			expect(rolldown).not.toHaveBeenCalled();
+		}
+	);
 
 	test('serverRolldown - should not overwrite options.output', async () => {
 		const adapter = azureAdapter({
