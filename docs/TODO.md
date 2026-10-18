@@ -9,7 +9,7 @@ Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.
 
 - Migrate and fix the existing adapter in the repository root in place.
 - Build on the fresh SvelteKit 3 application in `tests/demo`. Set up the local adapter, Sentry and SWA infrastructure first; then selectively copy and adapt useful scenarios/tests from the old application. Do not run an automatic app migration or overwrite the new scaffold with old configuration.
-- The old application is currently at `tests/demo-old` (the old-demo application discussed in chat). Treat it as a reference until replacement coverage passes.
+- Historical reference: the old application was kept at `tests/demo-old` during migration and removed on 2026-10-18 after replacement coverage passed locally and in Azure.
 - Target SvelteKit 3 only. Adapter 3.x is the new major release; adapter 2.x remains the Kit 2-compatible line. Do not introduce a Kit 2/3 compatibility layer.
 - Keep root and demo as independent npm projects with their own lockfiles and VS Code windows. Keep the current root `@types/node` policy and leave the schema-download command unchanged.
 
@@ -138,7 +138,7 @@ Step 6 local verification (2026-10-16): the helper is retained with a repository
 
 ### 7. Selectively port old-demo integration coverage
 
-Source: `tests/demo-old`. Destination: `tests/demo`. Custom Kit routes now live under `src/routes/adapter`; custom shared diagnostic code lives under `src/lib/adapter/server`. Home, About, Sverdle and add-on examples remain scaffold pages.
+Historical migration source (removed on 2026-10-18): `tests/demo-old`. Destination: `tests/demo`. Custom Kit routes now live under `src/routes/adapter`; custom shared diagnostic code lives under `src/lib/adapter/server`. Home, About, Sverdle and add-on examples remain scaffold pages.
 
 | Old reference                                     | New location / status                                                                                                                                                                                       |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -172,8 +172,10 @@ Source: `tests/demo-old`. Destination: `tests/demo`. Custom Kit routes now live 
 
 API references: [Retrieve a project event](https://docs.sentry.io/api/events/retrieve-an-event-for-a-project/), [source-map debug for an event](https://docs.sentry.io/api/events/get-debug-information-related-to-source-maps-for-a-given-event/), [official Sentry API client](https://github.com/getsentry/sentry-api-schema).
 
-- [ ] Run the suite against an actual Azure deployment in step 8 before treating Azure-specific expectations as verified.
-- [ ] Do not remove `tests/demo-old` until replacement coverage is complete; then remove/archive it and clean obsolete paths and ignore patterns.
+- [x] Run the suite against an actual Azure deployment in step 8 before treating Azure-specific expectations as verified. User confirmed all 40 Azure E2E tests passed before legacy-demo cleanup.
+- [x] Remove `tests/demo-old` after replacement coverage is complete and clean obsolete paths and ignore patterns.
+
+Legacy-demo cleanup (2026-10-18): audited the old routes, custom Function, diagnostics, unit tests and E2E assertions against the replacement demo; no important adapter-specific coverage gap was found. Removed the legacy demo and obsolete tooling/IDE exclusions, updated current documentation and the coverage spec, and preserved historical migration/archive references. Cleanup verification: `npm run check:all` and `npm run lint:all` pass; all 106 root tests and 59 demo unit/browser/Storybook tests pass. The user confirmed replacement unit/browser tests and all 40 local and real Azure E2E tests passed before removal; no deployment or live Sentry rerun is required for this cleanup.
 
 Step 7 local verification (2026-10-16): root check/lint and all 86 tests pass, with root implementation unchanged. Demo check has zero errors/warnings; 48 unit/browser/Storybook tests pass. Preview E2E: 23 pass, 17 Azure-specific cases intentionally skipped. Node 22.23.3 SWA/Functions E2E: all 40 pass, including all 16 header probes, `HelloWorld`, SSR/prerender/deep routes, forms/cookies and both error triggers. Svelte MCP autofixer reports no issues/suggestions on changed components. Third-party skill documentation is excluded from demo formatting because its illustrative code contains annotations that are not executable syntax. No live Sentry upload/ingestion verification, Azure deployment or legacy-demo deletion was performed.
 
@@ -207,7 +209,7 @@ Step 8c Azure identity and backend coverage (2026-10-16): Azure build/upload/SDK
 
 ### 9. Major release preparation
 
-- [ ] Verify affected project specs/development notes and remove or update obsolete old-demo paths after the replacement coverage is complete.
+- [x] Verify affected project specs/development notes and remove or update obsolete old-demo paths after the replacement coverage is complete.
 - [ ] Add a major changeset for adapter 3.0.0 with the dependency/API breaking changes. Preserve published `src`, `README`, `LICENSE`, `CHANGELOG.md`, package exports and `main`/`types` metadata.
 - [ ] Prepare release notes that clearly state the Kit 3-only compatibility boundary and the significant runtime/API changes without duplicating the full README rewrite in step 10.
 

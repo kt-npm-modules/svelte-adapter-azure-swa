@@ -62,15 +62,15 @@ The `npm run coverage` script SHALL emit reports to `./coverage-test` at the rep
 - **AND** `./coverage-test/coverage-final.json` exists and is non-empty
 - **AND** `./coverage-test/index.html` exists and is non-empty
 
-### Requirement: Coverage exclude list is preserved during the provider migration
+### Requirement: Coverage excludes test sources and the Azure registration wrapper
 
-The `test.coverage.exclude` array in `vite.config.js` SHALL continue to include the same patterns the package excluded under the Istanbul provider: `configDefaults.exclude`, `./tests/demo/**`, `./tests/new-demo/**`, `./tests/**`, `./src/server/entry/index.js`, and `./tests/unit/json.js`. The provider migration MUST NOT add to or remove from this list.
+The `test.coverage.exclude` array in `vite.config.js` SHALL include `configDefaults.exclude`, `./tests/demo/**`, `./tests/**`, `./src/server/entry/index.js`, and `./tests/unit/json.js`. Exclusions for retired demo directories are no longer required.
 
-#### Scenario: Exclude patterns unchanged
+#### Scenario: Required exclude patterns retained
 
 - **WHEN** `vite.config.js` is loaded
 - **THEN** `test.coverage.exclude` includes every pattern from `configDefaults.exclude`
-- **AND** it includes `"./tests/demo/**"`, `"./tests/new-demo/**"`, `"./tests/**"`, `"./src/server/entry/index.js"`, and `"./tests/unit/json.js"`
+- **AND** it includes `"./tests/demo/**"`, `"./tests/**"`, `"./src/server/entry/index.js"`, and `"./tests/unit/json.js"`
 
 #### Scenario: Excluded files do not appear in reports
 

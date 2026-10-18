@@ -2,8 +2,8 @@
 
 This is a fresh SvelteKit 3 application consuming the local adapter through `file:../..`.
 Sentry 11, Paraglide, the Azure Functions output layout and SWA CLI are configured here.
-Adapter scenarios live under `/adapter`; `../demo-old` remains a reference until
-replacement coverage is also verified in Azure.
+Adapter scenarios live under `/adapter`. The legacy demo was removed after replacement
+coverage passed locally and in Azure.
 
 ## Install independently
 
