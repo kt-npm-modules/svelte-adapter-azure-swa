@@ -25,10 +25,10 @@ function validateCustomConfig(config) {
 
 /**
  * @param {import('../types/swa.js').CustomStaticWebAppConfig} customStaticWebAppConfig
- * @param {string} appDir
+ * @param {string} appPath The application path, including any configured base path
  * @returns {import('../types/swa.js').StaticWebAppConfig}
  */
-export function generateConfig(customStaticWebAppConfig, appDir) {
+export function generateConfig(customStaticWebAppConfig, appPath) {
 	validateCustomConfig(customStaticWebAppConfig);
 
 	customStaticWebAppConfig.routes = customStaticWebAppConfig.routes || [];
@@ -50,7 +50,7 @@ export function generateConfig(customStaticWebAppConfig, appDir) {
 				rewrite: SSR_FUNC_ROUTE
 			},
 			{
-				route: `/${appDir}/immutable/*`,
+				route: `/${appPath}/immutable/*`,
 				headers: {
 					'cache-control': 'public, immutable, max-age=31536000'
 				}
@@ -78,7 +78,7 @@ export async function writeSWAConfig(builder, outDir, options) {
 	builder.log(`Writing staticwebapp.config.json to ${outDir}`);
 
 	let swaConfig = options.customStaticWebAppConfig || {};
-	swaConfig = generateConfig(swaConfig, builder.config.kit.appDir);
+	swaConfig = generateConfig(swaConfig, builder.getAppPath());
 
 	if (!builder.prerendered.paths.includes('/')) {
 		// Azure SWA requires an index.html to be present

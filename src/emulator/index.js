@@ -4,14 +4,15 @@ const { InvocationContext } = functions;
 
 /** @type {import('./index.js').emulatePlatform} */
 export function emulatePlatform(config, prerender, options) {
+	const state = typeof options === 'function' ? options() : options;
 	/** @type {App.Platform['clientPrincipal']} */
-	let clientPrincipal = null;
+	let clientPrincipal = state?.clientPrincipal ?? null;
 	/** @type {App.Platform['user']} */
 	let user = null;
 	/** @type {App.Platform} */
 	let platform;
 
-	if (!clientPrincipal && options?.role === 'authenticated') {
+	if (state?.clientPrincipal === undefined && state?.role === 'authenticated') {
 		clientPrincipal = {
 			identityProvider: 'adapter-azure-swa',
 			userId: 'devUser',

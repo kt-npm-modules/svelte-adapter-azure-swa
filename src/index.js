@@ -1,3 +1,4 @@
+import { mkdirSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { bundleClient } from './client/index.js';
 import {
@@ -18,9 +19,9 @@ export default function (options = {}) {
 			const start = performance.now();
 			const { allowReservedSwaRoutes = false } = options;
 
-			const conflictingRoutes =
-				builder.routes?.map((route) => route.id).filter((routeId) => routeId.startsWith('/api')) ??
-				[];
+			const conflictingRoutes = builder.routes
+				.map((route) => route.id)
+				.filter((routeId) => routeId.startsWith('/api'));
 			if (!allowReservedSwaRoutes && conflictingRoutes.length > 0) {
 				builder.log.error(
 					`Error: the following routes conflict with Azure SWA's reserved /api route: ${conflictingRoutes.join(
@@ -43,7 +44,7 @@ If you want to suppress this error, set allowReservedSwaRoutes to true in your a
 			if (!_apiDir?.startsWith(_defaultOutDirPath) && !_staticDir?.startsWith(_defaultOutDirPath)) {
 				// If neither apiDir nor staticDir are subdirectories of DEFAULT_OUT_DIR_PATH, we can safely remove it
 				builder.log(`Cleaning up default output directory: ${DEFAULT_OUT_DIR_PATH}`);
-				builder.rimraf(_defaultOutDirPath);
+				rmSync(_defaultOutDirPath, { recursive: true, force: true });
 			} else {
 				// If either apiDir or staticDir are subdirectories of DEFAULT_OUT_DIR_PATH, we need to keep it
 				builder.log(
@@ -58,8 +59,8 @@ If you want to suppress this error, set allowReservedSwaRoutes to true in your a
 			}
 
 			const tmpDir = builder.getBuildDirectory('adapter-azure-swa');
-			builder.rimraf(tmpDir);
-			builder.mkdirp(tmpDir);
+			rmSync(tmpDir, { recursive: true, force: true });
+			mkdirSync(tmpDir, { recursive: true });
 
 			const apiOutDirPath = options.apiDir ?? SERVER_DEFAULT_OUT_DIR_PATH;
 			await bundleServer(builder, apiOutDirPath, tmpDir, options);
