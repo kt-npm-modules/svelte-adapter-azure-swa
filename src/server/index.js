@@ -121,10 +121,22 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options, initializer) {
 	external = [...(external || []), ...(options.external || [])];
 	_options.external = external;
 	const _savedOutput = cloneDeep(_options.output);
-	// Snapshot before the callback, which may mutate these objects in place.
+	// Keep adapter-owned values independent of callback mutations.
 	const requiredInput = { ...input };
 	const requiredAliases = { SERVER_INSTANCE: serverInstanceFilePath, ENV: envFilePath };
-	_options = options.serverRolldown?.(_options) || _options;
+	if (options.serverRolldown) {
+		const adjustedOptions = options.serverRolldown(cloneDeep(_options));
+		if (
+			adjustedOptions === null ||
+			typeof adjustedOptions !== 'object' ||
+			Array.isArray(adjustedOptions)
+		) {
+			throw new Error(
+				'serverRolldown must explicitly return a RolldownOptions configuration object. Return the provided configuration after modifying it, or return a replacement object; mutation without a return value is not supported.'
+			);
+		}
+		_options = adjustedOptions;
+	}
 	for (const [name, expected] of Object.entries(requiredInput)) {
 		const input = _options.input;
 		if (!input || typeof input !== 'object' || Array.isArray(input) || input[name] !== expected) {

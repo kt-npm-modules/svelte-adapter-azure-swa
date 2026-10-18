@@ -15,6 +15,14 @@ test.each([
 	[
 		'with instrumentation and a replacement callback',
 		['--instrumented', '--server-rolldown=replace']
+	],
+	[
+		'with instrumentation, custom output directories and a mutating callback',
+		['--instrumented', '--custom', '--server-rolldown=mutate']
+	],
+	[
+		'with instrumentation, custom output directories and a replacement callback',
+		['--instrumented', '--custom', '--server-rolldown=replace']
 	]
 ])(
 	'builds and serves requests through Kit 3 %s',
@@ -34,6 +42,19 @@ test('fails the Kit 3 build clearly when serverRolldown removes an instrumentati
 	).rejects.toMatchObject({
 		stderr: expect.stringContaining(
 			'serverRolldown must preserve adapter-owned input["instrumentation-init"]'
+		)
+	});
+}, 35_000);
+
+test('fails the Kit 3 build clearly when serverRolldown mutates without returning', async () => {
+	await expect(
+		run(process.execPath, [fixture, '--instrumented', '--server-rolldown=no-return'], {
+			cwd: root,
+			timeout: 30_000
+		})
+	).rejects.toMatchObject({
+		stderr: expect.stringContaining(
+			'serverRolldown must explicitly return a RolldownOptions configuration object'
 		)
 	});
 }, 35_000);

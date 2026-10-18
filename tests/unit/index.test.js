@@ -8,6 +8,11 @@ import { jsonMatching } from './json';
 
 expect.extend({ jsonMatching });
 
+vi.mock('es-toolkit/object', async (importOriginal) => {
+	const actual = await importOriginal();
+	return { ...actual, cloneDeep: vi.fn(actual.cloneDeep) };
+});
+
 vi.mock('fs', () => ({
 	writeFileSync: vi.fn(),
 	mkdirSync: vi.fn(),
@@ -308,7 +313,7 @@ describe('adapt', () => {
 			return (options) => {
 				const result = mode === 'replace' ? cloneDeep(options) : options;
 				adjust(result);
-				if (mode === 'replace') return result;
+				return result;
 			};
 		}
 
@@ -372,6 +377,79 @@ describe('adapt', () => {
 				})
 			);
 		});
+	});
+
+	test('serverRolldown receives an isolated clone with working plugin functions', async () => {
+		let internal;
+		let snapshot;
+		let supplied;
+		await azureAdapter({
+			serverRolldown: (options) => {
+				internal = vi.mocked(cloneDeep).mock.calls.at(-1)[0];
+				snapshot = cloneDeep(internal);
+				supplied = options;
+				expect(options).toEqual(internal);
+				expect(options).not.toBe(internal);
+				for (const key of ['input', 'resolve', 'plugins', 'external', 'output']) {
+					expect(options[key]).not.toBe(internal[key]);
+				}
+				expect(options.resolve.alias).not.toBe(internal.resolve.alias);
+				const [sourcemaps, builtins] = options.plugins;
+				expect(sourcemaps).not.toBe(internal.plugins[0]);
+				expect(sourcemaps.load).not.toBe(internal.plugins[0].load);
+				expect(sourcemaps.load.handler).toBe(internal.plugins[0].load.handler);
+				expect(builtins.resolveId).toBe(internal.plugins[1].resolveId);
+				expect(builtins.resolveId('fs')).toEqual({ id: 'node:fs', external: true });
+				options.plugins[0].load.filter.id.include = /changed/;
+				options.plugins.push({ name: 'clone-only-plugin' });
+				options.external.push('clone-only-external');
+				options.input.extra = 'extra.js';
+				options.resolve.alias.extra = 'extra.js';
+				options.output.sourcemap = false;
+				return options;
+			}
+		}).adapt(getMockBuilder());
+		expect(internal).toEqual(snapshot);
+		expect(rolldown).toHaveBeenCalledWith(supplied);
+		expect(supplied.output).toEqual(snapshot.output);
+	});
+
+	test('serverRolldown rejects mutation without an explicit return', async () => {
+		await expect(
+			azureAdapter({
+				serverRolldown: (options) => {
+					options.treeshake = false;
+				}
+			}).adapt(getMockBuilder())
+		).rejects.toThrow(
+			'serverRolldown must explicitly return a RolldownOptions configuration object'
+		);
+		expect(rolldown).not.toHaveBeenCalled();
+	});
+
+	test.each(
+		[
+			undefined,
+			null,
+			false,
+			true,
+			0,
+			1,
+			NaN,
+			'',
+			'invalid',
+			1n,
+			Symbol('invalid'),
+			() => ({}),
+			[]
+		].map((value) => [value])
+	)('serverRolldown rejects invalid return value %s', async (value) => {
+		await expect(
+			azureAdapter({ serverRolldown: () => value }).adapt(getMockBuilder())
+		).rejects.toThrow(
+			'serverRolldown must explicitly return a RolldownOptions configuration object'
+		);
+		expect(rolldown).not.toHaveBeenCalled();
 	});
 
 	test.each(['input', 'resolve', 'alias'])(

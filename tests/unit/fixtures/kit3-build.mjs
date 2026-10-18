@@ -7,7 +7,9 @@ import { createBuilder } from 'vite';
 
 const instrumented = process.argv.includes('--instrumented');
 const custom = process.argv.includes('--custom');
-const serverRolldownMode = process.argv.find((arg) => arg.startsWith('--server-rolldown='))?.split('=')[1];
+const serverRolldownMode = process.argv
+	.find((arg) => arg.startsWith('--server-rolldown='))
+	?.split('=')[1];
 const apiDir = custom ? 'func' : 'build/server';
 const staticDir = custom ? 'public-build' : 'build/static';
 await mkdir('.tmp', { recursive: true });
@@ -73,6 +75,7 @@ if (callbackMode) options.serverRolldown = (options) => {
   const external = [...options.external, 'callback-external'];
   if (callbackMode === 'replace') return { ...options, plugins, external, treeshake: false };
   Object.assign(options, { plugins, external, treeshake: false });
+  if (callbackMode !== 'no-return') return options;
 };
 export default {
   logLevel: 'warn',
