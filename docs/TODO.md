@@ -30,8 +30,10 @@ Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.
 - [x] Refresh the root lockfile and verify ordinary `npm install` and clean `npm ci` without workspace hoisting or legacy peer-dependency flags (Node 24.21.0, npm 11.19.0).
 - [x] Preserve the root NodeNext/checkJs setup and the existing `@types/node` policy.
 - [x] Apply Node >=22.17 to the new demo, refresh its independent lockfile and verify clean installation. Add `.nvmrc` for Node 22 because the current SWA CLI/Core Tools rejects Node 24.
-- [ ] Finish CI/build/deployed-runtime verification in step 8; local SWA was tested on Node 22.23.3, not the exact supported minimum.
-- [ ] Verify the supported minimum Kit/Node combination with the migrated implementation. Dependency installation alone does not establish adapter compatibility.
+- [ ] Finish CI/build/deployed-runtime verification in step 8; the local minimum-runtime smoke test is complete, while actual Azure deployment verification remains pending.
+- [x] Verify the supported minimum Kit/Node combination with the migrated implementation. Dependency installation alone does not establish adapter compatibility.
+
+Minimum-runtime smoke verification (2026-10-18, user-reported): the migrated application passed the Node.js 22.17.0 smoke test, including 106 root tests and 40 local SWA E2E tests with Sentry integration. Retain the declared Node minimum `>=22.17.0`. This is a release smoke test, not an exhaustive compatibility matrix or evidence of actual Azure deployment.
 
 Step 1 verification (2026-10-15): clean install, dependency-tree validation and root lint pass. Root type checking fails on the removed polyfills export, the old `Server` constructor/manifest API, missing instrumentation initializer and `builder.config.kit`; two secondary callback-type errors follow from the invalid server type. Unit tests: 19 pass in two suites; two header suites cannot load the removed polyfills export. These are the API migration tasks in steps 2–3, not a completed compatibility check. No adapter implementation or demo files were changed in step 1.
 
