@@ -3,7 +3,7 @@
 ## Migrate to SvelteKit 3
 
 Main tracker: [#329](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/329).
-Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.1.0 Builder definitions/source in the new demo.
+Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.1.0 Builder definitions/source in the new demo. Final release-preparation status updated on 2026-10-18. Dated step-verification paragraphs below document their historical state; the current status is summarized here and in the completion gates.
 
 ### Approach and scope
 
@@ -19,8 +19,8 @@ Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.
 - [x] Simplify root ESLint/Prettier configuration and exclude demo projects from root checks.
 - [x] Clean up unused root browser-test dependencies and make the push script stop on failure.
 - [x] Create fresh `tests/demo` with Kit 3.1.0, Svelte 5, TypeScript 6, Vite 8 and the Vite-plugin configuration model.
-- [ ] Finish the actual adapter migration: root dependencies, server-instance integration, Builder filesystem/configuration and instrumentation now target Kit 3; sourcemap cleanup and final integration verification remain.
-- [x] Connect the new demo to the local scoped adapter, Azure/SWA and Sentry 11. Adapter E2E and live Sentry ingestion checks now pass (step 7); production source-map resolution and deployed-Azure verification remain pending below.
+- [x] Complete the adapter migration: Kit 3 server instance, Builder filesystem/configuration, instrumentation, native client output and the Azure integration are verified. Full production Sentry original-source symbolication remains explicitly deferred below, not a release blocker.
+- [x] Connect the new demo to the local scoped adapter, Azure/SWA and Sentry 11. Local SWA and real deployed Azure E2E, including exact Sentry client/server event ingestion, have passed. Production source-map symbolication assertions remain deferred below.
 
 ### 1. Root dependencies and compatibility boundary
 
@@ -30,7 +30,7 @@ Plan checked against the repository on 2026-10-16 and the installed SvelteKit 3.
 - [x] Refresh the root lockfile and verify ordinary `npm install` and clean `npm ci` without workspace hoisting or legacy peer-dependency flags (Node 24.21.0, npm 11.19.0).
 - [x] Preserve the root NodeNext/checkJs setup and the existing `@types/node` policy.
 - [x] Apply Node >=22.17 to the new demo, refresh its independent lockfile and verify clean installation. Add `.nvmrc` for Node 22 because the current SWA CLI/Core Tools rejects Node 24.
-- [ ] Finish CI/build/deployed-runtime verification in step 8; the local minimum-runtime smoke test is complete, while actual Azure deployment verification remains pending.
+- [x] Complete CI/build/deployed-runtime verification in step 8: the Node 22.17.0 smoke test and the deployed Azure Node 22 runtime assertion pass. Real Azure E2E and CI have passed on PR #334.
 - [x] Verify the supported minimum Kit/Node combination with the migrated implementation. Dependency installation alone does not establish adapter compatibility.
 
 Minimum-runtime smoke verification (2026-10-18, user-reported): the migrated application passed the Node.js 22.17.0 smoke test, including 106 root tests and 40 local SWA E2E tests with Sentry integration. Retain the declared Node minimum `>=22.17.0`. This is a release smoke test, not an exhaustive compatibility matrix or evidence of actual Azure deployment.
@@ -53,7 +53,7 @@ Files: `src/server/index.js`, `src/server/entry/entry.js`, `src/server/entry/ind
 
 Step 2 verification (2026-10-15): all 59 unit tests pass using native Node Web APIs. A temporary Kit 3.1.0 endpoint app was built with the real `bundleServer()` and Rolldown; the generated `sk_render/index.js` loaded, registered all seven methods and served three concurrent GET requests with the expected original URL, client address and platform context. Only Azure registration was stubbed. The fixture used Kit's own cookie dependency to avoid the older root transitive cookie package, and the check bypassed the full adapter configuration/instrumentation paths deliberately reserved for step 3. No demo files were changed. Root type checking now reports only the missing instrumentation initializer and `builder.config.kit` errors.
 
-- [ ] After steps 3 and 5–7, verify the real demo build/deployment, server chunks/assets and the full Azure request/response scenarios. The temporary fixture is a server-build smoke check, not Azure deployment evidence.
+- [x] Verify the real Kit 3 demo build/deployment, generated server chunks/assets and Azure request/response scenarios. Full local SWA and deployed Azure E2E have passed; unlike the earlier temporary fixture, these exercise the actual Azure deployment.
 
 ### 3. Builder filesystem, configuration and instrumentation APIs
 
@@ -194,8 +194,8 @@ Files: root/demo `package.json`, `.github/workflows/ci.yml`, `.github/workflows/
 - [x] Align local `*:all` commands, pre-push checks and release/version commands with independent dependency ownership. Keep the existing `ci:all` for sequential root/demo clean installs and use it in pre-push before `check:all` / `lint:all`. Refresh both installations/lockfiles after `changeset version`, then format both projects. Remove the stale `coverage:all` aggregate because the demo has no `coverage` script; define demo coverage separately in the coverage phase. Keep `build:release` / `changeset:publish` scoped to the published root adapter. Both shell entrypoints resolve the repository root before running project commands.
 - [x] Fix coverage-tool ownership: move the existing Monocart report flow from `tests/coverage/mcr-report-swa.mjs` to `tests/demo/scripts/report-swa-coverage.ts` and declare `monocart-coverage-reports` in demo devDependencies. CI invokes demo `npm run coverage`; the report stays at repository-root `coverage-swa/lcov.info`.
 - [x] Reconcile V8 output paths, CDP teardown and `NODE_V8_COVERAGE` propagation. Port the working main/old-demo worker settings and CDP flush to the new demo; remove the inherited build coverage variable when starting SWA so request coverage uses its own directory. Verify both phases exist and actual source paths are present in the merged LCOV. Keep flush/report failures fatal in coverage runs; external/Azure E2E does not use CDP.
-- [ ] Preserve local SWA and real Azure jobs, correct deployment static/API locations, Function production dependency installation, `PLAYWRIGHT_TEST_BASE_URL` handling and existing report/coverage artifacts.
-- [x] Keep Azure runtime selection separate from the build machine's Node version: the Azure job explicitly selects `node:22`; build/test Node still comes from the matrix. Extend the platform E2E to check the actual server Node major is 22 and its version is at least 22.17. The local SWA assertion passes; the actual Azure result remains pending with the deployment run below.
+- [x] Preserve local SWA and real Azure jobs, correct deployment static/API locations, Function production dependency installation, `PLAYWRIGHT_TEST_BASE_URL` handling and existing report/coverage artifacts. Full PR CI and deployment/cleanup jobs pass.
+- [x] Keep Azure runtime selection separate from the build machine's Node version: the Azure job explicitly selects `node:22`; build/test Node still comes from the matrix. Platform E2E checks that both local SWA and deployed Azure run server Node 22 at version >=22.17.
 - [x] Configure one npm Dependabot entry with explicit `directories` for `/`, `/tests/demo` and `/src/server/template`; the retired demo is excluded. Retain the general `minor-and-patch` batch and existing `major` group with `group-by: dependency-name`, without a dedicated Azure Functions group.
 - [x] Keep `src/server/template/package.json` `@azure/functions: ^4.7.0` unchanged (root: `^4.16.5`); let real Dependabot updates demonstrate cross-directory behavior instead of manually aligning versions or adding artificial update triggers.
 - [ ] After merging PR #334 into `main`, observe actual cross-directory grouping and Changeset behavior in real Dependabot PRs: verify a root dependency update generates one patch changeset for the published adapter and a demo-only update generates no adapter changeset. Inspect which eligible manifests change, including for `@azure/functions`; already-current dependencies can remain untouched and incompatible constraints can produce separate PRs. Leave `kt-workflows/actions/dependabot-generate-changesets` unchanged until a real PR demonstrates whether template-only changes need handling. Major dependency PRs remain manual-review cases rather than changing the generated changeset severity automatically.
@@ -214,32 +214,36 @@ Step 8c Azure identity and backend coverage (2026-10-16): Azure build/upload/SDK
 ### 9. Major release preparation
 
 - [x] Verify affected project specs/development notes and remove or update obsolete old-demo paths after the replacement coverage is complete.
-- [ ] Add a major changeset for adapter 3.0.0 with the dependency/API breaking changes. Preserve published `src`, `README`, `LICENSE`, `CHANGELOG.md`, package exports and `main`/`types` metadata.
-- [ ] Prepare release notes that clearly state the Kit 3-only compatibility boundary and the significant runtime/API changes without duplicating the full README rewrite in step 10.
+- [x] Add a major changeset for adapter 3.0.0 covering Kit 3, Node/Azure requirements, Vite configuration, `serverRolldown` and `sentryRewriteSourcesFactory` breaking changes. Preserve published `src`, `README`, `LICENSE`, `CHANGELOG.md`, package exports and `main`/`types` metadata. Release PR/version generation remains pending.
+- [x] Prepare concise release notes in `.changeset/simplify-sentry-rewrite-helper.md` covering the Kit 3-only boundary and significant runtime/API changes, without duplicating the full README. Review the generated `3.0.0` changelog in the future Release PR.
 
 ### 10. README, positioning and discoverability
 
 Execution note: treat this as a separate product/documentation review after the implementation, integration tests and release shape are stable. Use **High reasoning effort at minimum; Extra High is preferred if available**. Re-read the finished repository and reconsider the README structure from first principles rather than mechanically patching the current text.
 
-- [ ] Rewrite the README for the finished 3.x adapter. Make the opening immediately establish the concrete use case and compatibility boundary: current SvelteKit 3, Azure Static Web Apps, server-side rendering/hybrid applications, Azure Functions v4 and the supported Node minimum.
-- [ ] Rebuild the Quick Start and all configuration examples against the final Kit 3 Vite-plugin configuration model (`sveltekit({...})`), the scoped package name and the final public types. Verify every command/snippet against the finished demo/package rather than carrying forward Kit 2-era examples.
-- [ ] Review every adapter option, default and documented behavior against the final implementation, including external dependencies, custom API/static paths, SWA routes, auth/client principal, emulation, instrumentation, server bundling and Sentry integration. Replace obsolete Sentry helper/upload guidance with the tested Sentry 11 flow.
-- [ ] Audit feature/differentiator claims for technical ownership and usefulness. Do not present behavior supplied natively by SvelteKit as an adapter feature. In particular, client rebundling has been removed: describe client output/sourcemaps factually (the adapter copies Kit's generated output) and reserve adapter-specific claims for behavior the adapter actually provides, such as the Azure Functions server pipeline and any verified server sourcemap handling.
-- [ ] Reconsider the overall README information architecture. Prefer a concise product/use-case introduction, compatibility, installation/configuration, generated deployment layout, options and verified Azure caveats over repeatedly explaining or defending the fork. Keep upstream history/acknowledgements factual and secondary.
-- [ ] Review npm/package discoverability metadata after the final behavior is known: improve `package.json` `description` and `keywords` so that SvelteKit 3, Azure Static Web Apps, Azure Functions/SSR and the actual supported use cases are explicit without keyword stuffing.
-- [ ] Review GitHub repository discoverability: update the repository About/description and add accurate topics (for example SvelteKit, Azure Static Web Apps, Azure Functions, SSR/serverless) based on the final positioning.
-- [ ] Evaluate the README and metadata from common discovery intents such as “SvelteKit 3 Azure Static Web Apps adapter”, “SvelteKit Azure Functions SSR” and “SvelteKit Azure adapter”. A developer or AI agent should be able to determine from the README opening and package metadata what the adapter targets, whether it supports the current SvelteKit line, and how to install/configure it.
-- [ ] Keep discoverability evidence-based: optimize for clear, specific facts and terminology rather than comparative claims against upstream or generic marketing language. Let the final review decide the exact wording and which differentiators are worth emphasizing.
+- [x] Rewrite the README for the finished 3.x adapter. Make the opening immediately establish the concrete use case and compatibility boundary: current SvelteKit 3, Azure Static Web Apps, server-side rendering/hybrid applications, Azure Functions v4 and the supported Node minimum.
+- [x] Rebuild the Quick Start and all configuration examples against the final Kit 3 Vite-plugin configuration model (`sveltekit({...})`), the scoped package name and the final public types. Verify every command/snippet against the finished demo/package rather than carrying forward Kit 2-era examples.
+- [x] Review every adapter option, default and documented behavior against the final implementation, including external dependencies, custom API/static paths, SWA routes, auth/client principal, emulation, instrumentation, server bundling and Sentry integration. Replace obsolete Sentry helper/upload guidance with the tested Sentry 11 flow.
+- [x] Audit feature/differentiator claims for technical ownership and usefulness. Do not present behavior supplied natively by SvelteKit as an adapter feature. In particular, client rebundling has been removed: describe client output/sourcemaps factually (the adapter copies Kit's generated output) and reserve adapter-specific claims for behavior the adapter actually provides, such as the Azure Functions server pipeline and any verified server sourcemap handling.
+- [x] Reconsider the overall README information architecture. Prefer a concise product/use-case introduction, compatibility, installation/configuration, generated deployment layout, options and verified Azure caveats over repeatedly explaining or defending the fork. Keep upstream history/acknowledgements factual and secondary.
+- [x] Review npm/package discoverability metadata after the final behavior is known: improve `package.json` `description` and `keywords` so that SvelteKit 3, Azure Static Web Apps, Azure Functions/SSR and the actual supported use cases are explicit without keyword stuffing.
+- [x] Review GitHub repository discoverability: update the repository About/description and add accurate topics (for example SvelteKit, Azure Static Web Apps, Azure Functions, SSR/serverless) based on the final positioning.
+- [x] Evaluate the README and metadata from common discovery intents such as “SvelteKit 3 Azure Static Web Apps adapter”, “SvelteKit Azure Functions SSR” and “SvelteKit Azure adapter”. A developer or AI agent should be able to determine from the README opening and package metadata what the adapter targets, whether it supports the current SvelteKit line, and how to install/configure it.
+- [x] Keep discoverability evidence-based: optimize for clear, specific facts and terminology rather than comparative claims against upstream or generic marketing language. Let the final review decide the exact wording and which differentiators are worth emphasizing.
+
+Release-preparation evidence (2026-10-18): PR [#334](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/pull/334) passed root/demonstration checks, local SWA E2E, real Azure E2E, Sentry client/server event ingestion, CodeQL and Sonar Quality Gate. The latest verified full CI was [run 39130051714](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/actions/runs/39130051714) on commit `801e8f4`; the [Sonar PR comment](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/pull/334#issuecomment-6250311353) reports **Quality Gate Passed**. The comprehensive major Changeset has been committed; the package is still at `2.0.3` until the Release PR. Published npm `3.0.0`, main-branch release automation and new post-merge Dependabot behavior have not yet been verified.
 
 ### Completion gates
 
-- [ ] Root formatting/lint, TypeScript checks, unit tests and coverage pass against Kit 3.
-- [ ] Independent demo install, Svelte checks, lint, unit/browser tests and production build pass with the local/packed adapter.
-- [ ] Default and custom output layouts work; source-map regression checks resolve original application files.
-- [ ] Preview and local SWA E2E pass with the intended environment-specific assertions.
-- [ ] Real Azure preview deployment and E2E pass: SSR/prerender/deep routes, reserved `/api`, custom Function, HTTP methods/bodies, cookies, auth/principal/forwarded headers and dependency interoperability.
-- [ ] Instrumentation/environment order and client/server Sentry source locations are verified end to end. Local SWA emulation alone is not evidence of Azure header behavior.
-- [ ] Clean CI/release installs and npm tarball validation pass; README instructions match the final setup.
+- [x] Root formatting/lint, TypeScript checks, unit tests and coverage pass against Kit 3.
+- [x] Independent demo install, Svelte checks, lint, unit/browser tests and production build pass with the local adapter. Separately, an independent temporary consumer passed npm tarball installation, public imports and strict type checks.
+- [x] Default and custom output layouts work; local source-map regression checks resolve representative original application files. Production Sentry symbolication is a separate deferred check.
+- [x] Preview and local SWA E2E pass with the intended environment-specific assertions.
+- [x] Real Azure preview deployment and E2E pass: SSR/prerender/deep routes, reserved `/api`, custom Function, HTTP methods/bodies, cookies, auth/principal/forwarded headers and dependency interoperability.
+- [x] Instrumentation/environment order and live Sentry client/server event ingestion are verified; real Azure E2E covers header behavior rather than relying on SWA emulation.
+- [ ] **Deferred, not a 3.0.0 blocker:** Automatically verify original client/server Sentry source-file/line/context resolution and production server remote source-map lookup. Existing upload/ingestion checks are not a substitute.
+- [x] Clean root/demo CI installs, npm tarball verification (at the pre-documentation verification commit) and final README source/configuration review pass. README snippets were not separately copy-paste smoke-tested.
+- [ ] **Release-only:** Verify the Release PR's `changeset version` output, final `3.0.0` changelog/version/lockfiles, main-branch CI and the actual publish workflow before announcing release.
 
 ### References and separate follow-ups
 
