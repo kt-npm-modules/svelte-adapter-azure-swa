@@ -6,7 +6,10 @@
 version: 2
 updates:
   - package-ecosystem: 'npm'
-    directory: '/'
+    directories:
+      - '/'
+      - '/tests/demo'
+      - '/src/server/template'
 
     schedule:
       interval: 'weekly'
@@ -19,6 +22,16 @@ updates:
         versions: ['<10.0.0', '>=11.0.0']
 
     groups:
+      # First match wins: keep shared Azure runtime updates out of the general batch.
+      azure-functions-minor-and-patch:
+        applies-to: version-updates
+        patterns:
+          - '@azure/functions'
+        update-types:
+          - 'minor'
+          - 'patch'
+        group-by: dependency-name
+
       minor-and-patch:
         applies-to: version-updates
         update-types:
