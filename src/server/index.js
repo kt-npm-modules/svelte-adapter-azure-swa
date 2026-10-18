@@ -126,13 +126,9 @@ function prepareRolldownOptions(builder, outDir, tmpDir, options, initializer) {
 	const requiredAliases = { SERVER_INSTANCE: serverInstanceFilePath, ENV: envFilePath };
 	if (options.serverRolldown) {
 		const adjustedOptions = options.serverRolldown(cloneDeep(_options));
-		if (
-			adjustedOptions === null ||
-			typeof adjustedOptions !== 'object' ||
-			Array.isArray(adjustedOptions)
-		) {
+		if (!adjustedOptions || typeof adjustedOptions !== 'object' || Array.isArray(adjustedOptions)) {
 			throw new Error(
-				'serverRolldown must explicitly return a RolldownOptions configuration object. Return the provided configuration after modifying it, or return a replacement object; mutation without a return value is not supported.'
+				'serverRolldown must explicitly return a RolldownOptions configuration object...'
 			);
 		}
 		_options = adjustedOptions;
