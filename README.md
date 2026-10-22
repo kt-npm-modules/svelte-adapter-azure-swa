@@ -28,13 +28,13 @@ The adapter prepares a deployment for SWA's managed Azure Functions backend:
 
 Rendering, form actions and prerendering are SvelteKit features. The adapter connects them to Azure Functions and the SWA deployment layout.
 
-| Contract                 | Supported version              |
-| ------------------------ | ------------------------------ |
-| Adapter release line     | `3.x` (SvelteKit 3 only)       |
+| Contract                 | Supported version                            |
+| ------------------------ | -------------------------------------------- |
+| Adapter release line     | `3.x` (SvelteKit 3 only)                     |
 | `@sveltejs/kit` peer     | `3.x` — see [peerDependencies](package.json) |
-| `@azure/functions` peer  | Node.js programming model `v4` |
-| Package Node.js engine   | See [engines](package.json)    |
-| Deployed SWA API runtime | `node:22`                      |
+| `@azure/functions` peer  | Node.js programming model `v4`               |
+| Package Node.js engine   | See [engines](package.json)                  |
+| Deployed SWA API runtime | `node:22`                                    |
 
 The build machine's Node version does not select Azure's runtime. The adapter generates `platform.apiRuntime: 'node:22'`; local SWA CLI/Core Tools also currently requires Node 22. See [Local Development](#local-development) for those additional tools. Other framework prerequisites follow the [SvelteKit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3).
 
