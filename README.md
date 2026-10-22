@@ -6,51 +6,35 @@
 
 # SvelteKit 3 adapter for Azure Static Web Apps
 
-`@ktarmyshov/svelte-adapter-azure-swa` deploys SvelteKit 3 applications to Azure Static Web Apps (SWA), with server-side rendering (SSR), prerendered pages and static assets in one deployment. It packages the SvelteKit server as an Azure Functions HTTP renderer and generates the static output and SWA routing configuration.
+`@ktarmyshov/svelte-adapter-azure-swa` deploys SvelteKit 3 applications to **Azure Static Web Apps (SWA)**. It serves server-side rendering (SSR) through SWA-managed **Azure Functions**, alongside prerendered pages and static assets.
 
-- [Overview & Compatibility](#overview--compatibility)
-- [Quick Start](#quick-start)
-- [Deploy to Azure Static Web Apps](#deploy-to-azure-static-web-apps)
-- [Configuration](#configuration)
-- [Azure Functions & Platform](#azure-functions--platform)
-- [Local Development](#local-development)
-- [Instrumentation & Observability](#instrumentation--observability)
-- [Advanced, Troubleshooting & Migration](#advanced-troubleshooting--migration)
+The adapter integrates with SvelteKit's Vite configuration, bundles the server with Rolldown, supports server instrumentation, and exposes Azure request context through `event.platform`. Its Azure-specific routing and request behavior are covered by local and deployed Azure tests.
 
-## Overview & Compatibility
+- **SvelteKit 3 only:** this adapter's `3.x` line does not support SvelteKit 2.
+- **One SWA deployment:** static assets, prerendered pages and an Azure Functions SSR renderer.
+- **Azure-aware behavior:** request headers, authentication context and empty form submissions.
+- **Observability:** SvelteKit instrumentation and Sentry source-map integration.
 
-The adapter prepares a deployment for SWA's managed Azure Functions backend:
+## Compatibility
 
-- Bundles the SvelteKit server with Rolldown and registers the `sk_render` HTTP Function.
-- Copies SvelteKit's client assets and prerendered pages, and generates `staticwebapp.config.json` with renderer rewrites and immutable-asset caching.
-- Implements SvelteKit's server instrumentation contract and exposes Azure request context through `App.Platform`.
-- Supplies local platform emulation and compatibility handling for confirmed Azure request-header and empty-form behavior.
+| Requirement | Supported contract |
+| --- | --- |
+| Adapter | `3.x` for SvelteKit 3 |
+| SvelteKit and Azure Functions | See [peerDependencies](package.json) (Azure Functions Node.js programming model v4) |
+| Build Node.js | See [engines](package.json) |
+| Managed SWA API runtime | `node:22` |
 
-Rendering, form actions and prerendering are SvelteKit features. The adapter connects them to Azure Functions and the SWA deployment layout.
-
-| Contract                 | Supported version                            |
-| ------------------------ | -------------------------------------------- |
-| Adapter release line     | `3.x` (SvelteKit 3 only)                     |
-| `@sveltejs/kit` peer     | `3.x` — see [peerDependencies](package.json) |
-| `@azure/functions` peer  | Node.js programming model `v4`               |
-| Package Node.js engine   | See [engines](package.json)                  |
-| Deployed SWA API runtime | `node:22`                                    |
-
-The build machine's Node version does not select Azure's runtime. The adapter generates `platform.apiRuntime: 'node:22'`; local SWA CLI/Core Tools also currently requires Node 22. See [Local Development](#local-development) for those additional tools. Other framework prerequisites follow the [SvelteKit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3).
-
-This targets SWA-managed HTTP Functions. Azure's [API constraints](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-overview#api-constraints), including request-duration limits and lack of WebSocket support, still apply.
+The adapter generates `platform.apiRuntime: 'node:22'`. The build machine's Node version does not select the deployed Azure runtime. For framework prerequisites, see the [SvelteKit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3). SWA's [managed API constraints](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-overview#api-constraints), including request-duration limits and lack of WebSockets, still apply.
 
 ## Quick Start
 
-Start with an existing SvelteKit 3 application. Run these commands from its root, where `npm run build` runs `vite build`.
-
-### Install and configure
+Start from an existing SvelteKit 3 application. Install the adapter and the Azure Functions SDK (check the [peer dependency range](package.json) for the minimum supported version):
 
 ```sh
 npm install -D @ktarmyshov/svelte-adapter-azure-swa@3 @azure/functions@^4
 ```
 
-Replace your existing adapter in `vite.config.ts`, preserving the rest of your application's configuration:
+Configure `vite.config.ts`:
 
 ```ts
 import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
@@ -62,44 +46,39 @@ export default defineConfig({
 });
 ```
 
-If your application uses Azure platform types, add this reference to `src/app.d.ts`:
+For Azure platform types in application code, add to `src/app.d.ts`:
 
 ```ts
 /// <reference types="@ktarmyshov/svelte-adapter-azure-swa" />
 ```
 
-### Build
+Build the application:
 
 ```sh
 npm run build
 ```
 
-With no directory options, the adapter generates:
+The default output is:
 
 ```text
 build/
-├── server/                     # Azure Functions deployment root
-│   ├── sk_render/
-│   │   ├── index.js            # Function registration wrapper
-│   │   ├── entry.js
-│   │   └── ...                 # Server chunks, maps and optional instrumentation
-│   ├── .funcignore
+├── server/                    # Azure Functions API
+│   ├── sk_render/             # SSR function entry and server chunks
 │   ├── host.json
 │   ├── local.settings.json
+│   ├── .funcignore
 │   └── package.json
-└── static/                     # SWA static deployment root
+└── static/                    # Static SWA content
     ├── _app/
     ├── staticwebapp.config.json
-    └── ...                     # Static assets and prerendered pages
+    └── ...                    # Assets and prerendered pages
 ```
 
-The build generates the Function manifest but does not install its runtime dependencies. Complete that step before deployment.
+The adapter generates the API manifest but **does not install its runtime dependencies**. Install them before deployment.
 
 ## Deploy to Azure Static Web Apps
 
-Create an Azure Static Web App and store its deployment token in the GitHub repository secret `AZURE_STATIC_WEB_APPS_API_TOKEN`. The example below assumes an application and committed npm lockfile at the repository root, the default adapter directories, and production deployment from `main`.
-
-Create `.github/workflows/deploy.yml`:
+Create an Azure Static Web App and save its deployment token as the GitHub Actions secret `AZURE_STATIC_WEB_APPS_API_TOKEN`. For an application at the repository root using the default directories, create `.github/workflows/deploy.yml`:
 
 ```yaml
 name: Deploy to Azure Static Web Apps
@@ -139,123 +118,63 @@ jobs:
           skip_api_build: true
 ```
 
-Build independently, then upload the artifacts. This makes the build environment explicit and avoids delegating build detection to Azure/Oryx. The generated API always needs `@azure/functions`, even without additional externals. Its newly generated manifest has no lockfile, so the API install uses `npm install --omit=dev`, rather than `npm ci`.
+This workflow builds the application, installs the Function's production dependencies, then uploads the **prebuilt** static and API output. Because the generated API manifest has no lockfile, use `npm install --omit=dev` rather than `npm ci` inside `build/server`. Azure documents these [prebuilt deployment settings](https://learn.microsoft.com/en-us/azure/static-web-apps/build-configuration#skip-building-front-end-app).
 
-With `skip_app_build: true`, `app_location` is the static output directory and `output_location` is empty. With `skip_api_build: true`, `api_location` must contain the built Functions and installed production dependencies. The generated SWA configuration is already in the static output and selects `node:22`. See [Azure's prebuilt deployment instructions](https://learn.microsoft.com/en-us/azure/static-web-apps/build-configuration#skip-building-front-end-app).
+For a custom output directory, update both the dependency-install command and the corresponding action path. For a project in a repository subdirectory, run npm commands there and adjust all paths relative to the repository root.
 
-For a custom API directory, change both the production-dependency install destination and `api_location`. Change `app_location` when setting `staticDir`. For applications in a repository subdirectory, run the build/install commands there, adjust action paths relative to the repository root, and point the npm cache at the application's lockfile.
+See the repository's [Azure CI workflow](.github/workflows/ci-swa.yml) for a tested deployment using a user-managed API directory.
 
-The repository's [Azure workflow](.github/workflows/ci-swa.yml) demonstrates the same build/install/upload sequence with the demo's user-managed `func` directory. Its test infrastructure and deployment cleanup are specific to this repository.
+## Adapter configuration
 
-## Configuration
+Pass options through `sveltekit({ adapter: adapter({ ... }) })`. The [`Options` type](src/index.d.ts) is the source of truth.
 
-Pass options to `adapter({...})` inside `sveltekit({...})` in your Vite configuration. The public [`Options` type](src/index.d.ts) declares all ten options:
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `apiDir` | `build/server` | API output; explicitly setting it makes the surrounding directory user-managed |
+| `staticDir` | `build/static` | Static and prerendered output |
+| `external` | `[]` | Additional packages excluded from the server bundle |
+| `customStaticWebAppConfig` | `{}` | Additional SWA configuration and routes |
+| `allowReservedSwaRoutes` | `false` | Suppress the build-time `/api` route check; does not change Azure routing |
+| `emulate` | Anonymous | Local platform identity or a synchronous provider |
+| `preserveAuthorization` | `false` | Forward the inbound Authorization header instead of stripping it |
+| `debug` | `false` | Enable Function request/response diagnostics |
+| `testWorkarounds` | `false` | Expose sanitized compatibility diagnostics for tests |
+| `serverRolldown` | Not set | Customize the server Rolldown configuration |
 
-| Option                     | Default                  | Behavior                                                                                                                                            |
-| -------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apiDir`                   | `'build/server'`         | Functions output root. Supplying this option selects user-managed API configuration, even when its value equals the default path.                   |
-| `staticDir`                | `'build/static'`         | Destination for static assets, prerendered output and generated SWA configuration. Use a disposable build directory.                                |
-| `external`                 | `[]` additional entries  | Adds dependencies to the adapter's server-bundle externals. See [External dependencies](#external-dependencies).                                    |
-| `customStaticWebAppConfig` | `{}`                     | Extends generated SWA configuration; custom routes precede generated routes.                                                                        |
-| `allowReservedSwaRoutes`   | `false`                  | Suppresses the build-time `/api` route check when `true`; does not change Azure routing.                                                            |
-| `emulate`                  | Anonymous platform state | A static `EmulateState` or synchronous `() => EmulateState` provider. See [Platform emulation](#platform-emulation).                                |
-| `preserveAuthorization`    | `false`                  | Preserves the Function's inbound Authorization header when `true`; otherwise strips it before SvelteKit sees it.                                    |
-| `debug`                    | `false`                  | Enables generated Function request/response logging.                                                                                                |
-| `testWorkarounds`          | `false`                  | Adds workaround diagnostic facts to the internal request and `x-adapter-test-workarounds` response header. It does not enable the underlying fixes. |
-| `serverRolldown`           | No callback              | Receives a deep clone of the server configuration and must explicitly return `RolldownOptions`. See [Server bundling](#server-bundling).            |
+`debug`, `testWorkarounds` and `preserveAuthorization` are compiled into the server output; rebuild after changing them. Keep diagnostics off unless needed; debug logs may contain request data.
 
-`debug`, `testWorkarounds` and `preserveAuthorization` are written into the server build; rebuild after changing them.
+### Output ownership
 
-### Output ownership and cleanup
+With `adapter()`, the adapter generates the entire `build/server` API scaffold. With `adapter({ apiDir: 'func' })`, it regenerates only `func/sk_render`; supply `func/package.json`, `host.json` and any sibling Functions yourself. Even explicitly setting `apiDir: 'build/server'` selects user-managed API ownership.
 
-**Static output directories are disposable build destinations. Do not store unrelated files there.** The adapter cleans old output before writing a new build so stale hashed assets and chunks are not deployed alongside the current application. An explicitly configured `staticDir` is removed recursively. The default `build` tree can also be removed during a build; reserve it for build artifacts.
+Treat static build output as disposable. When customizing `apiDir` without specifying `staticDir`, clean `build/static` before deployment to avoid retaining old files; the cleanup edge case is tracked in [issue #341](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/341). Keep custom source and configuration outside disposable static output.
 
-API ownership depends on whether `apiDir` is supplied:
+### Routing
 
-| Configuration                         | Ownership                                                                                         |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `adapter()`                           | Regenerates `build/server` and its Azure Functions scaffold.                                      |
-| `adapter({ apiDir: 'func' })`         | Regenerates `func/sk_render`; the surrounding API directory is user-managed.                      |
-| `adapter({ apiDir: 'build/server' })` | Also user-managed: regenerates only `build/server/sk_render`, without supplying the API scaffold. |
+The adapter generates `staticwebapp.config.json` with:
 
-Keep custom API source/configuration outside the static output directory. See [Custom API directories and sibling Functions](#custom-api-directories-and-sibling-functions) for the required files.
+- `/api/*` and `/data-api/*` reserved for their Azure backends;
+- POST, PUT, PATCH and DELETE rewrites to `/api/sk_render`;
+- a navigation fallback for server-rendered paths;
+- immutable caching for SvelteKit's versioned assets.
 
-### Routing and custom SWA configuration
+Do not put SvelteKit endpoints under `/api`: Azure reserves that namespace. For custom SWA routes, add them through `customStaticWebAppConfig`. They precede generated rules and can shadow them; when a custom route needs SvelteKit, rewrite to `/api/sk_render`. The adapter does not allow overriding `navigationFallback` or defining a literal `'*'` route.
 
-The adapter writes `staticwebapp.config.json` into the static destination. Its generated rules:
-
-- Leave `/api/*` and `/data-api/*` to their Azure backends.
-- Rewrite POST, PUT, DELETE and PATCH requests to `/api/sk_render`.
-- Use `navigationFallback` to render requests that do not resolve to static files.
-- Apply long-lived immutable caching to the SvelteKit immutable-asset path, including any configured base path.
-
-When `/` is not prerendered, it also writes an empty `index.html` required by SWA and rewrites `/` and `/index.html` to the renderer. The empty file is a deployment placeholder, not the application's rendered page.
-
-Extend the configuration through the adapter rather than editing its generated file. For example, an explicit rewrite for a server-rendered endpoint:
-
-```ts
-import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-	plugins: [
-		sveltekit({
-			adapter: adapter({
-				customStaticWebAppConfig: {
-					routes: [{ route: '/status', rewrite: '/api/sk_render' }]
-				}
-			})
-		})
-	]
-});
-```
-
-Custom route rules are prepended. Azure stops at the first matching rule, so custom rules can shadow the generated method rewrite. Include a renderer rewrite when your custom rule needs to send a request to SvelteKit. The adapter rejects `navigationFallback` and the literal route `'*'` in custom configuration; this is not validation of every potentially conflicting rule.
-
-Azure documents additional [routing and authorization semantics](https://learn.microsoft.com/en-us/azure/static-web-apps/configuration#routes), including that route rules are not applied to requests triggering `navigationFallback`. Configure protection for the actual request paths and enforce application authorization before returning sensitive data. Azure's `globalHeaders` also excludes API responses; set headers for SvelteKit responses in your server hooks when needed.
-
-### Reserved `/api` paths
-
-Azure reserves `/api` and `/api/*` for its API backend. Put SvelteKit endpoints at other paths, such as `/orders`, and use `/api/HelloWorld` for a separate Azure Function. A Kit `/api` endpoint can work in Vite development but fail to reach Kit after deployment.
-
-The adapter rejects route IDs beginning with `/api` by default. `allowReservedSwaRoutes: true` only suppresses that check; it does not make the namespace available to SvelteKit or comprehensively validate other Azure-reserved paths.
+Azure's [routing and authorization rules](https://learn.microsoft.com/en-us/azure/static-web-apps/configuration#routes) are not a substitute for application-level authorization. In particular, route rules do not govern requests processed by `navigationFallback`.
 
 ### External dependencies
 
-The adapter bundles the server with Rolldown, always including `fsevents` and `@azure/functions` in its external list. Add other packages with `external: ['package-name']`.
+Rolldown bundles the server, while `@azure/functions` and `fsevents` are always external. Add further packages using, for example, `adapter({ external: ['@sentry/sveltekit'] })`.
 
-For the generated API scaffold, only exact package names present in **both** the adapter's `external` array and the application's `dependencies` are copied into the generated API manifest. Entries from `devDependencies`, Vite `ssr.external`, or externals added through `serverRolldown` are not automatically copied. The template already supplies `@azure/functions`; the API manifest is not a copy of your application's manifest.
+For the **generated** API scaffold, an extra external dependency is copied into its `package.json` only when its exact package name appears in the application's `dependencies`. With a custom `apiDir`, maintain runtime dependencies in that directory's own manifest. In both cases, install them before deploying.
 
-With an explicit `apiDir`, maintain all runtime dependencies in that directory's own `package.json` and install them before deployment.
+Vite `ssr.external` applies to SvelteKit's earlier SSR build; the adapter's `external` applies to the subsequent Azure Function bundle. They are not interchangeable.
 
-Vite `ssr.external` controls SvelteKit's SSR build. The adapter's `external` controls the subsequent Azure Function bundling stage. Configuring one is not a substitute for configuring the other.
+## Azure Functions and platform behavior
 
-## Azure Functions & Platform
+The generated API scaffold uses the `@azure/functions` range in the [template manifest](src/server/template/package.json), which Dependabot maintains. Its `host.json` has a schema `"version": "2.0"`; that is **not** the Functions programming model version. Set production environment variables through [SWA application settings](https://learn.microsoft.com/en-us/azure/static-web-apps/application-settings), not `local.settings.json`.
 
-### Generated API scaffold
-
-Without `apiDir`, the adapter supplies an ESM `package.json` loading `sk_render/index.js`, plus `host.json`, local settings and `.funcignore`. The `@azure/functions` version range is declared in the [template's `package.json`](src/server/template/package.json) and maintained through Dependabot updates. Install the generated manifest's production dependencies after each build.
-
-`host.json` uses the configuration schema value `"version": "2.0"`; this is distinct from the Node programming model v4 and Functions host runtime v4. `local.settings.json` supplies local emulator settings, not production application settings. The renderer initializes the Kit server with `process.env`; configure application-specific production variables in [SWA application settings](https://learn.microsoft.com/en-us/azure/static-web-apps/application-settings).
-
-### Custom API directories and sibling Functions
-
-For custom Functions, configure `apiDir: 'func'` in the adapter options of your Vite configuration. Supply the surrounding API files yourself:
-
-```text
-func/
-├── HelloWorld/
-│   └── index.js                 # Your v4 HTTP Function registration
-├── sk_render/                  # Regenerated by the adapter
-│   ├── index.js
-│   ├── entry.js
-│   └── ...
-├── host.json
-└── package.json
-```
-
-A `func/package.json` for this sibling-directory layout is:
+For sibling Azure Functions, configure `apiDir: 'func'` and use a manifest such as:
 
 ```json
 {
@@ -268,142 +187,44 @@ A `func/package.json` for this sibling-directory layout is:
 }
 ```
 
-Use a valid `host.json`, such as the adapter's [template](src/server/template/host.json). Check the supported Azure Functions range in the adapter's [peerDependencies](package.json). Add other external runtime dependencies to this manifest and run `npm install --omit=dev --prefix func` before uploading `func` as `api_location`.
+Check the adapter's [peer dependencies](package.json) for the minimum supported SDK version, and install the manifest's runtime dependencies with `npm install --omit=dev --prefix func`. The `*/index.js` pattern loads the generated `sk_render` wrapper and sibling v4 Function registrations; do not mix v3 `function.json` registrations with the v4 programming model in one app. The [demo](tests/demo/func/package.json) includes a sibling `HelloWorld` Function.
 
-The `main` pattern must load the generated **`sk_render/index.js` wrapper**, including when instrumentation is enabled, and your custom Function registration modules. Reserve the `sk_render` directory, Function name and `/api/sk_render` route for the adapter. Other Functions use the v4 `app.http(...)` registration model; Azure does not support mixing v3 `function.json` registrations and v4 registrations in one Function app. See the [Azure v4 migration guide](https://learn.microsoft.com/en-us/azure/azure-functions/functions-node-upgrade-v4).
+### Requests and authentication
 
-The working demo pairs [`func/package.json`](tests/demo/func/package.json) with [`HelloWorld/index.js`](tests/demo/func/HelloWorld/index.js), served at `/api/HelloWorld` alongside SvelteKit.
+SvelteKit server requests expose `platform.context` (Azure invocation context), `platform.user` (nullable Azure SDK user) and `platform.clientPrincipal` (nullable SWA client principal). The adapter also implements `getClientAddress()`.
 
-### Production platform context and authentication
+- **Authorization:** by default, the adapter strips the inbound `Authorization` header because SWA can overwrite or inject it. `preserveAuthorization: true` forwards what reaches the Function; it cannot recover a caller token replaced upstream. See [issue #218](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/218).
+- **Public origin:** request URLs and downstream `host` / `x-forwarded-*` origin headers are derived from SWA's `x-ms-original-url`. This renderer requires that header; it is not a standalone direct-Functions adapter.
+- **Empty forms:** if Azure strips the content type from an empty native form POST, the adapter restores `application/x-www-form-urlencoded` for the matching navigation request.
 
-On server-rendered requests, hooks, server loads and endpoints receive the Azure information through `event.platform`:
+SWA handles its configured sign-in and route access rules; application code remains responsible for authorization. The [Azure user-information documentation](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information#api-functions) explains which principal information reaches managed APIs.
 
-| Field                      | Source                                                             |
-| -------------------------- | ------------------------------------------------------------------ |
-| `platform.context`         | Azure `InvocationContext` for the request.                         |
-| `platform.user`            | The Azure Functions SDK request user; nullable.                    |
-| `platform.clientPrincipal` | Decoded `x-ms-client-principal`; `null` if missing or unparseable. |
+## Local development
 
-The adapter also supplies SvelteKit's `getClientAddress()` from forwarded client-address information. Prerendered files are served as static output and have no per-request Azure identity.
-
-Azure SWA handles sign-in and configured route access rules; application code remains responsible for authorization of its data and actions. The adapter exposes identity information without implementing a login/session service. Handle missing principals, and do not assume that a local authenticated mock proves production identity availability on every route. Azure documents that the API principal header does not contain the `claims` array, even though optional claims can be used in local emulation. See [Azure user information](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information#api-functions).
-
-### Authorization header policy
-
-**By default, the adapter strips inbound `Authorization` before constructing the SvelteKit request.** This applies to all seven supported methods: GET, HEAD, POST, PUT, PATCH, DELETE and OPTIONS. Hooks, loads and endpoints therefore see no Authorization header under the default policy.
-
-Real SWA deployments have been observed to inject or overwrite this header, even when the caller sent none, through both fallback and explicit-rewrite routing. The SWA CLI does not reproduce that cloud behavior. Stripping prevents application code from mistaking an Azure-injected bearer token for an end-user credential. See [issue #218](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/issues/218).
-
-`preserveAuthorization: true` forwards the value received by the Function, unchanged. It cannot recover a caller's token after Azure has overwritten it. For application bearer authentication, use an application-specific header such as `x-app-authorization` and validate it in application code; treat `Authorization` as platform-owned on this managed surface. This policy does not remove `platform.clientPrincipal` or `platform.user`.
-
-### Public-origin headers
-
-The Function's inbound `host` can describe the internal Azure hop. The adapter builds the SvelteKit request URL from SWA's trusted `x-ms-original-url`, excludes that header from downstream request headers, and normalizes:
-
-| Downstream header   | Value derived from `x-ms-original-url`               |
-| ------------------- | ---------------------------------------------------- |
-| `host`              | URL host, including a non-default port when present. |
-| `x-forwarded-host`  | The same public host.                                |
-| `x-forwarded-proto` | URL protocol without the colon, such as `https`.     |
-
-These values overwrite inbound origin headers, including stale or client-supplied forwarded values. Normalization has no toggle and is independent of Authorization stripping.
-
-The header-copy helper leaves origin headers unchanged when `x-ms-original-url` is absent or invalid. **The renderer still requires a valid original URL**: its request-construction path asserts that the header exists and constructs a `Request` from it. The helper's fallback does not provide a standalone direct-Functions deployment mode.
-
-### Empty form POST handling
-
-Azure can drop `content-type` on an empty native form POST, causing a Kit form action to return `415 Unsupported Media Type`. The adapter restores `application/x-www-form-urlencoded` when the request has no content type, `content-length: 0`, `sec-fetch-mode: navigate` and `sec-fetch-dest: document`. Other empty POSTs are not treated as form submissions by this heuristic.
-
-This handling is automatic. `testWorkarounds: true` exposes diagnostic facts to help compare emulator and cloud behavior; it is not required to activate the fix.
-
-## Local Development
-
-### Vite versus SWA CLI
-
-Use your normal `npm run dev` and `npm run preview` scripts for Kit development and preview. They use Kit's platform emulation; they do not execute the generated Azure Function wrapper or your sibling Functions.
-
-To exercise built static output and Functions together, use the Azure Static Web Apps CLI. Install it as a development tool in your application and make [Azure Functions Core Tools v4](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) available as `func` on `PATH`. Use Node 22 for this local SWA/Core Tools flow; the application's broader package engine does not imply that these tools support every newer Node major.
+`npm run dev` and `npm run preview` use SvelteKit's platform emulation; they do not run the generated Function or sibling Functions. For full local SWA routing, use [Azure Static Web Apps CLI](https://azure.github.io/static-web-apps-cli/) and [Azure Functions Core Tools v4](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) with Node 22:
 
 ```sh
 npm install -D @azure/static-web-apps-cli
-```
-
-Create `swa-cli.config.json` for the default layout:
-
-```json
-{
-	"configurations": {
-		"app": {
-			"appLocation": ".",
-			"outputLocation": "./build/static",
-			"apiLocation": "./build/server"
-		}
-	}
-}
-```
-
-```sh
 npm run build
 npm install --omit=dev --prefix build/server
-npx --no-install swa start app
+npx --no-install swa start ./build/static --api-location ./build/server
 ```
 
-Adjust the paths and dependency install for custom output. Local CLI success is useful deployment evidence, but it does not establish identical Azure header behavior. See the [demo setup](tests/demo/README.md) and [current CLI configuration](tests/demo/swa-cli.config.json), which use a custom API directory.
+For more involved setups (including a custom API directory), see the [demo configuration](tests/demo/swa-cli.config.json) and [demo instructions](tests/demo/README.md). Passing local SWA tests does not guarantee identical behavior in Azure, especially for headers.
 
-### Platform emulation
+To emulate an authenticated platform in Vite development, use `adapter({ emulate: { role: 'authenticated' } })`. For custom users, `emulate.clientPrincipal` accepts a principal or `null`; `emulate` also accepts a synchronous `() => EmulateState` provider. Emulation is not an authentication system.
 
-With no `emulate` option, Kit receives a platform object with null user/principal and a fresh invocation context. For an authenticated local identity, set `emulate: { role: 'authenticated' }` in your adapter options.
+## Instrumentation and Sentry
 
-For a custom local identity, supply a principal:
+SvelteKit 3's `src/instrumentation.server.ts` is supported without an experimental flag. To collect server tracing spans, enable `tracing: { server: true }` in `sveltekit({ ... })` and configure your tracing SDK. See [SvelteKit observability](https://svelte.dev/docs/kit/observability).
 
-```ts
-import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-	plugins: [
-		sveltekit({
-			adapter: adapter({
-				emulate: {
-					clientPrincipal: {
-						identityProvider: 'github',
-						userId: 'alice',
-						userDetails: 'alice@example.test',
-						userRoles: ['authenticated', 'admin']
-					}
-				}
-			})
-		})
-	]
-});
-```
-
-Resolution rules:
-
-- A supplied principal takes precedence over `role` and determines the mock user's identity and roles. Optional claims map into `platform.user.claimsPrincipalData`.
-- `clientPrincipal: null` explicitly logs out, including with `role: 'authenticated'`.
-- When the principal is omitted, `role: 'authenticated'` supplies the default `devUser`; otherwise both identity fields are null.
-
-`emulate` also accepts a synchronous `() => EmulateState` provider, such as `emulate: () => state`. A local harness controlling that state in the Vite process can simulate login/logout without restarting the server. The exported `EmulateState` type describes the returned object.
-
-The provider runs on each platform-emulation call, including Kit's build/prerender emulation. Results are not cached, supplied objects are not mutated, and invocation contexts are fresh. The provider receives no `Request`: shared state does not implement separate browser sessions, cookies, Azure route enforcement or cloud header rewriting. Deployed authentication comes from Azure.
-
-## Instrumentation & Observability
-
-### SvelteKit instrumentation
-
-The adapter supports `src/instrumentation.server.ts` (or its JavaScript equivalent). When present, Kit's environment initializer runs before instrumentation, which runs before the application. The generated `sk_render/index.js` wrapper preserves this order. No experimental instrumentation flag is needed in Kit 3.
-
-To collect Kit's server tracing spans, set `tracing: { server: true }` in `sveltekit({...})` and configure a collector/SDK in the instrumentation file. See [SvelteKit observability](https://svelte.dev/docs/kit/observability).
-
-### Sentry 11 integration
-
-Follow [Sentry's SvelteKit setup](https://docs.sentry.io/platforms/javascript/guides/sveltekit/) for SDK initialization and error hooks. The adapter-specific build setup below targets Sentry 11 and the default output layout. See the [demo's `package.json`](tests/demo/package.json) for the version used in repository tests. Install Sentry as an application runtime dependency:
+For Sentry 11, follow the [official SvelteKit setup](https://docs.sentry.io/platforms/javascript/guides/sveltekit/). The repository [demo dependencies](tests/demo/package.json) show the SDK version currently tested. Install Sentry as an application runtime dependency:
 
 ```sh
 npm install @sentry/sveltekit@^11
 ```
+
+A minimal adapter-specific Vite configuration for the default output directories:
 
 ```ts
 import adapter, { sentryRewriteSourcesFactory } from '@ktarmyshov/svelte-adapter-azure-swa';
@@ -436,112 +257,29 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
-Place the Sentry plugin before Kit and use the `/vite` import with top-level plugin options. Sentry 11 uploads after the adapter has written its output. Keep `SENTRY_AUTH_TOKEN` in an ignored local environment file or CI secret; do not put it in public environment variables. Configure your own SDK DSN and matching release/environment as part of the official SDK setup.
+Initialize the SDK and error hooks as described by Sentry. Keep `SENTRY_AUTH_TOKEN` in an ignored environment file or CI secret. The Sentry build plugin handles map uploads; the adapter does not upload them. With a custom `apiDir`, declare `@sentry/sveltekit` in its runtime dependencies. The [complete demo](tests/demo/vite.config.ts) shows the tested instrumentation and upload configuration.
 
-The SDK is externalized from the server bundle so runtime initialization can precede application loading. With default API ownership, its version is copied from the application's `dependencies` into the generated manifest. With a custom `apiDir`, add it to the user-managed API manifest yourself. In either case, install Function production dependencies before deployment.
+`sentryRewriteSourcesFactory(repositoryRoot)` makes Sentry map paths relative to your repository using the callback's `context.mapDir`. For a monorepo app, pass the actual repository root instead of `import.meta.dirname`. Client source maps may remain publicly accessible in the static output; configure Sentry's post-upload map deletion if required. Upload and event receipt alone do **not** guarantee complete production symbolication.
 
-Adjust `sourcemaps.assets` for your output locations. The [complete demo Vite configuration](tests/demo/vite.config.ts) uses `build/static` and `func/sk_render`; its [server instrumentation](tests/demo/src/instrumentation.server.ts), [server hooks](tests/demo/src/hooks.server.ts) and [client hooks](tests/demo/src/hooks.client.ts) show the runtime integration.
+**Known Sentry/PostgreSQL issue:** Sentry `11.8.0` was observed to fail on a `pg` CommonJS dependency during the Azure build. As a temporary workaround, put `ssr: { external: ['pg'] }` at the **top level of Vite configuration**, not in the adapter's `external` option. This may disable automatic PostgreSQL instrumentation. Track [Sentry #25470](https://github.com/getsentry/sentry-javascript/issues/25470) and the adapter's [draft verification PR #338](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/pull/338); remove the workaround after verifying an upstream fix.
 
-### Source maps and repository paths
+## Advanced configuration and troubleshooting
 
-The adapter generates server sourcemaps while rebundling with Rolldown and retains input-map handling through `rolldown-plugin-sourcemaps`. For client maps, enable Vite `build.sourcemap`; SvelteKit performs native source-path rebasing when its output is copied. The adapter does not rebundle the client.
+`serverRolldown(options)` receives a deep clone of the adapter's Rolldown options and **must return** a configuration object. Preserve adapter-owned inputs and aliases when extending it; the adapter restores its own output settings. See the [option type](src/index.d.ts) and implementation in [`src/server/index.js`](src/server/index.js). Additional externals configured here are **not** copied automatically to the generated API manifest.
 
-`sentryRewriteSourcesFactory(repositoryRoot)` returns a callback for Sentry's `sourcemaps.rewriteSources`. The root may be absolute or relative to the build's working directory. Each filesystem source is resolved using its own native `context.mapDir` and rewritten relative to the repository root; URL and null-prefixed virtual identifiers are preserved. Without context, sources pass through unchanged. The helper performs no directory scanning, caching or uploading.
+| Symptom | Check |
+| --- | --- |
+| Renderer cannot start or a module is missing | Install API production dependencies; verify custom API `package.json` / `host.json` |
+| App or API missing after deployment | Check prebuilt `app_location`, `api_location`, `output_location` and skip-build flags |
+| `/api` endpoint works locally but not in Azure | Move the SvelteKit route outside Azure's reserved API namespace |
+| Form actions or custom routes fail | Check custom-route precedence and renderer rewrites |
+| Authorization differs between local and Azure | Check [header policy](#requests-and-authentication) |
+| Prerendered routes loop in SWA CLI | Review local `trailingSlash` behavior in the [demo](tests/demo/README.md) |
 
-For a repository-root `vite.config.ts`, use `import.meta.dirname` as above. For an app nested two directories below the repository root, use `sentryRewriteSourcesFactory(path.resolve(import.meta.dirname, '../..'))`, importing `path` from `node:path`. This is the demo's monorepo layout. Adapter 3 replaces the old output-directory-array and `prefixDir`/`log` helper arguments with this single repository-root argument.
+### Migrating from adapter 2.x
 
-Generated/copied maps remain output artifacts unless a later tool removes them. Client maps in the deployed static directory can be publicly accessible; configure Sentry's `sourcemaps.filesToDeleteAfterUpload` if you want to remove map files after uploading them. The adapter does not automatically upload or delete maps.
+Upgrade the app to **SvelteKit 3** and meet this adapter's [peer dependencies](package.json) and [Node engine requirement](package.json). Move the adapter configuration to `sveltekit({ adapter: adapter(...) })` in `vite.config.ts`, following the [SvelteKit migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3). Review output-directory ownership and reinstall Function production dependencies. If you use server customization or Sentry, update `serverRolldown` callbacks and the source-map helper to their 3.x contracts.
 
-The release verification includes server map generation, copied client maps, representative local source-mapping regressions, successful Sentry upload and exact client/server event ingestion. A separate client symbolication experiment also succeeded. **Comprehensive production symbolication is not guaranteed:** automated original file/line/context assertions for both production event types and complete server-side symbolication through remote map lookup remain deferred. Upload or ingestion success alone does not prove those outcomes.
+## Acknowledgements
 
-### Known issue: Sentry 11.8.0 and PostgreSQL
-
-With Sentry 11.8.0 build-time instrumentation, the demo's `pg` import can produce unresolved CommonJS dependencies during the Azure Function build. The confirmed workaround belongs at the top level of the **Vite** configuration, alongside `plugins`:
-
-```ts
-import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-	ssr: { external: ['pg'] },
-	plugins: [sveltekit({ adapter: adapter() })]
-});
-```
-
-When adding this to the Sentry example above, retain its Sentry plugin and other options. This is Vite `ssr.external`, distinct from the adapter's `external` option. It lets the tested demo build and run but may disable Sentry's automatic PostgreSQL instrumentation. This specific issue does not establish that CommonJS dependencies in general are incompatible. Track [Sentry issue #25470](https://github.com/getsentry/sentry-javascript/issues/25470) and the [tested configuration](tests/demo/vite.config.ts).
-
-## Advanced, Troubleshooting & Migration
-
-### Server bundling
-
-`serverRolldown` is a synchronous `(options: RolldownOptions) => RolldownOptions` callback. It receives a **deep clone** of the adapter's configuration and must explicitly return a configuration object. You may modify the clone and return it, or return a replacement that preserves the required adapter values. Mutation without return, `undefined`, `null`, primitive values and arrays fail at build time.
-
-For example, add a server-bundle plugin while retaining the supplied configuration:
-
-```ts
-import adapter from '@ktarmyshov/svelte-adapter-azure-swa';
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-	plugins: [
-		sveltekit({
-			adapter: adapter({
-				serverRolldown(options) {
-					options.plugins = [options.plugins, { name: 'custom-server-plugin' }];
-					return options;
-				}
-			})
-		})
-	]
-});
-```
-
-Preserve these supplied paths exactly:
-
-- `input.entry` and `input.index`.
-- `input['instrumentation-init']` and `input['instrumentation.server']` when instrumentation exists.
-- `resolve.alias.SERVER_INSTANCE` and `resolve.alias.ENV`; a single-element array with the same path is also accepted.
-
-Removing or changing these values fails the build with the affected field named. Additional entrypoints, aliases, plugins, externals and other non-conflicting options are supported. Retain the adapter's existing plugins and externals when extending those lists. Changes to `output` are ignored: the adapter restores its destination, ESM format, filenames and sourcemap configuration. Externals added here do not automatically become API manifest dependencies.
-
-### Troubleshooting
-
-| Symptom                                                                  | Check                                                                                                                                                            |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Azure cannot start the renderer or reports a missing module              | Install production dependencies in the deployed API root after building. For custom APIs, check ESM configuration, `main`, runtime dependencies and `host.json`. |
-| Static files or the API are missing after upload                         | Point action inputs at the built directories, use an empty `output_location` with skipped builds, and update paths after changing directory options.             |
-| Build fails for a Kit `/api` route, or it works locally but not in Azure | Move Kit endpoints outside Azure's reserved namespace. Suppressing the adapter check does not change Azure routing.                                              |
-| A custom SWA rule breaks an endpoint or form action                      | Review first-match precedence and whether the rule needs `rewrite: '/api/sk_render'`.                                                                            |
-| Bearer authentication behaves differently in Azure                       | Review the [Authorization header policy](#authorization-header-policy); preserving the header does not undo Azure overwrites.                                    |
-| Empty native form actions return `415`                                   | Check the [empty-form heuristic](#empty-form-post-handling) and use diagnostic flags when comparing requests.                                                    |
-| A customized server build fails                                          | Return a configuration explicitly and preserve the [required entrypoints and aliases](#server-bundling).                                                         |
-| Sentry/`pg` bundling fails                                               | Apply the narrowly scoped [Vite SSR workaround](#known-issue-sentry-1180-and-postgresql).                                                                        |
-
-#### Prerendered routes and SWA CLI trailing slashes
-
-The local SWA static server can handle prerendered directories differently from Azure. In the demo, full refreshes produced redirect loops or `404`s until the root layout selected `trailingSlash: 'always'` for CLI builds. It uses a typed boolean `PUBLIC_SWA_CLI` declared in [`src/env.ts`](tests/demo/src/env.ts), read through `$app/env/public` in [`src/routes/+layout.ts`](tests/demo/src/routes/+layout.ts). Its `build:swa` script sets `PUBLIC_SWA_CLI=true`; production Azure builds keep it false.
-
-Use that environment-specific policy when it suits your routes, and review lower-level trailing-slash overrides. Alternatively, disable prerendering for the affected routes only during CLI builds. This is local-emulator guidance, not a requirement to change production prerendering. Keep the detailed setup aligned with the [working demo](tests/demo/README.md).
-
-#### Azure-managed builds and diagnostics
-
-If Azure/Oryx build detection is slow or fails to resolve the environment, use the [prebuilt deployment workflow](#deploy-to-azure-static-web-apps). Keep the app build, API dependency installation and upload as explicit steps.
-
-For request diagnostics, `debug` logs request/response information and `testWorkarounds` exposes compatibility facts. Leave these disabled unless needed. The repository's [demo](tests/demo/README.md) and [CI workflow](.github/workflows/ci-swa.yml) also contain backend V8 coverage examples; they are test infrastructure rather than deployment prerequisites.
-
-### Migrating from adapter 2.x to 3.x
-
-- Upgrade to SvelteKit 3 using the adapter's supported [peer dependency ranges](package.json) and [Node.js engine requirement](package.json). Deploy the managed API with `node:22`; adapter 3.x does not support Kit 2.
-- Move configuration from `svelte.config.js`/`kit.adapter` to `sveltekit({ adapter: adapter(...) })` in `vite.config.ts`, following the [Kit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3).
-- Use the scoped package name in imports and the `src/app.d.ts` reference.
-- Use Sentry 11's `/vite` import and top-level build options. Replace the old Sentry source-path helper arguments with `sentryRewriteSourcesFactory(repositoryRoot)` and update upload globs to match the deployed output.
-- Make every `serverRolldown` callback return its configuration explicitly and retain the adapter-owned entrypoints and aliases.
-- Client rebundling has been removed. Enable client maps in Vite when needed; their copying and rebasing use Kit's native pipeline.
-- Review output ownership, Function dependency installation and the production header policies above before deploying an upgraded application.
-
-### Acknowledgements
-
-- The [original adapter project](https://github.com/geoffrich/svelte-adapter-azure-swa) provided the upstream foundation.
-- Thanks to [@sukeshpabolu](https://github.com/sukeshpabolu) for the Node 22 / Rolldown migration and the project's first external contribution.
+Based on the [original Azure SWA adapter](https://github.com/geoffrich/svelte-adapter-azure-swa). Thanks to [@sukeshpabolu](https://github.com/sukeshpabolu) for the Node 22 / Rolldown migration and the project's first external contribution.
