@@ -17,12 +17,12 @@ The adapter integrates with SvelteKit's Vite configuration, bundles the server w
 
 ## Compatibility
 
-| Requirement | Supported contract |
-| --- | --- |
-| Adapter | `3.x` for SvelteKit 3 |
+| Requirement                   | Supported contract                                                                  |
+| ----------------------------- | ----------------------------------------------------------------------------------- |
+| Adapter                       | `3.x` for SvelteKit 3                                                               |
 | SvelteKit and Azure Functions | See [peerDependencies](package.json) (Azure Functions Node.js programming model v4) |
-| Build Node.js | See [engines](package.json) |
-| Managed SWA API runtime | `node:22` |
+| Build Node.js                 | See [engines](package.json)                                                         |
+| Managed SWA API runtime       | `node:22`                                                                           |
 
 The adapter generates `platform.apiRuntime: 'node:22'`. The build machine's Node version does not select the deployed Azure runtime. For framework prerequisites, see the [SvelteKit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3). SWA's [managed API constraints](https://learn.microsoft.com/en-us/azure/static-web-apps/apis-overview#api-constraints), including request-duration limits and lack of WebSockets, still apply.
 
@@ -128,18 +128,18 @@ See the repository's [Azure CI workflow](.github/workflows/ci-swa.yml) for a tes
 
 Pass options through `sveltekit({ adapter: adapter({ ... }) })`. The [`Options` type](src/index.d.ts) is the source of truth.
 
-| Option | Default | Purpose |
-| --- | --- | --- |
-| `apiDir` | `build/server` | API output; explicitly setting it makes the surrounding directory user-managed |
-| `staticDir` | `build/static` | Static and prerendered output |
-| `external` | `[]` | Additional packages excluded from the server bundle |
-| `customStaticWebAppConfig` | `{}` | Additional SWA configuration and routes |
-| `allowReservedSwaRoutes` | `false` | Suppress the build-time `/api` route check; does not change Azure routing |
-| `emulate` | Anonymous | Local platform identity or a synchronous provider |
-| `preserveAuthorization` | `false` | Forward the inbound Authorization header instead of stripping it |
-| `debug` | `false` | Enable Function request/response diagnostics |
-| `testWorkarounds` | `false` | Expose sanitized compatibility diagnostics for tests |
-| `serverRolldown` | Not set | Customize the server Rolldown configuration |
+| Option                     | Default        | Purpose                                                                        |
+| -------------------------- | -------------- | ------------------------------------------------------------------------------ |
+| `apiDir`                   | `build/server` | API output; explicitly setting it makes the surrounding directory user-managed |
+| `staticDir`                | `build/static` | Static and prerendered output                                                  |
+| `external`                 | `[]`           | Additional packages excluded from the server bundle                            |
+| `customStaticWebAppConfig` | `{}`           | Additional SWA configuration and routes                                        |
+| `allowReservedSwaRoutes`   | `false`        | Suppress the build-time `/api` route check; does not change Azure routing      |
+| `emulate`                  | Anonymous      | Local platform identity or a synchronous provider                              |
+| `preserveAuthorization`    | `false`        | Forward the inbound Authorization header instead of stripping it               |
+| `debug`                    | `false`        | Enable Function request/response diagnostics                                   |
+| `testWorkarounds`          | `false`        | Expose sanitized compatibility diagnostics for tests                           |
+| `serverRolldown`           | Not set        | Customize the server Rolldown configuration                                    |
 
 `debug`, `testWorkarounds` and `preserveAuthorization` are compiled into the server output; rebuild after changing them. Keep diagnostics off unless needed; debug logs may contain request data.
 
@@ -267,14 +267,14 @@ Initialize the SDK and error hooks as described by Sentry. Keep `SENTRY_AUTH_TOK
 
 `serverRolldown(options)` receives a deep clone of the adapter's Rolldown options and **must return** a configuration object. Preserve adapter-owned inputs and aliases when extending it; the adapter restores its own output settings. See the [option type](src/index.d.ts) and implementation in [`src/server/index.js`](src/server/index.js). Additional externals configured here are **not** copied automatically to the generated API manifest.
 
-| Symptom | Check |
-| --- | --- |
-| Renderer cannot start or a module is missing | Install API production dependencies; verify custom API `package.json` / `host.json` |
-| App or API missing after deployment | Check prebuilt `app_location`, `api_location`, `output_location` and skip-build flags |
-| `/api` endpoint works locally but not in Azure | Move the SvelteKit route outside Azure's reserved API namespace |
-| Form actions or custom routes fail | Check custom-route precedence and renderer rewrites |
-| Authorization differs between local and Azure | Check [header policy](#requests-and-authentication) |
-| Prerendered routes loop in SWA CLI | Review local `trailingSlash` behavior in the [demo](tests/demo/README.md) |
+| Symptom                                        | Check                                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Renderer cannot start or a module is missing   | Install API production dependencies; verify custom API `package.json` / `host.json`   |
+| App or API missing after deployment            | Check prebuilt `app_location`, `api_location`, `output_location` and skip-build flags |
+| `/api` endpoint works locally but not in Azure | Move the SvelteKit route outside Azure's reserved API namespace                       |
+| Form actions or custom routes fail             | Check custom-route precedence and renderer rewrites                                   |
+| Authorization differs between local and Azure  | Check [header policy](#requests-and-authentication)                                   |
+| Prerendered routes loop in SWA CLI             | Review local `trailingSlash` behavior in the [demo](tests/demo/README.md)             |
 
 ### Migrating from adapter 2.x
 
