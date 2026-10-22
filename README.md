@@ -31,9 +31,9 @@ Rendering, form actions and prerendering are SvelteKit features. The adapter con
 | Contract                 | Supported version              |
 | ------------------------ | ------------------------------ |
 | Adapter release line     | `3.x` (SvelteKit 3 only)       |
-| `@sveltejs/kit` peer     | `3.x` — see peerDependencies   |
+| `@sveltejs/kit` peer     | `3.x` — see [peerDependencies](package.json) |
 | `@azure/functions` peer  | Node.js programming model `v4` |
-| Package Node.js engine   | `>=22.17.0`                    |
+| Package Node.js engine   | See [engines](package.json)    |
 | Deployed SWA API runtime | `node:22`                      |
 
 The build machine's Node version does not select Azure's runtime. The adapter generates `platform.apiRuntime: 'node:22'`; local SWA CLI/Core Tools also currently requires Node 22. See [Local Development](#local-development) for those additional tools. Other framework prerequisites follow the [SvelteKit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3).
@@ -47,7 +47,7 @@ Start with an existing SvelteKit 3 application. Run these commands from its root
 ### Install and configure
 
 ```sh
-npm install -D @ktarmyshov/svelte-adapter-azure-swa@3 @azure/functions@^4.16.5
+npm install -D @ktarmyshov/svelte-adapter-azure-swa@3 @azure/functions@^4
 ```
 
 Replace your existing adapter in `vite.config.ts`, preserving the rest of your application's configuration:
@@ -235,7 +235,7 @@ Vite `ssr.external` controls SvelteKit's SSR build. The adapter's `external` con
 
 ### Generated API scaffold
 
-Without `apiDir`, the adapter supplies an ESM `package.json` loading `sk_render/index.js`, plus `host.json`, local settings and `.funcignore`. The template currently declares `@azure/functions: ^4.7.0`; this is separate from the adapter's consumer peer requirement `^4.16.5`. Install the generated manifest's production dependencies after each build.
+Without `apiDir`, the adapter supplies an ESM `package.json` loading `sk_render/index.js`, plus `host.json`, local settings and `.funcignore`. The `@azure/functions` version range is declared in the [template's `package.json`](src/server/template/package.json) and maintained through Dependabot updates. Install the generated manifest's production dependencies after each build.
 
 `host.json` uses the configuration schema value `"version": "2.0"`; this is distinct from the Node programming model v4 and Functions host runtime v4. `local.settings.json` supplies local emulator settings, not production application settings. The renderer initializes the Kit server with `process.env`; configure application-specific production variables in [SWA application settings](https://learn.microsoft.com/en-us/azure/static-web-apps/application-settings).
 
@@ -263,12 +263,12 @@ A `func/package.json` for this sibling-directory layout is:
 	"type": "module",
 	"main": "*/index.js",
 	"dependencies": {
-		"@azure/functions": "^4.16.5"
+		"@azure/functions": "^4"
 	}
 }
 ```
 
-Use a valid `host.json`, such as the adapter's [template](src/server/template/host.json). Add other external runtime dependencies to this manifest and run `npm install --omit=dev --prefix func` before uploading `func` as `api_location`.
+Use a valid `host.json`, such as the adapter's [template](src/server/template/host.json). Check the supported Azure Functions range in the adapter's [peerDependencies](package.json). Add other external runtime dependencies to this manifest and run `npm install --omit=dev --prefix func` before uploading `func` as `api_location`.
 
 The `main` pattern must load the generated **`sk_render/index.js` wrapper**, including when instrumentation is enabled, and your custom Function registration modules. Reserve the `sk_render` directory, Function name and `/api/sk_render` route for the adapter. Other Functions use the v4 `app.http(...)` registration model; Azure does not support mixing v3 `function.json` registrations and v4 registrations in one Function app. See the [Azure v4 migration guide](https://learn.microsoft.com/en-us/azure/azure-functions/functions-node-upgrade-v4).
 
@@ -399,10 +399,10 @@ To collect Kit's server tracing spans, set `tracing: { server: true }` in `svelt
 
 ### Sentry 11 integration
 
-Follow [Sentry's SvelteKit setup](https://docs.sentry.io/platforms/javascript/guides/sveltekit/) for SDK initialization and error hooks. The adapter-specific build setup below uses the default output layout and Sentry 11.8.0, the version tested by the demo. Install Sentry as an application runtime dependency:
+Follow [Sentry's SvelteKit setup](https://docs.sentry.io/platforms/javascript/guides/sveltekit/) for SDK initialization and error hooks. The adapter-specific build setup below targets Sentry 11 and the default output layout. See the [demo's `package.json`](tests/demo/package.json) for the version used in repository tests. Install Sentry as an application runtime dependency:
 
 ```sh
-npm install @sentry/sveltekit@^11.8.0
+npm install @sentry/sveltekit@^11
 ```
 
 ```ts
@@ -533,7 +533,7 @@ For request diagnostics, `debug` logs request/response information and `testWork
 
 ### Migrating from adapter 2.x to 3.x
 
-- Upgrade to SvelteKit `^3.1.0`, Node `>=22.17.0` and the Azure Functions peer `^4.16.5`. Deploy the managed API with `node:22`; adapter 3.x does not support Kit 2.
+- Upgrade to SvelteKit 3 using the adapter's supported [peer dependency ranges](package.json) and [Node.js engine requirement](package.json). Deploy the managed API with `node:22`; adapter 3.x does not support Kit 2.
 - Move configuration from `svelte.config.js`/`kit.adapter` to `sveltekit({ adapter: adapter(...) })` in `vite.config.ts`, following the [Kit 3 migration guide](https://svelte.dev/docs/kit/migrating-to-sveltekit-3).
 - Use the scoped package name in imports and the `src/app.d.ts` reference.
 - Use Sentry 11's `/vite` import and top-level build options. Replace the old Sentry source-path helper arguments with `sentryRewriteSourcesFactory(repositoryRoot)` and update upload globs to match the deployed output.
