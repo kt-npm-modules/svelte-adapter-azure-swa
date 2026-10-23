@@ -261,8 +261,6 @@ Initialize the SDK and error hooks as described by Sentry. Keep `SENTRY_AUTH_TOK
 
 `sentryRewriteSourcesFactory(repositoryRoot)` makes Sentry map paths relative to your repository using the callback's `context.mapDir`. For a monorepo app, pass the actual repository root instead of `import.meta.dirname`. Client source maps may remain publicly accessible in the static output; configure Sentry's post-upload map deletion if required. Upload and event receipt alone do **not** guarantee complete production symbolication.
 
-**Known Sentry/PostgreSQL issue:** Sentry `11.8.0` was observed to fail on a `pg` CommonJS dependency during the Azure build. As a temporary workaround, put `ssr: { external: ['pg'] }` at the **top level of Vite configuration**, not in the adapter's `external` option. This may disable automatic PostgreSQL instrumentation. Track [Sentry #25470](https://github.com/getsentry/sentry-javascript/issues/25470) and the adapter's [draft verification PR #338](https://github.com/kt-npm-modules/svelte-adapter-azure-swa/pull/338); remove the workaround after verifying an upstream fix.
-
 ## Advanced configuration and troubleshooting
 
 `serverRolldown(options)` receives a deep clone of the adapter's Rolldown options and **must return** a configuration object. Preserve adapter-owned inputs and aliases when extending it; the adapter restores its own output settings. See the [option type](src/index.d.ts) and implementation in [`src/server/index.js`](src/server/index.js). Additional externals configured here are **not** copied automatically to the generated API manifest.
