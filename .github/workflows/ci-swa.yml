@@ -111,8 +111,8 @@ jobs:
           cache-reset: ${{ inputs.cache-reset }}
           install-script: npm run ci:all
           cache-dependency-path: '**/package-lock.json'
-          # Run even on cache hits: Linux browser libraries are not cached.
-          run-script: npm exec --prefix ./tests/demo --no -- playwright install --with-deps chromium
+          # Ensure Chromium is installed on cache hits; use system libraries from the runner image.
+          run-script: npm exec --prefix ./tests/demo --no -- playwright install chromium
 
       - name: Install Azure Functions Core Tools v4
         shell: bash
@@ -193,7 +193,7 @@ jobs:
           # Additionally, the azure swa action will occasionaly fail on determining the environment step (this step takes a long time)
           # Overall CI workflow reduced from about 5:00 minutes to about 2:30 minutes
           run-script: |
-            npm exec --prefix ./tests/demo --no -- playwright install --with-deps chromium
+            npm exec --prefix ./tests/demo --no -- playwright install chromium
             npm run build --prefix ./tests/demo
             echo "############################################################################"
             cat ./tests/demo/build/static/staticwebapp.config.json
