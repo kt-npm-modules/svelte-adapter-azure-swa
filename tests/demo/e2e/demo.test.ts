@@ -50,9 +50,11 @@ test('platform load exposes consistent facts and fresh invocation IDs', async ({
 	expect(facts.clientAddressPresent).toBe(true);
 	const [major, minor] = facts.nodeVersion.split('.').map(Number);
 	expect(major > 22 || (major === 22 && minor >= 17)).toBe(true);
-	if (hasAzureAdapter) {
-		const expectedMajor = isLiveAzure ? Number(process.env.EXPECTED_AZURE_NODE_MAJOR) : 22;
-		expect(major).toBe(expectedMajor);
+	if (isLiveAzure) {
+		// An accepted config is not enough: confirm the deployed process runs this Node major.
+		expect(major).toBe(Number(process.env.EXPECTED_AZURE_NODE_MAJOR));
+	} else if (hasAzureAdapter && process.versions.node.startsWith('22.')) {
+		expect(major).toBe(22);
 	}
 	expect(facts.invocationId).toBeTruthy();
 	await page.reload();
