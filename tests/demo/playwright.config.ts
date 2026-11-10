@@ -11,8 +11,12 @@ if (!['preview', 'swa', 'azure'].includes(target)) {
 if (target === 'azure' && !externalURL) {
 	throw new Error('Azure E2E requires PLAYWRIGHT_TEST_BASE_URL; no local app will be started.');
 }
-if (isSwaCli && !externalURL && process.versions.node.split('.')[0] !== '22') {
-	throw new Error('Local SWA E2E requires Node 22 (nvm use).');
+if (
+	isSwaCli &&
+	!externalURL &&
+	!['22', '24'].includes(process.versions.node.split('.')[0])
+) {
+	throw new Error('Local SWA E2E requires Node 22 or experimental Node 24.');
 }
 if (!env.SENTRY_AUTH_TOKEN) {
 	throw new Error(
