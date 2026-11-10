@@ -222,9 +222,9 @@ jobs:
     needs: config
     uses: ./.github/workflows/ci-swa.yml
     with:
-      # SWA uses a separate Node matrix because Azure Static Web Apps
-      # does not necessarily support the full main CI Node matrix yet.
-      matrix-node-version: '[22]'
+      # Probe Azure with Node 22 as baseline and Node 24 as an experimental runtime.
+      # Local SWA CLI stays on Node 22 in ci-swa.yml.
+      matrix-node-version: '[22,24]'
       cache-reset: ${{ needs.config.outputs.cache-reset == 'true' }}
     secrets: inherit
 
