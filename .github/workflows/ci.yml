@@ -222,9 +222,8 @@ jobs:
     needs: config
     uses: ./.github/workflows/ci-swa.yml
     with:
-      # Probe Azure with Node 22 as baseline and Node 24 as an experimental runtime.
-      # Local SWA CLI stays on Node 22 in ci-swa.yml.
-      matrix-node-version: '[22,24]'
+      # Reuse the same repository-configured Node matrix as the other CI jobs.
+      matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
       cache-reset: ${{ needs.config.outputs.cache-reset == 'true' }}
     secrets: inherit
 
