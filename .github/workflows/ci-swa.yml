@@ -117,7 +117,7 @@ jobs:
       - name: Install Azure Functions Core Tools v4
         shell: bash
         run: |
-          npm install --prefix "$RUNNER_TEMP/azure-functions-tools" --no-save --package-lock=false azure-functions-core-tools@4
+          npm install --prefix "$RUNNER_TEMP/azure-functions-tools" --no-save --package-lock=false azure-functions-core-tools@4 --unsafe-perm true
           echo "$RUNNER_TEMP/azure-functions-tools/node_modules/.bin" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/azure-functions-tools/node_modules/.bin/func" --version
 
