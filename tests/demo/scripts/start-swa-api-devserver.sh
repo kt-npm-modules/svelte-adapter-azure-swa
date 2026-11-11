@@ -48,9 +48,10 @@ fi
 ./node_modules/.bin/swa start --api-devserver-url http://127.0.0.1:7071 &
 swa_pid=$!
 
-if wait -n "$func_pid" "$swa_pid"; then
-  echo "A local server exited unexpectedly." >&2
-else
-  echo "A local server failed." >&2
-fi
+# Monitor both servers without Bash 4-only wait -n (macOS ships Bash 3).
+while kill -0 "$func_pid" 2>/dev/null && kill -0 "$swa_pid" 2>/dev/null; do
+  sleep 1
+done
+
+echo "A local server exited unexpectedly." >&2
 exit 1
