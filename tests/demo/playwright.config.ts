@@ -25,10 +25,6 @@ if (externalURL && (!env.PUBLIC_SENTRY_RELEASE || !env.PUBLIC_SENTRY_ENVIRONMENT
 	);
 }
 
-const swaStartCommand = process.versions.node.startsWith('24.')
-	? 'bash ./scripts/start-swa-api-devserver.sh'
-	: 'npm run swa';
-
 // Build identity is stable across requests; correlation nonces are generated per test.
 const release = env.PUBLIC_SENTRY_RELEASE || `adapter-e2e-${randomUUID()}`;
 const environment = env.PUBLIC_SENTRY_ENVIRONMENT || 'adapter-e2e';
@@ -52,7 +48,7 @@ export default defineConfig({
 		? undefined
 		: {
 				command: isSwaCli
-					? `npm run build:swa && env -u SENTRY_AUTH_TOKEN -u NODE_V8_COVERAGE ${swaStartCommand}`
+					? 'npm run build:swa && env -u SENTRY_AUTH_TOKEN -u NODE_V8_COVERAGE npm run swa'
 					: 'npm run build && env -u SENTRY_AUTH_TOKEN npm run preview',
 				port: isSwaCli ? 4280 : 4173,
 				timeout: 180_000,
