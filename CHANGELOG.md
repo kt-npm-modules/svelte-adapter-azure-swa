@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.2
+
+### Patch Changes
+
+- 4f91679: dependabot: dependency updates for PR #345
+- 5c3d8a0: dependabot: dependency updates for PR #347
+- 8ad1f81: dependabot: dependency updates for PR #350
+
 ## 3.0.1
 
 ### Patch Changes
