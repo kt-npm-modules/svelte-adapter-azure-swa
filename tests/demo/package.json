@@ -34,7 +34,7 @@
 		"@ktarmyshov/svelte-adapter-azure-swa": "file:../..",
 		"@neoconfetti/svelte": "^2.2.2",
 		"@playwright/test": "^1.65.1",
-		"@sentry/api": "^1.51.0",
+		"@sentry/api": "^2.5.0",
 		"@storybook/addon-a11y": "^10.6.7",
 		"@storybook/addon-docs": "^10.6.7",
 		"@storybook/addon-svelte-csf": "latest",
