@@ -18,7 +18,7 @@ permissions:
   pull-requests: write # to create comments (actions/github-script)
 
 env:
-  DEFAULT_MATRIX_NODE_VERSION: '["22"]'
+  MATRIX_NODE_VERSION: '["22", "24"]'
   DEFAULT_CACHE_RESET: false
   CI: true
 
@@ -117,7 +117,7 @@ jobs:
         shell: bash
         run: |
           # Set the node version to use in the matrix
-          value='${{ vars.MATRIX_NODE_VERSION || env.DEFAULT_MATRIX_NODE_VERSION || '' }}'
+          value='${{ env.MATRIX_NODE_VERSION }}'
           printf 'matrix-node-version=%s\n' "$value" >> "$GITHUB_OUTPUT"
 
       - id: sonar
@@ -222,9 +222,8 @@ jobs:
     needs: config
     uses: ./.github/workflows/ci-swa.yml
     with:
-      # SWA uses a separate Node matrix because Azure Static Web Apps
-      # does not necessarily support the full main CI Node matrix yet.
-      matrix-node-version: '[22]'
+      # Use the same Node matrix as the other CI jobs.
+      matrix-node-version: ${{ needs.config.outputs.matrix-node-version }}
       cache-reset: ${{ needs.config.outputs.cache-reset == 'true' }}
     secrets: inherit
 
