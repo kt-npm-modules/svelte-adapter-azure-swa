@@ -11,13 +11,13 @@
 {#if form?.success}
 	<p id="empty-post-success">success</p>
 	<p>
-		Adapter diagnostics: <span id="workarounds-info-marker"
-			>{String(form.workaroundInfoPresent)}</span
-		>
+		Adapter diagnostics: <span id="workarounds-info-marker">
+			{String(form.workaroundInfoPresent)}
+		</span>
 	</p>
 	<p>
-		Empty POST workaround: <span id="empty-post-workaround-marker"
-			>{String(form.emptyPostWorkaround)}</span
-		>
+		Empty POST workaround: <span id="empty-post-workaround-marker">
+			{String(form.emptyPostWorkaround)}
+		</span>
 	</p>
 {/if}
