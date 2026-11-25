@@ -14,10 +14,8 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), '');
 	const apiRuntime = env.NODE_API_RUNTIME || 'node:22';
-	if (apiRuntime !== 'node:22') {
-		throw new Error(
-			'NODE_API_RUNTIME must be node:22, the runtime currently supported by the adapter.'
-		);
+	if (apiRuntime !== 'node:22' && apiRuntime !== 'node:24') {
+		throw new Error('NODE_API_RUNTIME must be node:22 or node:24 (experimental).');
 	}
 	return {
 		build: { sourcemap: true },
