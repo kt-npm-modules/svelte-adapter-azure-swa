@@ -45,16 +45,18 @@
 {/if}
 <button type="button" onclick={throwClientError} disabled={!ready}>Trigger client error</button>
 <p role="status" data-testid="client-status">{clientStatus}</p>
-<button type="button" onclick={throwServerError} disabled={!ready || pending}
-	>Trigger server error</button
->
+<button type="button" onclick={throwServerError} disabled={!ready || pending}>
+	Trigger server error
+</button>
 <p role="status" data-testid="server-status">{serverStatus}</p>
 <p>
 	<a
 		href="https://konstantin-tarmyshov.sentry.io/issues/?project=4509255200669776"
 		target="_blank"
-		rel="noreferrer">Open Sentry issues</a
+		rel="noreferrer"
 	>
+		Open Sentry issues
+	</a>
 </p>
 
 <style>
